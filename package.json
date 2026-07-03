@@ -1,0 +1,58 @@
+{
+  "name": "obd2-mcp",
+  "version": "0.1.0",
+  "description": "MCP server that lets AI assistants read your car's OBD-II data through ELM327 adapters — trouble codes, live sensors, freeze frame, readiness monitors, VIN. Ships with a mock vehicle so you can try it without any hardware.",
+  "type": "module",
+  "bin": {
+    "obd2-mcp": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "README.md",
+    "README.ja.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "start": "node dist/index.js",
+    "test": "npm run build && node test/smoke.mjs"
+  },
+  "keywords": [
+    "mcp",
+    "modelcontextprotocol",
+    "mcp-server",
+    "obd2",
+    "obd-ii",
+    "elm327",
+    "car",
+    "vehicle",
+    "diagnostics",
+    "automotive",
+    "dtc",
+    "claude"
+  ],
+  "author": "Sho Kamakura (https://github.com/shoka-jp)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shoka-jp/obd2-mcp.git"
+  },
+  "homepage": "https://github.com/shoka-jp/obd2-mcp#readme",
+  "bugs": "https://github.com/shoka-jp/obd2-mcp/issues",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.24.0"
+  },
+  "optionalDependencies": {
+    "serialport": "^12.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}
