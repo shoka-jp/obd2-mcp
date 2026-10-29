@@ -1,5 +1,7 @@
 # obd2-mcp
 
+**初めての方へ：[車なしで試せるモック体験ガイド](./docs/try-mock.md#日本語)**
+
 [English](./README.md) | **日本語**
 
 [![npm](https://img.shields.io/npm/v/obd2-mcp)](https://www.npmjs.com/package/obd2-mcp)
