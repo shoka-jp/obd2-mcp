@@ -1,5 +1,7 @@
 # obd2-mcp
 
+**[実際の出力を見る・AIクライアントなしでデモを実行する](./docs/demo-results.md)**
+
 **初めての方へ：[車なしで試せるモック体験ガイド](./docs/try-mock.md#日本語)**
 
 [English](./README.md) | **日本語**
