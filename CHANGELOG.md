@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+- Build before packing so clean-source tarballs include the executable JavaScript.
+- Include demo guides, the example client, and contribution instructions in npm packages.
+- Add an isolated package-installation check and a Linux CI matrix for Node.js 22/24.
+- Add GitHub Sponsors funding metadata and a bilingual release checklist.
+
 ## [0.1.0] - 2026-07-03
 
 Initial release.

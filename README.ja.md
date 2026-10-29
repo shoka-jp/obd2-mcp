@@ -106,6 +106,7 @@ git clone https://github.com/shoka-jp/obd2-mcp.git
 cd obd2-mcp
 npm install
 npm test        # ビルド+モック車両に対するstdioスモークテスト
+npm run test:package  # 配布用tarballを別環境へインストールして検証
 ```
 
 モック車両はELM327プロトコルレベルで応答するため、テストはパース系全体(マルチフレームのVIN応答含む)を通ります。
