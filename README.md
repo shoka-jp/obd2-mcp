@@ -106,6 +106,7 @@ git clone https://github.com/shoka-jp/obd2-mcp.git
 cd obd2-mcp
 npm install
 npm test        # builds + runs the stdio smoke test against the mock vehicle
+npm run test:package  # tests an isolated installation of the actual npm tarball
 ```
 
 The mock vehicle answers at the ELM327 protocol level, so tests exercise the full parsing stack (including multi-frame ISO-TP VIN responses).

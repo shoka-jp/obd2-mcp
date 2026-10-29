@@ -11,13 +11,17 @@
     "dist",
     "README.md",
     "README.ja.md",
-    "LICENSE"
+    "LICENSE",
+    "docs",
+    "examples",
+    "CONTRIBUTING.md"
   ],
   "scripts": {
     "build": "tsc",
-    "prepublishOnly": "npm run build",
     "start": "node dist/index.js",
-    "test": "npm run build && node test/smoke.mjs"
+    "test": "npm run build && node test/smoke.mjs",
+    "test:package": "node test/package.mjs",
+    "prepack": "npm run build"
   },
   "keywords": [
     "mcp",
@@ -54,5 +58,9 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "typescript": "^5.6.0"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/shoka-jp"
   }
 }
