@@ -1,5 +1,7 @@
 # obd2-mcp
 
+**New here? [Try the step-by-step mock demo — no car required](./docs/try-mock.md).**
+
 **English** | [日本語](./README.ja.md)
 
 [![npm](https://img.shields.io/npm/v/obd2-mcp)](https://www.npmjs.com/package/obd2-mcp)
