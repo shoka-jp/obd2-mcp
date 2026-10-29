@@ -18,6 +18,9 @@ import { buildServer } from "./server.js";
  */
 function parseConnection(): { transport: Transport; mock: boolean } {
   const argIdx = process.argv.indexOf("--connection");
+  if (argIdx !== -1 && process.argv[argIdx + 1] === undefined) {
+    throw new Error("Missing value for --connection — expected mock, serial:<path>, or tcp:<host>:<port>");
+  }
   const spec = (argIdx !== -1 ? process.argv[argIdx + 1] : process.env.OBD2MCP_CONNECTION) ?? "mock";
   if (spec === "mock") return { transport: new MockTransport(), mock: true };
   if (spec.startsWith("serial:")) {
