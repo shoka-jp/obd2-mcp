@@ -1,5 +1,7 @@
 # obd2-mcp
 
+**[See actual mock output and run the demo without an AI client](./docs/demo-results.md).**
+
 **New here? [Try the step-by-step mock demo — no car required](./docs/try-mock.md).**
 
 **English** | [日本語](./README.ja.md)
