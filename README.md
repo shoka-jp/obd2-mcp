@@ -4,7 +4,6 @@
 
 **English** | [日本語](./README.ja.md)
 
-[![npm](https://img.shields.io/npm/v/obd2-mcp)](https://www.npmjs.com/package/obd2-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 An MCP server that lets AI assistants read your car's OBD-II data through cheap ELM327 adapters — trouble codes, live sensors, freeze frame, readiness monitors, and VIN.
@@ -15,10 +14,22 @@ Ask Claude *"why is my check-engine light on?"* and it reads the actual codes fr
 
 ## Quick start (mock mode — no hardware)
 
+Build from source first using Git and Node.js/npm. The npm package lookup returned 404 on 2026-10-29; use this source setup.
+
+```bash
+git clone https://github.com/shoka-jp/obd2-mcp.git
+cd obd2-mcp
+npm ci
+npm run build
+node -p "require('node:path').resolve('dist/index.js')"
+```
+
+Replace `/absolute/path/to/obd2-mcp/dist/index.js` below with the absolute path printed by the last command. Windows JSON configuration can use forward slashes.
+
 **Claude Code:**
 
 ```bash
-claude mcp add obd2 -- npx -y obd2-mcp
+claude mcp add obd2 -- node "/absolute/path/to/obd2-mcp/dist/index.js"
 ```
 
 **Claude Desktop** (`claude_desktop_config.json`):
@@ -27,8 +38,8 @@ claude mcp add obd2 -- npx -y obd2-mcp
 {
   "mcpServers": {
     "obd2": {
-      "command": "npx",
-      "args": ["-y", "obd2-mcp"]
+      "command": "node",
+      "args": ["/absolute/path/to/obd2-mcp/dist/index.js"]
     }
   }
 }
@@ -53,7 +64,7 @@ Serial baud rate defaults to 38400; override with `OBD2MCP_BAUD=115200` if your 
 Claude Code example with a real adapter:
 
 ```bash
-claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- npx -y obd2-mcp
+claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- node "/absolute/path/to/obd2-mcp/dist/index.js"
 ```
 
 ## Tools
@@ -75,7 +86,7 @@ This server is the *tool* layer. The knowledge layer — how to reason from code
 ```text
 /plugin marketplace add shoka-jp/automotive-ai-skills
 /plugin install automotive-ai-skills@automotive-ai-skills
-claude mcp add obd2 -- npx -y obd2-mcp
+claude mcp add obd2 -- node "/absolute/path/to/obd2-mcp/dist/index.js"
 ```
 
 With both installed, Claude reads the codes from your car *and* runs the diagnostic workflow on them.
