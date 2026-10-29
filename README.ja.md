@@ -4,7 +4,6 @@
 
 [English](./README.md) | **日本語**
 
-[![npm](https://img.shields.io/npm/v/obd2-mcp)](https://www.npmjs.com/package/obd2-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 安価なELM327アダプタ経由で、AIアシスタントが**あなたの車のOBD-IIデータを直接読める**ようにするMCPサーバーです。故障コード(DTC)、ライブセンサー、フリーズフレーム、レディネスモニタ、車台番号(VIN)に対応。
@@ -15,10 +14,22 @@ Claudeに「エンジン警告灯が点いたのはなぜ?」と聞くと、**�
 
 ## クイックスタート(モックモード — ハードウェア不要)
 
+GitとNode.js/npmを用意し、先にソースからビルドします。2026-10-29の確認ではnpmパッケージ取得が404となったため、以下の手順を使用してください。
+
+```bash
+git clone https://github.com/shoka-jp/obd2-mcp.git
+cd obd2-mcp
+npm ci
+npm run build
+node -p "require('node:path').resolve('dist/index.js')"
+```
+
+以下の `/absolute/path/to/obd2-mcp/dist/index.js` は最後のコマンドで表示された実際の絶対パスに置き換えてください。WindowsのJSON設定では区切り文字に `/` を使用できます。
+
 **Claude Code:**
 
 ```bash
-claude mcp add obd2 -- npx -y obd2-mcp
+claude mcp add obd2 -- node "/absolute/path/to/obd2-mcp/dist/index.js"
 ```
 
 **Claude Desktop**(`claude_desktop_config.json`):
@@ -27,8 +38,8 @@ claude mcp add obd2 -- npx -y obd2-mcp
 {
   "mcpServers": {
     "obd2": {
-      "command": "npx",
-      "args": ["-y", "obd2-mcp"]
+      "command": "node",
+      "args": ["/absolute/path/to/obd2-mcp/dist/index.js"]
     }
   }
 }
@@ -53,7 +64,7 @@ ELM327互換アダプタ(USB / Bluetooth / WiFi、1,000〜3,000円程度)をOBD-
 実車接続でのClaude Code登録例:
 
 ```bash
-claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- npx -y obd2-mcp
+claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- node "/absolute/path/to/obd2-mcp/dist/index.js"
 ```
 
 ## ツール一覧
@@ -75,7 +86,7 @@ claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- npx -y obd2-mcp
 ```text
 /plugin marketplace add shoka-jp/automotive-ai-skills
 /plugin install automotive-ai-skills@automotive-ai-skills
-claude mcp add obd2 -- npx -y obd2-mcp
+claude mcp add obd2 -- node "/absolute/path/to/obd2-mcp/dist/index.js"
 ```
 
 両方入れると、Claudeが実車からコードを読み、**その上で診断ワークフローを回します**。
