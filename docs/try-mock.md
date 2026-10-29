@@ -4,12 +4,24 @@ This walkthrough uses simulated data, not a real vehicle. AI wording varies; the
 
 ## Setup
 
-You need Node.js 18 or later (per the package requirements), npm/npx, and Claude Code. Follow the main [README](../README.md) for Claude Desktop configuration instead.
+Build from source first using Git and Node.js/npm. The npm package lookup returned 404 on 2026-10-29; use this source setup.
+
+```bash
+git clone https://github.com/shoka-jp/obd2-mcp.git
+cd obd2-mcp
+npm ci
+npm run build
+node -p "require('node:path').resolve('dist/index.js')"
+```
+
+Replace `/absolute/path/to/obd2-mcp/dist/index.js` below with the absolute path printed by the last command. Windows JSON configuration can use forward slashes.
+
+You need Node.js 18 or later (per the package requirements), npm, and Claude Code. Follow the main [README](../README.md) for Claude Desktop configuration instead.
 
 Register an explicitly simulated connection:
 
 ```bash
-claude mcp add obd2 --env OBD2MCP_CONNECTION=mock -- npx -y obd2-mcp
+claude mcp add obd2 --env OBD2MCP_CONNECTION=mock -- node "/absolute/path/to/obd2-mcp/dist/index.js"
 ```
 
 If a server named obd2 is already registered, inspect its configuration before changing it. Confirm the connection is mock before proceeding.
@@ -24,11 +36,11 @@ The documented mock scenario is a warm idling sedan with a stored P0420 and the 
 
 ## If it does not work
 
-Check Node.js/npx availability and that the client can start the MCP server. Include the package version, client, OS, exact reproduction steps, and sanitized error output in a [bug report](https://github.com/shoka-jp/obd2-mcp/issues/new?template=bug_report.md). Never post VINs or credentials.
+Check Node.js availability and that the client can start the MCP server. Include the package version, client, OS, exact reproduction steps, and sanitized error output in a [bug report](https://github.com/shoka-jp/obd2-mcp/issues/new?template=bug_report.md). Never post VINs or credentials.
 
 ## 日本語
 
-Node.js 18以上、npm/npx、Claude Codeを用意し、上のコマンドで明示的にモック接続を登録します。同名の登録がある場合は既存設定を確認してください。
+Node.js 18以上、npm、Claude Codeを用意し、まず上のgit clone・npm ci・npm run buildを実行します。表示された絶対パスに置き換えた登録コマンドで明示的にモック接続を登録します。同名の登録がある場合は既存設定を確認してください。
 
 次の順番で質問します。
 
