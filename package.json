@@ -19,7 +19,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "npm run build && node test/smoke.mjs",
+    "test": "npm run build && node --test test/cli.mjs && node test/smoke.mjs",
     "test:package": "node test/package.mjs",
     "prepack": "npm run build"
   },
