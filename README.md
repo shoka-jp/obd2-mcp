@@ -103,6 +103,15 @@ The mock vehicle answers at the ELM327 protocol level, so tests exercise the ful
 - [ ] O2 sensor sweep sampling for catalyst diagnosis
 - [ ] Configurable mock scenarios (misfire, lean condition, EVAP leak)
 
+## Support the project
+
+If this server is useful to you:
+
+- [Follow shoka-jp](https://github.com/shoka-jp) for automotive AI and MCP development.
+- Star this repository to bookmark it, and share it with someone who works with vehicle diagnostics.
+- [Report a reproducible issue](https://github.com/shoka-jp/obd2-mcp/issues) with your adapter type, operating system, connection mode, and expected versus actual behavior. Remove VINs and other personal information from logs.
+- [Sponsor the maintainer](https://github.com/sponsors/shoka-jp) to support this open-source work.
+
 ## License
 
 [MIT](./LICENSE) © 2026 Sho Kamakura
