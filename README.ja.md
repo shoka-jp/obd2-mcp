@@ -95,6 +95,15 @@ npm test        # ビルド+モック車両に対するstdioスモークテス�
 
 モック車両はELM327プロトコルレベルで応答するため、テストはパース系全体(マルチフレームのVIN応答含む)を通ります。
 
+## プロジェクトを応援する
+
+役立った方は、次の方法で開発を応援していただけます。
+
+- [開発者をフォロー](https://github.com/shoka-jp)して、自動車 × AIの開発をチェックする。
+- リポジトリをStarして保存したり、必要としている人に紹介する。
+- [Issue](https://github.com/shoka-jp/obd2-mcp/issues)で、試した手順・期待した結果・実際の結果を共有する。ログから車台番号などの個人情報を取り除いてください。
+- [GitHub Sponsors](https://github.com/sponsors/shoka-jp)でオープンソース活動を支援する。
+
 ## ライセンス
 
 [MIT](./LICENSE) © 2026 Sho Kamakura
