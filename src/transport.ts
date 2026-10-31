@@ -15,6 +15,7 @@ abstract class StreamTransport implements Transport {
   protected buffer = "";
   private queue: Promise<unknown> = Promise.resolve();
   private waiter: { resolve: (s: string) => void; reject: (e: Error) => void; timer: NodeJS.Timeout } | null = null;
+  private unusable: Error | null = null;
 
   abstract open(): Promise<void>;
   abstract close(): Promise<void>;
@@ -35,6 +36,7 @@ abstract class StreamTransport implements Transport {
   }
 
   protected fail(err: Error): void {
+    this.unusable = err;
     if (this.waiter) {
       const w = this.waiter;
       this.waiter = null;
@@ -46,13 +48,16 @@ abstract class StreamTransport implements Transport {
   sendRaw(cmd: string, timeoutMs = DEFAULT_TIMEOUT): Promise<string> {
     const run = () =>
       new Promise<string>((resolve, reject) => {
+        if (this.unusable) return reject(new Error(`Adapter connection is unusable; restart the server: ${this.unusable.message}`));
         this.buffer = "";
         const timer = setTimeout(() => {
           this.waiter = null;
-          reject(new Error(`Timeout waiting for adapter response to "${cmd}" (${timeoutMs} ms)`));
+          const err = new Error(`Timeout waiting for adapter response to "${cmd}" (${timeoutMs} ms)`);
+          this.unusable = err;
+          reject(err);
         }, timeoutMs);
         this.waiter = { resolve, reject, timer };
-        this.write(cmd + "\r");
+        try { this.write(cmd + "\r"); } catch (err) { this.fail(err instanceof Error ? err : new Error(String(err))); }
       });
     const next = this.queue.then(run, run);
     this.queue = next.catch(() => undefined);
@@ -80,6 +85,7 @@ export class TcpTransport extends StreamTransport {
       });
       s.on("data", d => this.onData(String(d)));
       s.on("error", err => this.fail(err as Error));
+      s.on("close", () => this.fail(new Error("TCP adapter connection closed")));
       this.socket = s;
     });
   }
@@ -119,6 +125,7 @@ export class SerialTransport extends StreamTransport {
       p.setEncoding("ascii");
       p.on("data", (d: unknown) => this.onData(String(d)));
       p.on("error", (err: Error) => this.fail(err));
+      p.on("close", () => this.fail(new Error("Serial adapter connection closed")));
       this.port = p;
     });
   }

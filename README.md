@@ -79,7 +79,7 @@ claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- node "/absolute/path
 | `read_readiness` | Emissions monitor completion status (inspection readiness) |
 | `read_vin` | Vehicle Identification Number from the ECU |
 | `connection_status` | Adapter identity and battery voltage at the port |
-| `clear_dtcs` | Clear codes — **requires explicit confirmation**; warns that freeze frame evidence is erased and readiness monitors reset |
+| `clear_dtcs` | Clear codes — **disabled for real adapters by default**; warns that freeze frame evidence is erased and readiness monitors reset |
 
 ## Pairs with automotive-ai-skills 🔧
 
@@ -95,7 +95,8 @@ With both installed, Claude reads the codes from your car *and* runs the diagnos
 
 ## Safety and scope
 
-- **Read-only by design.** v0.1 performs no ECU writes, coding, or actuator tests. The only state-changing operation is `clear_dtcs` (standard mode 04), which is gated behind explicit confirmation because it erases evidence.
+- **Real vehicle code clearing is disabled by default.** To enable mode 04, set `OBD2MCP_ENABLE_CLEAR=1` before starting the server, set the tool's `confirm` argument to true, and approve the separate MCP form confirmation. Clients without form elicitation cannot clear real codes. This relies on the client displaying the confirmation to a human; the server cannot verify the identity of the approver. Mock clearing remains available for testing.
+- **Response limitations.** Multiple ECU replies and unsupported compression-ignition readiness data are reported as errors instead of combining or guessing values. Following an adapter timeout or disconnect, restart the server before trying again. Real-vehicle and adapter compatibility must be verified independently.
 - **Diagnosis support, not a verdict.** Codes identify failed tests, not failed parts. Verify with physical tests before spending money, and defer safety-critical work (brakes, fuel, SRS, high-voltage) to professionals.
 - Never drive while interacting with an AI assistant. Read with the vehicle parked.
 

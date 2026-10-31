@@ -28,7 +28,12 @@ export function encodeDtc(code: string): [number, number] {
  */
 export function parseDtcPayload(bytes: number[]): string[] {
   let data = bytes;
-  if (data.length % 2 === 1) data = data.slice(1);
+  if (data.length % 2 === 1) {
+    const count = data[0];
+    if (data.length - 1 < count * 2) throw new Error(`Incomplete DTC response: expected ${count} codes`);
+    if (data.slice(1 + count * 2).some(byte => byte !== 0)) throw new Error("Ambiguous DTC response: unexpected trailing data");
+    data = data.slice(1, 1 + count * 2);
+  }
   const out: string[] = [];
   for (let i = 0; i + 1 < data.length; i += 2) {
     const dtc = decodeDtcPair(data[i], data[i + 1]);
