@@ -40,3 +40,30 @@ test('summary flag without demo fails', () => {
   assert.equal(run.status, 1);
   assert.match(run.stderr, /requires --demo/);
 });
+
+test('Japanese summary explains the mock code and preserves diagnostic evidence', () => {
+  const run = spawnSync(process.execPath, ['dist/index.js', '--demo', '--summary', '--lang', 'ja'], {
+    env: { ...process.env, OBD2MCP_CONNECTION: 'tcp:127.0.0.1:1' }, encoding: 'utf8', timeout: 15000,
+  });
+  assert.ifError(run.error);
+  assert.equal(run.status, 0, run.stderr);
+  assert.match(run.stdout, /模擬デモ/);
+  assert.match(run.stdout, /P0420の一般的な意味/);
+  assert.match(run.stdout, /コードだけで故障部品は特定できません/);
+  assert.match(run.stdout, /消去せず保存/);
+  assert.doesNotMatch(run.stdout, /clear_dtcs/);
+});
+
+test('language option rejects missing, invalid, duplicate, and unsupported contexts', () => {
+  for (const args of [
+    ['--demo', '--summary', '--lang'],
+    ['--demo', '--summary', '--lang', 'fr'],
+    ['--demo', '--summary', '--lang', 'ja', '--lang', 'en'],
+    ['--demo', '--lang', 'ja'],
+    ['--lang', 'ja'],
+  ]) {
+    const run = spawnSync(process.execPath, ['dist/index.js', ...args], { encoding: 'utf8', timeout: 5000 });
+    assert.equal(run.status, 1, `${args.join(' ')}: ${run.stderr}`);
+    assert.match(run.stderr, /--lang/);
+  }
+});

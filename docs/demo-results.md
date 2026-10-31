@@ -17,7 +17,9 @@ npm run demo
 
 The demo builds the source, explicitly selects mock mode, reads four tools, and displays a short summary. It never calls `clear_dtcs`. For the complete JSON responses, run `node dist/index.js --demo` after building. If you already cloned the project, update your checkout before running.
 
-デモはソースをビルドし、モックを明示指定して4つの読み取りツールを呼び、要約を表示します。コード消去は行いません。すべてのJSON応答はビルド後に `node dist/index.js --demo` で確認できます。すでにクローン済みの場合は最新の変更を取得してください。
+日本語で表示するには、上記の `npm run demo` の代わりに `npm run demo:ja` を実行してください。デモはソースをビルドし、モックを明示指定して4つの読み取りツールを呼び、要約と次の確認手順を表示します。コード消去は行いません。すべてのJSON応答はビルド後に `node dist/index.js --demo` で確認できます。すでにクローン済みの場合は最新の変更を取得してください。
+
+The summary explains the example P0420 code and suggests preserving the data for a technician; it cannot identify a failed part. Its code description can be checked against [Ford's OBD system operation summary](https://www.fordservicecontent.com/Ford_Content/catalog/motorcraft/OBD_Operation_Summary_to_Gasoline_MY_2024_2025.pdf). The Japanese summary is available with `npm run demo:ja`.
 
 ## Observed output / 実際に取得した結果
 

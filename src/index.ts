@@ -42,9 +42,18 @@ function parseConnection(): { transport: Transport; mock: boolean } {
 }
 
 async function main(): Promise<void> {
+  const langIndex = process.argv.indexOf("--lang");
+  let lang: "en" | "ja" = "en";
+  if (langIndex !== -1) {
+    if (!process.argv.includes("--demo") || !process.argv.includes("--summary")) throw new Error("--lang requires --demo --summary");
+    if (process.argv.indexOf("--lang", langIndex + 1) !== -1) throw new Error("Specify --lang only once");
+    const value = process.argv[langIndex + 1];
+    if (value !== "en" && value !== "ja") throw new Error("--lang requires en or ja");
+    lang = value;
+  }
   if (process.argv.includes("--demo")) {
     if (process.argv.includes("--connection")) throw new Error("--demo always uses a mock vehicle; do not combine it with --connection");
-    await runDemo(process.argv.includes("--summary"));
+    await runDemo(process.argv.includes("--summary"), lang);
     return;
   }
   if (process.argv.includes("--summary")) throw new Error("--summary requires --demo");
