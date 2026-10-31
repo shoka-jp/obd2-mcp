@@ -49,6 +49,18 @@ claude mcp add obd2 -- node "/absolute/path/to/obd2-mcp/dist/index.js"
 
 そして聞いてみてください:「車の故障コードを読んで、お金を使う前に確認すべきことを教えて」
 
+### 別のモックシナリオを試す
+
+MCPクライアントの設定で `OBD2MCP_CONNECTION=mock` と合わせて `OBD2MCP_MOCK_SCENARIO` を指定できます。`catalyst`（既定、P0420）、`healthy`（コードなし）、`misfire`（P0301）、`lean`（P0171と高めのバンク1燃料補正）から選べます。いずれも学習用の模擬データで、実車の故障診断や車両プロファイルを保証するものではありません。未対応のシナリオ名では起動を停止します。実車接続時にはこの設定を使用しません。
+
+たとえばClaude Codeに別のモックサーバーを登録します。
+
+```bash
+claude mcp add obd2-lean --env OBD2MCP_CONNECTION=mock --env OBD2MCP_MOCK_SCENARIO=lean -- node "/absolute/path/to/obd2-mcp/dist/index.js"
+```
+
+設定変更後はサーバーを再起動してください。モックの状態はサーバーごとに独立しています。モックの消去はレディネスをリセットしますが、実車には影響しません。
+
 ## 実車への接続
 
 ELM327互換アダプタ(USB / Bluetooth / WiFi、1,000〜3,000円程度)をOBD-IIポートに挿します(日本車はおおむね2008年以降のOBD2義務化車両で確実、それ以前も多くが対応。イグニッションON)。

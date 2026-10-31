@@ -49,6 +49,18 @@ claude mcp add obd2 -- node "/absolute/path/to/obd2-mcp/dist/index.js"
 
 Then ask: *"Read my car's trouble codes and tell me what to check before I spend money."*
 
+### Try another mock scenario
+
+Set `OBD2MCP_MOCK_SCENARIO` in your MCP client configuration while using `OBD2MCP_CONNECTION=mock`. Available values are `catalyst` (default, P0420), `healthy` (no codes), `misfire` (P0301), and `lean` (P0171 with elevated bank 1 fuel trims). These are synthetic teaching examples, not diagnoses or verified vehicle profiles. An unknown scenario stops startup instead of falling back silently. The setting is ignored for real connections.
+
+For example, register a separate Claude Code mock server:
+
+```bash
+claude mcp add obd2-lean --env OBD2MCP_CONNECTION=mock --env OBD2MCP_MOCK_SCENARIO=lean -- node "/absolute/path/to/obd2-mcp/dist/index.js"
+```
+
+Restart the server after changing the setting. Each server has independent mock state. Clearing a mock scenario resets its readiness monitors and does not affect any vehicle.
+
 ## Connecting a real car
 
 You need an ELM327-compatible adapter (USB, Bluetooth-serial, or WiFi — typically $5–30) plugged into the OBD-II port (all gasoline cars since 1996 in the US, roughly 2001+ elsewhere; ignition on).
@@ -118,7 +130,7 @@ The mock vehicle answers at the ELM327 protocol level, so tests exercise the ful
 - [ ] Mode 09 calibration IDs
 - [ ] PID auto-discovery (0100/0120/0140 support bitmaps)
 - [ ] O2 sensor sweep sampling for catalyst diagnosis
-- [ ] Configurable mock scenarios (misfire, lean condition, EVAP leak)
+- [ ] Additional mock scenarios (such as EVAP leak)
 
 ## Support the project
 
