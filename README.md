@@ -91,12 +91,12 @@ claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- node "/absolute/path
 
 | Tool | What it does |
 |---|---|
-| `read_dtcs` | Stored + pending trouble codes, MIL state, DTC count |
+| `read_dtcs` | Stored + pending trouble codes, MIL state, DTC count. A code list is `null` when the adapter returns no data; this is not a confirmed empty list. |
 | `read_freeze_frame` | The DTC that set the freeze frame and the engine conditions at that moment |
 | `read_live_data` | Live sensors: RPM, coolant temp, fuel trims, MAF, O2 voltages, and more (22 PIDs) |
 | `read_readiness` | Emissions monitor completion status (inspection readiness) |
 | `read_vin` | Vehicle Identification Number from the ECU |
-| `connection_status` | Adapter identity and battery voltage at the port |
+| `connection_status` | Adapter identity and port voltage if available. A connected adapter does not itself confirm communication with the vehicle. |
 | `clear_dtcs` | Clear codes — **disabled for real adapters by default**; warns that freeze frame evidence is erased and readiness monitors reset |
 
 ## Pairs with automotive-ai-skills 🔧
