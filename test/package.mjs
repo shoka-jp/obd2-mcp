@@ -20,7 +20,7 @@ try {
   mkdirSync(source);
   mkdirSync(consumer);
   for (const path of ['package.json', 'tsconfig.json', 'src', 'docs', 'examples',
-    'README.md', 'README.ja.md', 'LICENSE', 'CONTRIBUTING.md']) {
+    'README.md', 'README.ja.md', 'CHANGELOG.md', 'LICENSE', 'CONTRIBUTING.md']) {
     cpSync(join(root, path), join(source, path), { recursive: true });
   }
   // Reuse installed build tools only in the source staging directory.
@@ -29,9 +29,10 @@ try {
   assert(!existsSync(join(source, 'dist')), 'staging must start without build output');
   const [pack] = JSON.parse(runNpm(['pack', '--json', '--pack-destination', temporary], source));
   const included = new Set(pack.files.map(file => file.path));
-  for (const required of ['dist/index.js', 'dist/server.js', 'dist/mock.js',
-    'README.md', 'README.ja.md', 'LICENSE', 'CONTRIBUTING.md',
-    'docs/demo-results.md', 'docs/try-mock.md', 'examples/mock-demo.mjs']) {
+  for (const required of ['dist/index.js', 'dist/server.js', 'dist/mock.js', 'dist/demo.js',
+    'README.md', 'README.ja.md', 'CHANGELOG.md', 'LICENSE', 'CONTRIBUTING.md',
+    'docs/demo-results.md', 'docs/try-mock.md', 'docs/images/get-started-en.svg',
+    'docs/images/get-started-ja.svg', 'examples/mock-demo.mjs']) {
     assert(included.has(required), `package is missing ${required}`);
   }
   assert([...included].every(path => !path.startsWith('node_modules/')));
@@ -43,6 +44,12 @@ try {
   assert.equal(manifest.bin['obd2-mcp'], 'dist/index.js');
   assert(existsSync(join(consumer, 'node_modules', '.bin', process.platform === 'win32' ? 'obd2-mcp.cmd' : 'obd2-mcp')),
     'npm must create the CLI executable');
+  const demoOutput = execFileSync(process.execPath, ['dist/index.js', '--demo'], {
+    cwd: installed, encoding: 'utf8', timeout: 30000,
+    env: { ...process.env, OBD2MCP_CONNECTION: 'tcp:127.0.0.1:1' },
+  });
+  assert.match(demoOutput, /"simulated": true/);
+  assert.match(demoOutput, /P0420/);
   execFileSync(process.execPath, [join(root, 'test/smoke.mjs')], {
     cwd: installed, stdio: 'inherit', timeout: 30000,
   });

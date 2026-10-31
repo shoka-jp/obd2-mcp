@@ -12,13 +12,12 @@ Install Git and Node.js/npm, then run:
 git clone https://github.com/shoka-jp/obd2-mcp.git
 cd obd2-mcp
 npm ci
-npm run build
-node examples/mock-demo.mjs
+npm run demo
 ```
 
-The script explicitly selects mock mode, reads four tools, and closes the connection. It never calls `clear_dtcs`. If you already cloned the project, update your checkout before running.
+The demo builds the source, explicitly selects mock mode, reads four tools, and closes the connection. It never calls `clear_dtcs`. If you already cloned the project, update your checkout before running.
 
-スクリプトはモックを明示指定し、4つの読み取りツールを呼んで終了します。コード消去は行いません。すでにクローン済みの場合は最新の変更を取得してください。
+デモはソースをビルドし、モックを明示指定して4つの読み取りツールを呼んだ後に終了します。コード消去は行いません。すでにクローン済みの場合は最新の変更を取得してください。
 
 ## Observed output / 実際に取得した結果
 

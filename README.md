@@ -10,13 +10,19 @@
 
 An MCP server that lets AI assistants read your car's OBD-II data through cheap ELM327 adapters — trouble codes, live sensors, freeze frame, readiness monitors, and VIN.
 
+![Three steps: install and build from source, run the simulated demo, then connect an AI client. The demo needs no car and never clears codes.](docs/images/get-started-en.svg)
+
+**Try it without an AI client or car:** clone the repository, run `npm ci`, then `npm run demo`. [See the full steps and sample output](./docs/demo-results.md).
+
+After the npm package is published and its ownership verified, the demo can also be run with `npx -y obd2-mcp@0.2.0 --demo`.
+
 Ask Claude *"why is my check-engine light on?"* and it reads the actual codes from your actual car, pulls the freeze frame before anything gets erased, checks the fuel trims, and reasons about causes — instead of you transcribing scanner output by hand.
 
 **No hardware? It still works.** A built-in mock vehicle (a warm idling sedan with a stored P0420, MIL on, and realistic live data) lets you try everything before buying an adapter.
 
 ## Quick start (mock mode — no hardware)
 
-Build from source first using Git and Node.js/npm. The npm package lookup returned 404 on 2026-10-29; use this source setup.
+Build from source using Git and Node.js/npm. Verify npm availability before using registry installation.
 
 ```bash
 git clone https://github.com/shoka-jp/obd2-mcp.git

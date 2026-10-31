@@ -17,7 +17,7 @@ const MONITORS_CD = [
 ] as const;
 
 export function buildServer(elm: Elm327, mock: boolean): McpServer {
-  const server = new McpServer({ name: "obd2-mcp", version: "0.1.0" });
+  const server = new McpServer({ name: "obd2-mcp", version: "0.2.0" });
 
   const wrap = (data: Record<string, unknown>) => {
     const payload = {

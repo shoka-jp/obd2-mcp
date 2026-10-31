@@ -4,7 +4,7 @@ This walkthrough uses simulated data, not a real vehicle. AI wording varies; the
 
 ## Setup
 
-Build from source first using Git and Node.js/npm. The npm package lookup returned 404 on 2026-10-29; use this source setup.
+Build from source using Git and Node.js/npm.
 
 ```bash
 git clone https://github.com/shoka-jp/obd2-mcp.git

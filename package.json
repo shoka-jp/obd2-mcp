@@ -1,6 +1,6 @@
 {
   "name": "obd2-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP server that lets AI assistants read your car's OBD-II data through ELM327 adapters — trouble codes, live sensors, freeze frame, readiness monitors, VIN. Ships with a mock vehicle so you can try it without any hardware.",
   "type": "module",
   "bin": {
@@ -11,6 +11,7 @@
     "dist",
     "README.md",
     "README.ja.md",
+    "CHANGELOG.md",
     "LICENSE",
     "docs",
     "examples",
@@ -19,7 +20,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "npm run build && node --test test/cli.mjs test/safety.mjs test/scenarios.mjs && node test/smoke.mjs",
+    "demo": "npm run build && node dist/index.js --demo",
+    "test": "npm run build && node --test test/cli.mjs test/safety.mjs test/scenarios.mjs test/demo.mjs && node test/smoke.mjs",
     "test:package": "node test/package.mjs",
     "prepack": "npm run build"
   },
