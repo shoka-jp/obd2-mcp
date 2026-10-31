@@ -44,9 +44,10 @@ function parseConnection(): { transport: Transport; mock: boolean } {
 async function main(): Promise<void> {
   if (process.argv.includes("--demo")) {
     if (process.argv.includes("--connection")) throw new Error("--demo always uses a mock vehicle; do not combine it with --connection");
-    await runDemo();
+    await runDemo(process.argv.includes("--summary"));
     return;
   }
+  if (process.argv.includes("--summary")) throw new Error("--summary requires --demo");
   const { transport, mock } = parseConnection();
   const elm = new Elm327(transport);
   const server = buildServer(elm, mock);

@@ -15,13 +15,13 @@ npm ci
 npm run demo
 ```
 
-The demo builds the source, explicitly selects mock mode, reads four tools, and closes the connection. It never calls `clear_dtcs`. If you already cloned the project, update your checkout before running.
+The demo builds the source, explicitly selects mock mode, reads four tools, and displays a short summary. It never calls `clear_dtcs`. For the complete JSON responses, run `node dist/index.js --demo` after building. If you already cloned the project, update your checkout before running.
 
-デモはソースをビルドし、モックを明示指定して4つの読み取りツールを呼んだ後に終了します。コード消去は行いません。すでにクローン済みの場合は最新の変更を取得してください。
+デモはソースをビルドし、モックを明示指定して4つの読み取りツールを呼び、要約を表示します。コード消去は行いません。すべてのJSON応答はビルド後に `node dist/index.js --demo` で確認できます。すでにクローン済みの場合は最新の変更を取得してください。
 
 ## Observed output / 実際に取得した結果
 
-Captured on 2026-10-29 using Node.js 24.22.1, the source build, and the MCP SDK client on Linux. This is real program output from **simulated data**, not a real-car test or a screenshot of an AI conversation. The table selects fields from the responses; the script prints the complete responses.
+Captured on 2026-10-29 using Node.js 24.22.1, the source build, and the MCP SDK client on Linux. This is real program output from **simulated data**, not a real-car test or a screenshot of an AI conversation. The table selects fields from the responses; use the JSON command above for complete responses.
 
 | Tool | Selected result / 結果の抜粋 |
 | --- | --- |
