@@ -34,6 +34,8 @@ If a server named obd2 is already registered, inspect its configuration before c
 
 The documented mock scenario is a warm idling sedan with a stored P0420 and the malfunction indicator on. A successful demo means the tools return simulated diagnostic data. It does not establish the cause of a real fault or prove adapter compatibility.
 
+To explore other simulated cases, set `OBD2MCP_MOCK_SCENARIO` to `healthy`, `misfire`, or `lean` in the MCP server's environment and restart it. See [mock scenarios](../README.md#try-another-mock-scenario) for setup and limitations.
+
 ## If it does not work
 
 Check Node.js availability and that the client can start the MCP server. Include the package version, client, OS, exact reproduction steps, and sanitized error output in a [bug report](https://github.com/shoka-jp/obd2-mcp/issues/new?template=bug_report.md). Never post VINs or credentials.
@@ -49,6 +51,8 @@ Node.js 18以上、npm、Claude Codeを用意し、まず上のgit clone・npm c
 3. 「観測した事実・原因の仮説・実車なら確認が必要な点をまとめて。コードは消去しないで」
 
 モックは暖機済みのセダンで、P0420が記録され警告灯が点いた想定です。模擬データの取得を体験するもので、実車の故障原因やアダプタの適合を証明するものではありません。
+
+別の模擬例を試すには、MCPサーバーの環境変数 `OBD2MCP_MOCK_SCENARIO` に `healthy`、`misfire`、`lean` のいずれかを設定し、再起動してください。設定方法と注意点は[日本語README](../README.ja.md)を参照してください。
 
 ## Next steps / 次にできること
 

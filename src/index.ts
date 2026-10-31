@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { Elm327 } from "./elm327.js";
-import { MockTransport } from "./mock.js";
+import { MockTransport, MOCK_SCENARIOS, type MockScenario } from "./mock.js";
 import { SerialTransport, TcpTransport } from "./transport.js";
 import type { Transport } from "./transport.js";
 import { buildServer } from "./server.js";
@@ -22,7 +22,11 @@ function parseConnection(): { transport: Transport; mock: boolean } {
     throw new Error("Missing value for --connection — expected mock, serial:<path>, or tcp:<host>:<port>");
   }
   const spec = (argIdx !== -1 ? process.argv[argIdx + 1] : process.env.OBD2MCP_CONNECTION) ?? "mock";
-  if (spec === "mock") return { transport: new MockTransport(), mock: true };
+  if (spec === "mock") {
+    const scenario = process.env.OBD2MCP_MOCK_SCENARIO ?? "catalyst";
+    if (!MOCK_SCENARIOS.includes(scenario as MockScenario)) throw new Error(`Unknown mock scenario "${scenario}" — choose ${MOCK_SCENARIOS.join(", ")}`);
+    return { transport: new MockTransport(scenario as MockScenario), mock: true };
+  }
   if (spec.startsWith("serial:")) {
     const baud = Number(process.env.OBD2MCP_BAUD ?? 38400);
     return { transport: new SerialTransport(spec.slice("serial:".length), baud), mock: false };

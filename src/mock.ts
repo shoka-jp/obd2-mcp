@@ -14,6 +14,8 @@ interface MockState {
   milOn: boolean;
   vin: string;
   freezeDtc: string | null;
+  readinessIncomplete: number;
+  continuousIncomplete: number;
   /** live values by PID name */
   live: Record<string, number>;
   /** freeze frame values by PID name */
@@ -27,6 +29,8 @@ function defaultState(): MockState {
     milOn: true,
     vin: "1HGFC2F59GA000042",
     freezeDtc: "P0420",
+    readinessIncomplete: 0x04,
+    continuousIncomplete: 0,
     live: {
       rpm: 748,
       coolant_temp: 89,
@@ -62,14 +66,45 @@ function defaultState(): MockState {
   };
 }
 
+export const MOCK_SCENARIOS = ["catalyst", "healthy", "misfire", "lean"] as const;
+export type MockScenario = (typeof MOCK_SCENARIOS)[number];
+
+function scenarioState(scenario: MockScenario): MockState {
+  const state = defaultState();
+  if (scenario === "healthy") {
+    state.storedDtcs = [];
+    state.milOn = false;
+    state.freezeDtc = null;
+    state.readinessIncomplete = 0;
+  } else if (scenario === "misfire") {
+    state.storedDtcs = ["P0301"];
+    state.freezeDtc = "P0301";
+    state.live.rpm = 690;
+    state.freeze.rpm = 1850;
+  } else if (scenario === "lean") {
+    state.storedDtcs = ["P0171"];
+    state.freezeDtc = "P0171";
+    state.live.stft_b1 = 18;
+    state.live.ltft_b1 = 15;
+    state.freeze.stft_b1 = 19;
+    state.freeze.ltft_b1 = 16;
+  }
+  return state;
+}
+
 const hex = (n: number) => n.toString(16).toUpperCase().padStart(2, "0");
 const join = (bytes: number[]) => bytes.map(hex).join(" ");
 
 export class MockTransport implements Transport {
-  private state = defaultState();
+  private state: MockState;
+
+  constructor(private scenario: MockScenario = "catalyst") {
+    if (!MOCK_SCENARIOS.includes(scenario)) throw new Error(`Unknown mock scenario: ${scenario}. Choose: ${MOCK_SCENARIOS.join(", ")}`);
+    this.state = scenarioState(scenario);
+  }
 
   describe(): string {
-    return "mock (simulated vehicle — no real car connected)";
+    return `mock:${this.scenario} (simulated vehicle — no real car connected)`;
   }
 
   open(): Promise<void> {
@@ -104,14 +139,16 @@ export class MockTransport implements Transport {
       this.state.pendingDtcs = [];
       this.state.milOn = false;
       this.state.freezeDtc = null;
+      this.state.readinessIncomplete = 0xe5;
+      this.state.continuousIncomplete = 0x70;
       return "44\r";
     }
     // Mode 01 PID 01: MIL / DTC count / readiness
     if (cmd === "0101") {
       const a = (this.state.milOn ? 0x80 : 0) | (this.state.storedDtcs.length & 0x7f);
-      const b = 0x07; // spark ignition; misfire/fuel/components monitors available, all complete
+      const b = 0x07 | this.state.continuousIncomplete; // spark ignition; continuous monitors
       const c = 0xe5; // catalyst, evap, O2 sensor, O2 heater, EGR supported
-      const d = 0x04; // evap monitor incomplete (recent refuel), rest complete
+      const d = this.state.readinessIncomplete;
       return `41 01 ${join([a, b, c, d])}\r`;
     }
     // Mode 09 PID 02: VIN (ISO-TP multi-frame)
