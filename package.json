@@ -19,7 +19,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "npm run build && node --test test/cli.mjs && node test/smoke.mjs",
+    "test": "npm run build && node --test test/cli.mjs test/safety.mjs && node test/smoke.mjs",
     "test:package": "node test/package.mjs",
     "prepack": "npm run build"
   },
@@ -49,7 +49,7 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^3.24.0"
   },
   "optionalDependencies": {
