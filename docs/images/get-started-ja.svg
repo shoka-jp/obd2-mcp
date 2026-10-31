@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="384" viewBox="0 0 1200 384" role="img" aria-labelledby="title desc">
+<title id="title">車なしで、診断の流れを体験</title>
+<desc id="desc">まずは模擬データから。AIクライアントも不要</desc>
+<rect width="1200" height="384" rx="24" fill="#0d1728"/>
+<rect x="0" y="0" width="1200" height="7" rx="3" fill="#31d5ae"/>
+<g font-family="system-ui, -apple-system, Segoe UI, Noto Sans, sans-serif"><text x="48" y="56" font-size="29" font-weight="700" fill="#f6fbff">車なしで、診断の流れを体験</text>
+<text x="48" y="87" font-size="17" fill="#b3c6dc">まずは模擬データから。AIクライアントも不要</text>
+<rect x="48" y="111" width="352" height="184" rx="16" fill="#172840" stroke="#314b64"/>
+<circle cx="87" cy="150" r="20" fill="#31d5ae"/>
+<text x="87" y="156" text-anchor="middle" font-size="15" font-weight="700" fill="#0d1728">01</text>
+<text x="117" y="157" font-size="21" font-weight="700" fill="#ffffff">ソースを準備</text>
+<text x="73" y="210" font-size="17" fill="#d8e6f4">リポジトリをクローン</text>
+<text x="73" y="242" font-size="17" fill="#d8e6f4">npm ci を実行</text>
+<rect x="422" y="111" width="352" height="184" rx="16" fill="#172840" stroke="#314b64"/>
+<circle cx="461" cy="150" r="20" fill="#31d5ae"/>
+<text x="461" y="156" text-anchor="middle" font-size="15" font-weight="700" fill="#0d1728">02</text>
+<text x="491" y="157" font-size="21" font-weight="700" fill="#ffffff">デモを実行</text>
+<text x="447" y="210" font-size="17" fill="#d8e6f4">npm run demo を実行</text>
+<text x="447" y="242" font-size="17" fill="#d8e6f4">模擬データの結果を確認</text>
+<rect x="796" y="111" width="352" height="184" rx="16" fill="#172840" stroke="#314b64"/>
+<circle cx="835" cy="150" r="20" fill="#31d5ae"/>
+<text x="835" y="156" text-anchor="middle" font-size="15" font-weight="700" fill="#0d1728">03</text>
+<text x="865" y="157" font-size="21" font-weight="700" fill="#ffffff">AIとつなぐ</text>
+<text x="821" y="210" font-size="17" fill="#d8e6f4">MCPクライアントを設定</text>
+<text x="821" y="242" font-size="17" fill="#d8e6f4">模擬データについて質問</text>
+<text x="48" y="345" font-size="16" fill="#9dc2c2">模擬データのみ  •  実車には接続しません  •  コードは消去しません</text>
+</g></svg>

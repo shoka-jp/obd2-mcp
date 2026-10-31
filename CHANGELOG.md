@@ -1,6 +1,12 @@
 # Changelog
 
-## [Unreleased]
+## [0.2.0] - Unreleased
+
+- Add selectable catalyst, healthy, misfire, and lean mock scenarios.
+- Add `--demo` to run a safe mock demonstration without an MCP client.
+- Validate adapter responses and share concurrent initialization.
+- Disable real-vehicle code clearing by default and require client confirmation.
+- Add illustrated English and Japanese getting-started guides.
 
 - Build before packing so clean-source tarballs include the executable JavaScript.
 - Include demo guides, the example client, and contribution instructions in npm packages.

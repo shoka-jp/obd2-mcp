@@ -5,6 +5,7 @@ import { MockTransport, MOCK_SCENARIOS, type MockScenario } from "./mock.js";
 import { SerialTransport, TcpTransport } from "./transport.js";
 import type { Transport } from "./transport.js";
 import { buildServer } from "./server.js";
+import { runDemo } from "./demo.js";
 
 /**
  * Connection selection (first match wins):
@@ -41,6 +42,11 @@ function parseConnection(): { transport: Transport; mock: boolean } {
 }
 
 async function main(): Promise<void> {
+  if (process.argv.includes("--demo")) {
+    if (process.argv.includes("--connection")) throw new Error("--demo always uses a mock vehicle; do not combine it with --connection");
+    await runDemo();
+    return;
+  }
   const { transport, mock } = parseConnection();
   const elm = new Elm327(transport);
   const server = buildServer(elm, mock);

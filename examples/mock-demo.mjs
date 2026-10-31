@@ -14,7 +14,8 @@ try {
   for (const name of ['connection_status', 'read_dtcs', 'read_freeze_frame', 'read_live_data']) {
     const result = await client.callTool({ name, arguments: {} });
     if (result.isError) throw new Error(JSON.stringify(result));
-    console.log(JSON.stringify({ tool: name, result }, null, 2));
+    const data = JSON.parse(result.content[0].text);
+    console.log(JSON.stringify({ tool: name, data }, null, 2));
   }
 } finally {
   await client.close();
