@@ -130,7 +130,6 @@ export class MockTransport implements Transport {
     if (cmd === "03") return this.dtcResponse(0x43, this.state.storedDtcs);
     // Mode 07: pending DTCs
     if (cmd === "07") {
-      if (this.state.pendingDtcs.length === 0) return "NO DATA\r";
       return this.dtcResponse(0x47, this.state.pendingDtcs);
     }
     // Mode 04: clear

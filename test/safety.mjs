@@ -71,6 +71,56 @@ test('rejects short status data and incomplete PID data', async () => {
   } finally { await client.close(); await server.close(); }
 });
 
+test('does not report an empty code list when the vehicle reports a stored code', async () => {
+  const { client, server } = await clientFor({ '0101': '41 01 81 07 E5 04', '03': 'NO DATA', '07': 'NO DATA' });
+  try {
+    const result = await client.callTool({ name: 'read_dtcs', arguments: {} });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].text, /Incomplete stored DTC response/);
+  } finally { await client.close(); await server.close(); }
+});
+
+test('NO DATA is reported as unavailable rather than a confirmed empty list', async () => {
+  const { client, server } = await clientFor({ '0101': '41 01 00 07 E5 04', '03': 'NO DATA', '07': 'NO DATA' });
+  try {
+    const result = await client.callTool({ name: 'read_dtcs', arguments: {} });
+    const data = JSON.parse(result.content[0].text);
+    assert.equal(data.stored_dtcs, null);
+    assert.equal(data.pending_dtcs, null);
+  } finally { await client.close(); await server.close(); }
+});
+
+test('invalid adapter identification is not reported as connected', async () => {
+  const { client, server } = await clientFor({ ATI: '?', ATRV: '12.5V' });
+  try {
+    const result = await client.callTool({ name: 'connection_status', arguments: {} });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].text, /Invalid adapter/);
+  } finally { await client.close(); await server.close(); }
+});
+
+test('unavailable voltage is distinct from adapter connection or vehicle communication', async () => {
+  const { client, server } = await clientFor({ ATI: 'ELM327', ATRV: '?' });
+  try {
+    const result = await client.callTool({ name: 'connection_status', arguments: {} });
+    const data = JSON.parse(result.content[0].text);
+    assert.equal(data.connected, true);
+    assert.equal(data.battery_voltage, null);
+    assert.equal(data.vehicle_communication, 'not_checked');
+    assert.match(data.battery_voltage_note, /unavailable/);
+  } finally { await client.close(); await server.close(); }
+});
+
+test('no PID data does not assert that the vehicle lacks support', async () => {
+  const { client, server } = await clientFor({ '010C': 'NO DATA' });
+  try {
+    const result = await client.callTool({ name: 'read_live_data', arguments: { pids: ['rpm'] } });
+    const data = JSON.parse(result.content[0].text);
+    assert.match(data.live_data.rpm.error, /may be unsupported/);
+    assert.match(data.live_data.rpm.error, /ignition may be off/);
+  } finally { await client.close(); await server.close(); }
+});
+
 test('freeze frame propagates communication errors', async () => {
   const { client, server } = await clientFor({ '020200': '42 02 00 04 20', '020400': 'CAN ERROR' });
   try {

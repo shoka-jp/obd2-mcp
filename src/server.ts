@@ -35,13 +35,23 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
 
   server.tool(
     "connection_status",
-    "Report the OBD-II adapter connection: transport, adapter identity, and battery voltage at the port.",
+    "Report the OBD-II adapter connection, identity, and port voltage if available. Adapter connectivity does not establish communication with a vehicle; vehicle_communication is not_checked.",
     {},
     async () => {
       try {
         const identity = await elm.at("ATI");
         const voltage = await elm.at("ATRV");
-        return wrap({ connected: true, adapter: identity, battery_voltage: voltage });
+        if (!identity || /^(\?|ERROR|NO DATA|STOPPED|UNABLE TO CONNECT)$/i.test(identity)) {
+          throw new Error(`Invalid adapter identity: ${identity || "(empty)"}`);
+        }
+        const voltageValid = /^\d+(?:\.\d+)?\s*V$/i.test(voltage);
+        return wrap({
+          connected: true,
+          adapter: identity,
+          vehicle_communication: "not_checked",
+          battery_voltage: voltageValid ? voltage : null,
+          ...(!voltageValid ? { battery_voltage_note: "Voltage unavailable or unsupported by this adapter." } : {}),
+        });
       } catch (err) {
         return fail(err);
       }
@@ -50,7 +60,7 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
 
   server.tool(
     "read_dtcs",
-    "Read diagnostic trouble codes: stored (confirmed) DTCs, pending DTCs, MIL (check-engine light) state, and DTC count. Use first when a warning light is on.",
+    "Read diagnostic trouble codes: stored (confirmed) DTCs, pending DTCs, MIL (check-engine light) state, and DTC count. A null code list means the adapter returned no data, not that there are no codes. Use first when a warning light is on.",
     {},
     async () => {
       try {
@@ -58,8 +68,8 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
         requireBytes(status, 4, "0101");
         const milOn = (status[0] & 0x80) !== 0;
         const count = status[0] & 0x7f;
-        let stored: string[] = [];
-        let pending: string[] = [];
+        let stored: string[] | null = null;
+        let pending: string[] | null = null;
         try {
           stored = parseDtcPayload(await elm.obd("03", "43"));
         } catch (e) {
@@ -69,6 +79,9 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
           pending = parseDtcPayload(await elm.obd("07", "47"));
         } catch (e) {
           if (!(e instanceof NoDataError)) throw e;
+        }
+        if (count > 0 && (!stored || stored.length < count)) {
+          throw new Error(`Incomplete stored DTC response: vehicle reports ${count} code(s), received ${stored?.length ?? 0}`);
         }
         return wrap({ mil_on: milOn, dtc_count: count, stored_dtcs: stored, pending_dtcs: pending });
       } catch (err) {
@@ -95,7 +108,7 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
           requireBytes(bytes, def.bytes, `01${def.pid}`);
           values[name] = { value: round(def.parse(bytes)), unit: def.unit };
         } catch (err) {
-          values[name] = { error: err instanceof NoDataError ? "not supported by this vehicle" : String(err instanceof Error ? err.message : err) };
+          values[name] = { error: err instanceof NoDataError ? "No data: the PID may be unsupported, the ignition may be off, or the vehicle may not have responded." : String(err instanceof Error ? err.message : err) };
         }
       }
       return wrap({ live_data: values });
@@ -133,7 +146,7 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
 
   server.tool(
     "read_readiness",
-    "Read readiness monitors (emissions self-tests): which monitors this vehicle supports and whether each has completed. Needed to know if the vehicle would pass an emissions inspection after codes were cleared.",
+    "Read readiness monitors (emissions self-tests): which monitors this vehicle supports and whether each has completed. Useful when preparing for an emissions inspection; this result alone does not determine whether the vehicle will pass.",
     {},
     async () => {
       try {
