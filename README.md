@@ -14,6 +14,8 @@ An MCP server that lets AI assistants read your car's OBD-II data through cheap 
 
 **Try it without an AI client or car:** clone the repository, run `npm ci`, then `npm run demo`. [See the full steps and sample output](./docs/demo-results.md).
 
+**Example from the mock vehicle:** stored code `P0420`; freeze frame at 98 km/h and 2,210 rpm; current reading 0 km/h and 740 rpm. These are simulated observations, not a diagnosis. [See the captured results and their limits](./docs/demo-results.md#observed-output--実際に取得した結果).
+
 After the npm package is published and its ownership verified, the concise demo can also be run with `npx -y obd2-mcp@0.2.0 --demo --summary`.
 
 Ask Claude *"why is my check-engine light on?"* and it reads the actual codes from your actual car, pulls the freeze frame before anything gets erased, checks the fuel trims, and reasons about causes — instead of you transcribing scanner output by hand.
