@@ -58,7 +58,7 @@ node -p "require('node:path').resolve('dist/index.js')"
 claude mcp add obd2 --env OBD2MCP_CONNECTION=mock -- node "/absolute/path/to/obd2-mcp/dist/index.js"
 ```
 
-同名の登録がある場合は既存設定を確認し、モック接続であることを確認してから進んでください。Claude Desktopを使う場合は[設定例](../README.ja.md#クイックスタートモックモード--ハードウェア不要)を参照してください。
+同名の登録がある場合は既存設定を確認し、モック接続であることを確認してから進んでください。Claude Desktopを使う場合は[設定例](../README.ja.md)を参照してください。
 
 次の順番で質問します。
 
