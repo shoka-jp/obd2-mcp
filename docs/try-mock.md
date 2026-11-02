@@ -42,7 +42,23 @@ Check Node.js availability and that the client can start the MCP server. Include
 
 ## 日本語
 
-Node.js 18以上、npm、Claude Codeを用意し、まず上のgit clone・npm ci・npm run buildを実行します。表示された絶対パスに置き換えた登録コマンドで明示的にモック接続を登録します。同名の登録がある場合は既存設定を確認してください。
+Node.js 18以上、npm、Git、Claude Codeを用意します。ターミナルで次を実行してください。最後に表示されるパスは、使用するパソコンやフォルダーによって異なります。
+
+```bash
+git clone https://github.com/shoka-jp/obd2-mcp.git
+cd obd2-mcp
+npm ci
+npm run build
+node -p "require('node:path').resolve('dist/index.js')"
+```
+
+次の `/absolute/path/to/obd2-mcp/dist/index.js` を、最後に表示された絶対パスに置き換えて実行します。これは車両に接続しないモックの登録です。
+
+```bash
+claude mcp add obd2 --env OBD2MCP_CONNECTION=mock -- node "/absolute/path/to/obd2-mcp/dist/index.js"
+```
+
+同名の登録がある場合は既存設定を確認し、モック接続であることを確認してから進んでください。Claude Desktopを使う場合は[設定例](../README.ja.md#クイックスタートモックモード--ハードウェア不要)を参照してください。
 
 次の順番で質問します。
 
