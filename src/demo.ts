@@ -7,7 +7,7 @@ import { buildServer } from "./server.js";
 /** Run a read-only simulation without requiring an external MCP client. */
 export async function runDemo(summary = false, lang: "en" | "ja" = "en"): Promise<void> {
   const server = buildServer(new Elm327(new MockTransport()), true);
-  const client = new Client({ name: "obd2-mcp-demo", version: "0.2.0" });
+  const client = new Client({ name: "obd2-mcp-demo", version: "0.3.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   try {
     await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
