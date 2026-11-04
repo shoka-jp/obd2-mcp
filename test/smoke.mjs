@@ -60,7 +60,7 @@ try {
 
   const tools = await request("tools/list", {});
   const names = tools.result.tools.map(t => t.name).sort();
-  assert(names.length === 7, `7 tools registered (${names.join(", ")})`);
+  assert(names.length === 8 && names.includes("read_diagnostic_report"), `8 tools registered (${names.join(", ")})`);
 
   const dtcs = toolJson(await request("tools/call", { name: "read_dtcs", arguments: {} }));
   assert(dtcs.stored_dtcs?.includes("P0420"), "read_dtcs finds stored P0420");
@@ -83,6 +83,12 @@ try {
 
   const vin = toolJson(await request("tools/call", { name: "read_vin", arguments: {} }));
   assert(vin.vin === "1HGFC2F59GA000042", `VIN decoded (${vin.vin})`);
+
+  const reportResponse = await request("tools/call", { name: "read_diagnostic_report", arguments: {} });
+  const report = toolJson(reportResponse);
+  assert(report.sections.read_dtcs.data.stored_dtcs.includes("P0420"), "report collects stored codes over stdio");
+  assert(report.sections.read_freeze_frame.data.freeze_frame.conditions.rpm.value === 2210, "report preserves freeze frame evidence");
+  assert(report.simulated === true && reportResponse.result.structuredContent.schema_version === 1, "report supplies structured simulated evidence");
 
   const refuse = await request("tools/call", { name: "clear_dtcs", arguments: { confirm: false } });
   assert(refuse.result.isError === true, "clear_dtcs refuses without confirm");
