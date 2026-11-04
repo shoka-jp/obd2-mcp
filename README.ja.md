@@ -4,11 +4,17 @@
 
 ![3ステップ：ソースから準備、模擬デモを実行、AIクライアントに接続。デモは車不要でコード消去もしません。](docs/images/get-started-ja.svg)
 
-**車もAIクライアントも不要：** リポジトリをクローンし、`npm ci` のあとに `npm run demo:ja` を実行すると、日本語の模擬結果と確認手順を表示します。[詳しい手順と出力例を見る](./docs/demo-results.md)。
+**車もAIクライアントも不要：** Node.js 22または24とnpmを用意し、ターミナルで次を実行してください。ビルド済みパッケージと依存ライブラリを取得するので、Gitの操作や手元でのビルド作業を省けます。
+
+```bash
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.2.0/obd2-mcp-0.2.0.tgz -- obd2-mcp --demo --summary --lang ja
+```
+
+このリポジトリの[v0.2.0リリース](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.2.0)に添付したパッケージを取得し、模擬データと確認手順を表示して終了します。[出力例と確認事項を見る](./docs/demo-results.md)。
 
 **模擬車両の結果例：** 記録コード `P0420`、記録時は時速98 km・2,210 rpm、現在値は時速0 km・740 rpm。模擬データであり、故障診断ではありません。[実際の取得結果と限界を見る](./docs/demo-results.md#observed-output--実際に取得した結果)。
 
-npmパッケージの公開と所有者の確認が済んだ後は、日本語デモに対応した公開バージョンで `--demo --summary --lang ja` も利用できます。
+ツールの応答全体を見る場合は `--summary --lang ja` を外します。開発やソースからのMCPクライアント接続は、下のクイックスタートを参照してください。
 
 **初めての方へ：[車なしで試せるモック体験ガイド](./docs/try-mock.md#日本語)**
 
