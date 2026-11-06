@@ -149,11 +149,7 @@ The mock vehicle answers at the ELM327 protocol level, so tests exercise the ful
 
 ## Roadmap
 
-- [ ] Mode 06 (on-board monitoring test results)
-- [ ] Mode 09 calibration IDs
-- [ ] PID auto-discovery (0100/0120/0140 support bitmaps)
-- [ ] O2 sensor sweep sampling for catalyst diagnosis
-- [ ] Additional mock scenarios (such as EVAP leak)
+See the [product roadmap](./docs/roadmap.md) for current release status, proposed improvements, and ways to help. Priorities are open to feedback and are not a release schedule.
 
 ## Support the project
 
