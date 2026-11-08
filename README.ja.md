@@ -9,10 +9,10 @@
 **車もAIクライアントも不要：** Node.js 22または24とnpmを用意し、ターミナルで次を実行してください。ビルド済みパッケージと依存ライブラリを取得するので、Gitの操作や手元でのビルド作業を省けます。
 
 ```bash
-npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.2.0/obd2-mcp-0.2.0.tgz -- obd2-mcp --demo --summary --lang ja
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.3.0/obd2-mcp-0.3.0.tgz -- obd2-mcp --demo --summary --lang ja
 ```
 
-このリポジトリの[v0.2.0リリース](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.2.0)に添付したパッケージを取得し、模擬データと確認手順を表示して終了します。[出力例と確認事項を見る](./docs/demo-results.md)。
+このリポジトリの[v0.3.0リリース](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.3.0)に添付したパッケージを取得し、模擬データと確認手順を表示して終了します。[出力例と確認事項を見る](./docs/demo-results.md)。
 
 **模擬車両の結果例：** 記録コード `P0420`、記録時は時速98 km・2,210 rpm、現在値は時速0 km・740 rpm。模擬データであり、故障診断ではありません。[実際の取得結果と限界を見る](./docs/demo-results.md#observed-output--実際に取得した結果)。
 
@@ -77,9 +77,9 @@ claude mcp add obd2-lean --env OBD2MCP_CONNECTION=mock --env OBD2MCP_MOCK_SCENAR
 
 設定変更後はサーバーを再起動してください。モックの状態はサーバーごとに独立しています。モックの消去はレディネスをリセットしますが、実車には影響しません。
 
-## 整備相談レポート（0.3.0開発版）
+## 整備相談レポート
 
-現在のソースをビルドしたMCPサーバーで、**「read_diagnostic_reportを実行し、観測値・未取得項目・エラーを整備相談用のメモにまとめて。フリーズフレームと現在値は分けて」**と依頼できます。上記の公開済みv0.2.0パッケージは従来の7ツールです。新しいツールは次回リリースに向けて`main`に追加しています。
+v0.3.0のMCPサーバーをクライアントに設定すると、**「read_diagnostic_reportを実行し、観測値・未取得項目・エラーを整備相談用のメモにまとめて。フリーズフレームと現在値は分けて」**と依頼できます。
 
 故障コード・フリーズフレーム・ライブセンサー・レディネスを1回の呼び出しで取得し、取得時刻付きのJSONにまとめます。既存の読み取り処理を利用し、一部が取得できなくても、ほかの結果と未取得項目・エラーを残します。順番に読み取るため、同一瞬間の値とは限りません。
 
@@ -89,7 +89,7 @@ VINの取得やコード消去は行わず、接続元を示す`source`フィー
 
 ## 実車への接続
 
-ELM327互換アダプタ(USB / Bluetooth / WiFi、1,000〜3,000円程度)をOBD-IIポートに挿します(日本車はおおむね2008年以降のOBD2義務化車両で確実、それ以前も多くが対応。イグニッションON)。
+ELM327互換アダプタ（USB / Bluetoothシリアル / WiFi）をOBD-IIポートに接続し、イグニッションをONにします。対応状況は車種・販売地域・通信規格・アダプタ・接続方式によって異なり、このプロジェクトでは実車とアダプタの組み合わせをまだ検証していません。停車中に読み取り専用の確認から始めてください。アダプタへの接続だけでは車両との通信は確認できません。
 
 接続先は環境変数またはCLIフラグで指定:
 
@@ -107,7 +107,7 @@ ELM327互換アダプタ(USB / Bluetooth / WiFi、1,000〜3,000円程度)をOBD-
 claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- node "/absolute/path/to/obd2-mcp/dist/index.js"
 ```
 
-## 対応するライブセンサーの確認（0.3.0開発版）
+## 対応するライブセンサーの確認
 
 センサーを選ぶ前に、MCPクライアントで `read_supported_pids` を実行できます。このサーバーが使用する16進数のPID `01`〜`60` の範囲について、後続の対応表があることを示すビットを確認しながらMode 01の対応情報を読み取ります。返された `supported_sensor_names` を、`read_live_data` や `read_diagnostic_report` の `pids` に指定できます。
 
@@ -121,8 +121,8 @@ claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- node "/absolute/path
 
 | ツール | 内容 |
 |---|---|
-| `read_supported_pids` | ライブセンサーの対応通知を確認。不明や途中の取得失敗を保持（0.3.0開発版） |
-| `read_diagnostic_report` | 4種類の読み取り結果を取得時刻・未取得項目・エラー付きでまとめる整備相談用レポート。ライブセンサーを選択可能（0.3.0開発版） |
+| `read_supported_pids` | ライブセンサーの対応通知を確認。不明や途中の取得失敗を保持 |
+| `read_diagnostic_report` | 4種類の読み取り結果を取得時刻・未取得項目・エラー付きでまとめる整備相談用レポート。ライブセンサーを選択可能 |
 | `read_dtcs` | 記録済み・保留中の故障コード、警告灯の状態、コード数。アダプターがデータを返さない場合、該当する一覧は `null`（未確認）です。 |
 | `read_freeze_frame` | フリーズフレームを記録させたDTCと、その瞬間のエンジン状態 |
 | `read_live_data` | ライブセンサー:回転数、水温、燃料補正、MAF、O2電圧など(22 PID) |
