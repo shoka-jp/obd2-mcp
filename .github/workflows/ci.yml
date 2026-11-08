@@ -32,4 +32,7 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm test
+      # Synthetic ELM responses over localhost TCP and a POSIX pseudo-terminal.
+      # This verifies stream handling, not real-adapter or vehicle compatibility.
+      - run: python3 test/transport_sim.py
       - run: npm run test:package
