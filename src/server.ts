@@ -237,12 +237,10 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
       try {
         const bytes = await elm.obd("0902", "4902");
         requireBytes(bytes, 18, "0902");
-        const ascii = bytes
-          .slice(1) // record-count byte
-          .filter(x => x >= 0x20 && x <= 0x7e)
-          .map(x => String.fromCharCode(x))
-          .join("");
-        const vin = ascii.length >= 17 ? ascii.slice(-17) : ascii;
+        // Accept the supported single-record response only. Dropping bytes or
+        // taking the last 17 characters can turn a mixed response into a false VIN.
+        if (bytes.length !== 18 || bytes[0] !== 0x01) throw new Error("Invalid or ambiguous VIN response");
+        const vin = String.fromCharCode(...bytes.slice(1));
         if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) throw new Error("Invalid or incomplete VIN response");
         return wrap({ vin });
       } catch (err) {

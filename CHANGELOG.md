@@ -2,6 +2,7 @@
 
 ## [0.3.0] - Unreleased
 
+- Reject mixed multi-frame responses and ambiguous VIN payloads instead of dropping bytes or returning a potentially incorrect VIN.
 - Add `read_diagnostic_report` to collect codes, freeze frame, live data and readiness into one timestamped MCP response with structured JSON.
 - Preserve reader failures, unknown code lists and per-sensor errors in the report. Omit connection source fields and do not request VIN or clear codes during collection.
 - Describe a freeze-frame `NO DATA` response as unavailable, preserving the distinction from a confirmed absent record.
