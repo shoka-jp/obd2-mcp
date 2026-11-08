@@ -9,6 +9,7 @@
 - Preserve reader failures, unknown code lists and per-sensor errors in the report. Omit connection source fields and do not request VIN or clear codes during collection.
 - Describe a freeze-frame `NO DATA` response as unavailable, preserving the distinction from a confirmed absent record.
 - Preserve reader-specific notes alongside the mock simulation flag.
+- Document the issue-to-PR workflow and add structured issue and PR templates.
 
 ## [0.2.0] - 2026-11-04
 

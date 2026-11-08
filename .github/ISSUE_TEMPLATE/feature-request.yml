@@ -1,0 +1,37 @@
+name: "Improvement proposal / 機能・改善の提案"
+description: "Describe a problem and desired outcome / 困りごとと期待する改善を共有"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you! One problem per issue is easiest to discuss. A proposed implementation is optional.
+        Issues are public. Do not include VINs, license plates, credentials, personal details, or private logs.
+        困りごと１件につき１Issueを目安にしてください。実装案は任意です。Issueは公開されます。車台番号・ナンバー・認証情報・個人情報・非公開ログは載せないでください。
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Problem and context / 困りごと・背景"
+      description: "Who is affected and what are they trying to do? / 誰が何をしようとして困っていますか？"
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: "Desired outcome / 期待する結果"
+      description: "What would improve for the user? / 利用者にとって何が改善するとよいですか？"
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: "Possible approach / 改善案"
+      description: "Optional; a problem without a solution is welcome. / 任意です。解決案がなくても歓迎します。"
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: "How could we check it? / 完了をどう確認しますか？"
+      description: "Optional examples or acceptance criteria. / 任意です。確認例や完了条件があれば記載してください。"
+    validations:
+      required: false
