@@ -144,7 +144,7 @@ With both installed, Claude reads the codes from your car *and* runs the diagnos
 ```bash
 git clone https://github.com/shoka-jp/obd2-mcp.git
 cd obd2-mcp
-npm install
+npm ci
 npm test        # builds + runs the stdio smoke test against the mock vehicle
 npm run test:package  # tests an isolated installation of the actual npm tarball
 ```

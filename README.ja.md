@@ -144,7 +144,7 @@ claude mcp add obd2 -- node "/absolute/path/to/obd2-mcp/dist/index.js"
 ```bash
 git clone https://github.com/shoka-jp/obd2-mcp.git
 cd obd2-mcp
-npm install
+npm ci
 npm test        # ビルド+モック車両に対するstdioスモークテスト
 npm run test:package  # 配布用tarballを別環境へインストールして検証
 ```
