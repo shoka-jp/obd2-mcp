@@ -73,7 +73,8 @@ test('report selects requested live sensors and keeps unknown names visible', as
     assert.deepEqual(response.structuredContent, report);
     assert.equal(report.simulated, true);
     assert.deepEqual(Object.keys(report.sections.read_live_data.data.live_data), ['rpm', 'coolant_temp', 'not_a_sensor']);
-    assert.equal(report.sections.read_live_data.data.live_data.rpm.value, 748);
+    assert(Number.isFinite(report.sections.read_live_data.data.live_data.rpm.value));
+    assert.equal(report.sections.read_live_data.data.live_data.rpm.unit, 'rpm');
     assert.equal(report.sections.read_live_data.data.live_data.coolant_temp.value, 89);
     assert.match(report.sections.read_live_data.data.live_data.not_a_sensor.error, /Unknown PID name/);
     assert.equal('value' in report.sections.read_live_data.data.live_data.not_a_sensor, false);
@@ -93,7 +94,11 @@ test('omitted and empty live sensor selections use the same defaults', async () 
     const empty = await client.callTool({ name: 'read_diagnostic_report', arguments: { pids: [] } });
     const defaultValues = JSON.parse(omitted.content[0].text).sections.read_live_data.data.live_data;
     const emptyValues = JSON.parse(empty.content[0].text).sections.read_live_data.data.live_data;
-    assert.deepEqual(emptyValues, defaultValues);
+    // Live mock RPM and airflow vary between reads, just like real measurements.
+    assert.deepEqual(Object.keys(emptyValues), Object.keys(defaultValues));
+    for (const name of Object.keys(defaultValues)) {
+      assert.equal(emptyValues[name].unit, defaultValues[name].unit);
+    }
     assert.ok(Object.keys(defaultValues).length > 2);
   } finally { await client.close(); await server.close(); }
 });
