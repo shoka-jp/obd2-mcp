@@ -2,21 +2,38 @@
 
 This walkthrough uses simulated data, not a real vehicle. AI wording varies; the goal is to inspect tool output and distinguish observations from hypotheses.
 
-## Setup
+## Run the standalone demo
 
-Build from source using Git and Node.js/npm.
+Use Git, Node.js 22 or 24, and npm. No AI client, car, or adapter is required.
+From a source checkout, install the dependencies and run either summary:
 
 ```bash
 git clone https://github.com/shoka-jp/obd2-mcp.git
 cd obd2-mcp
 npm ci
+npm run demo
+npm run demo:ja
+```
+
+`npm run demo` prints an English summary; `npm run demo:ja` prints a Japanese
+summary. Both build the project and use simulated data. See the [captured mock
+output](./demo-results.md) for an example. A successful run is not a diagnosis
+and does not prove that a real vehicle or adapter is compatible.
+
+## Optional: connect Claude Code
+
+To use an MCP client after the standalone demo, install Claude Code and run the
+following from the same checkout:
+
+```bash
 npm run build
 node -p "require('node:path').resolve('dist/index.js')"
 ```
 
-Replace `/absolute/path/to/obd2-mcp/dist/index.js` below with the absolute path printed by the last command. Windows JSON configuration can use forward slashes.
-
-You need Node.js 18 or later (per the package requirements), npm, and Claude Code. Follow the main [README](../README.md) for Claude Desktop configuration instead.
+Replace `/absolute/path/to/obd2-mcp/dist/index.js` below with the absolute path
+printed by the last command. Windows JSON configuration can use forward
+slashes. Follow the main [README](../README.md) for Claude Desktop configuration
+instead.
 
 Register an explicitly simulated connection:
 
@@ -42,12 +59,25 @@ Check Node.js availability and that the client can start the MCP server. Include
 
 ## 日本語
 
-Node.js 18以上、npm、Git、Claude Codeを用意します。ターミナルで次を実行してください。最後に表示されるパスは、使用するパソコンやフォルダーによって異なります。
+### AIクライアントなしで試す
+
+Git、Node.js 22または24、npmを用意します。AIクライアント・車・アダプターは不要です。ターミナルで次を実行してください。
 
 ```bash
 git clone https://github.com/shoka-jp/obd2-mcp.git
 cd obd2-mcp
 npm ci
+npm run demo
+npm run demo:ja
+```
+
+`npm run demo` は英語、`npm run demo:ja` は日本語の要約を表示します。どちらもビルド後に模擬データを使用します。[模擬出力の例](./demo-results.md)も参照できます。実行できても実車の故障診断や、車両・アダプターとの互換性を証明するものではありません。
+
+### 次の選択肢：Claude Codeにつなぐ
+
+スタンドアロンのデモ後にMCPクライアントを使う場合は、Claude Codeを用意し、同じフォルダーで次を実行します。最後に表示されるパスは、使用するパソコンやフォルダーによって異なります。
+
+```bash
 npm run build
 node -p "require('node:path').resolve('dist/index.js')"
 ```
