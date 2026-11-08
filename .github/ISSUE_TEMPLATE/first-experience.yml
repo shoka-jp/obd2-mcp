@@ -1,0 +1,34 @@
+name: "First-use feedback / はじめての感想"
+description: "Share a question or a confusing step / 分かりにくかった点や質問を共有"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for trying the project! A short question, suggestion or confusing step helps; no code or car is needed.
+        **This issue will be public.** Remove VINs, license plates, credentials, names, contact details and other private information, including from screenshots and logs.
+        試して分かりにくかった点や質問を歓迎します。**Issueは公開されます。** 車台番号、ナンバープレート、認証情報、氏名・連絡先などは画像やログからも取り除いてください。
+  - type: dropdown
+    id: area
+    attributes:
+      label: "Where were you? / どこで気になりましたか？"
+      options:
+        - "Demo / デモ"
+        - "Documentation / 説明"
+        - "Other / その他"
+    validations:
+      required: false
+  - type: textarea
+    id: feedback
+    attributes:
+      label: "What did you try, and what was unclear? / 試したことと、分かりにくかった点"
+      description: "A short description is fine. / 一言からで大丈夫です。"
+      placeholder: "For example: I tried the mock demo and could not find the next step. / 例：模擬デモの次に何をすればよいか迷いました。"
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: "What would help? / どうなると使いやすいですか？"
+      description: "Optional; a question without a proposed solution is welcome. / 任意です。解決案がなくても歓迎します。"
+    validations:
+      required: false
