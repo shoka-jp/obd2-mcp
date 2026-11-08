@@ -55,6 +55,49 @@ test('report combines existing readers with timestamps, structured data and no V
   } finally { await client.close(); await server.close(); }
 });
 
+test('report selects requested live sensors and keeps unknown names visible', async () => {
+  const { client, server, commands } = await session();
+  try {
+    const { tools } = await client.listTools();
+    const reportTool = tools.find(tool => tool.name === 'read_diagnostic_report');
+    assert.equal(reportTool.inputSchema.properties.pids.type, 'array');
+    assert.equal(reportTool.inputSchema.properties.pids.items.type, 'string');
+    assert(!reportTool.inputSchema.required?.includes('pids'));
+    assert.equal(reportTool.annotations.readOnlyHint, true);
+
+    const response = await client.callTool({
+      name: 'read_diagnostic_report',
+      arguments: { pids: [' RPM ', 'coolant_temp', 'not_a_sensor'] },
+    });
+    const report = JSON.parse(response.content[0].text);
+    assert.deepEqual(response.structuredContent, report);
+    assert.equal(report.simulated, true);
+    assert.deepEqual(Object.keys(report.sections.read_live_data.data.live_data), ['rpm', 'coolant_temp', 'not_a_sensor']);
+    assert.equal(report.sections.read_live_data.data.live_data.rpm.value, 748);
+    assert.equal(report.sections.read_live_data.data.live_data.coolant_temp.value, 89);
+    assert.match(report.sections.read_live_data.data.live_data.not_a_sensor.error, /Unknown PID name/);
+    assert.equal('value' in report.sections.read_live_data.data.live_data.not_a_sensor, false);
+    assert.deepEqual(report.sections.read_dtcs.data.stored_dtcs, ['P0420']);
+    assert.equal(report.sections.read_freeze_frame.data.freeze_frame.conditions.rpm.value, 2210);
+    assert.equal(report.sections.read_readiness.data.readiness_monitors.catalyst, 'complete');
+    assert(commands.includes('010C') && commands.includes('0105'));
+    assert(!commands.includes('010D') && !commands.includes('0104'));
+    assert(!commands.includes('0902') && !commands.includes('04'));
+  } finally { await client.close(); await server.close(); }
+});
+
+test('omitted and empty live sensor selections use the same defaults', async () => {
+  const { client, server } = await session();
+  try {
+    const omitted = await client.callTool({ name: 'read_diagnostic_report', arguments: {} });
+    const empty = await client.callTool({ name: 'read_diagnostic_report', arguments: { pids: [] } });
+    const defaultValues = JSON.parse(omitted.content[0].text).sections.read_live_data.data.live_data;
+    const emptyValues = JSON.parse(empty.content[0].text).sections.read_live_data.data.live_data;
+    assert.deepEqual(emptyValues, defaultValues);
+    assert.ok(Object.keys(defaultValues).length > 2);
+  } finally { await client.close(); await server.close(); }
+});
+
 test('one failed reader remains visible while subsequent report sections are collected', async () => {
   const { client, server, commands } = await session({ '020200': 'CAN ERROR' });
   try {

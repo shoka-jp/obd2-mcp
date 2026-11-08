@@ -182,11 +182,11 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
   server.registerTool(
     "read_diagnostic_report",
     {
-      description: "Collect stored/pending codes, freeze frame, live data and readiness into one timestamped evidence record for a workshop discussion. Readings are collected sequentially. Preserve each section's errors and unknown values when summarizing. VIN is not requested and codes are not cleared. The result contains observations, not a diagnosis.",
-      inputSchema: {},
+      description: `Collect stored/pending codes, freeze frame, live data and readiness into one timestamped evidence record for a workshop discussion. Optionally select live sensor names with pids; omit or pass an empty list for the defaults. Available names: ${PIDS.map(p => p.name).join(", ")}. Readings are collected sequentially. Preserve each section's errors and unknown values when summarizing. VIN is not requested and codes are not cleared. The result contains observations, not a diagnosis.`,
+      inputSchema: { pids: z.array(z.string()).optional().describe("Live PID names to read; omit or pass an empty list for the default set") },
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     },
-    async () => {
+    async ({ pids }) => {
       const startedAt = new Date().toISOString();
       const sections: Record<string, {
         collected_at: string;
@@ -196,7 +196,7 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
       const readers = [
         ["read_dtcs", readDtcs],
         ["read_freeze_frame", readFreezeFrame],
-        ["read_live_data", () => readLiveData({})],
+        ["read_live_data", () => readLiveData({ pids })],
         ["read_readiness", readReadiness],
       ] as const;
       for (const [name, read] of readers) {
