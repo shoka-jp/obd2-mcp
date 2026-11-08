@@ -9,7 +9,7 @@ The goal is to make a vehicle's recorded observations easier to understand and s
 | Where | What you can try |
 |---|---|
 | GitHub release **v0.2.0** | A no-car mock demo, four simulated scenarios, and seven MCP tools. [Try the demo](./try-mock.md). |
-| Current **main**, unreleased | The above plus `read_diagnostic_report`, which collects existing observations, unknowns and errors for a workshop handover. Build from source to try it. |
+| Current **main**, unreleased | The above plus `read_diagnostic_report` for workshop evidence and `read_supported_pids` for advertised live sensor support in the Mode 01 PID 01–60 range. Build from source to try them. |
 
 The report uses sequential reads and does not request VIN or clear codes; it is not a diagnosis. Mock tests do not establish compatibility with a real vehicle or adapter. See the [safety and scope notes](../README.md#safety-and-scope).
 
@@ -23,7 +23,7 @@ The report uses sequential reads and does not request VIN or clear codes; it is 
 
 ### 2. Reduce uncertainty when connecting a real adapter
 
-- **Supported PID discovery:** investigate Mode 01 support bitmaps (`0100`, `0120`, `0140`) so unsupported sensors can be identified before requesting readings. Handle incomplete or ambiguous replies without guessing.
+- **Supported PID discovery:** available on current source for `0100`, `0120` and `0140`, with explicit unknown states and partial results. Next, collect reproducible real-adapter evidence before considering broader ranges or automatic sensor selection.
 - **Evidence from real setups:** document reproducible, privacy-reviewed reports by operating system, connection type, adapter and vehicle context. Mark only combinations actually tested; mock coverage is not hardware validation.
 - **Connection guidance:** improve troubleshooting for pairing, port selection, timeouts and reconnects based on reproducible reports. Preserve the existing advice to restart after a timeout or disconnect until recovery is implemented and tested.
 
