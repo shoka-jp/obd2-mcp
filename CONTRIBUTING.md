@@ -2,6 +2,10 @@
 
 English and Japanese reports and contributions are welcome.
 
+## Find a first task
+
+Browse [open good first issues](https://github.com/shoka-jp/obd2-mcp/issues?q=is%3Aissue%20is%3Aopen%20label%3A%22good%20first%20issue%22); each describes the goal and how to check the result. Leave a note on an issue before starting so others can avoid duplicating the work. Questions, reports and pull requests are welcome in English or Japanese. Many documentation and mock-based test tasks do not require a car or an AI account; check each issue for its requirements.
+
 ## Start small
 
 - Improve setup instructions or Japanese/English documentation.
@@ -26,6 +30,8 @@ Keep English and Japanese user-facing instructions aligned. Do not include VINs,
 Preserve explicit confirmation for clearing diagnostic codes. Avoid changes that silently erase diagnostic evidence.
 
 ## 日本語
+
+[初めての方向けIssue](https://github.com/shoka-jp/obd2-mcp/issues?q=is%3Aissue%20is%3Aopen%20label%3A%22good%20first%20issue%22)から、目的と確認方法を見て選べます。作業の重複を避けるため、着手前にIssueへ一言コメントしてください。質問・報告・PRは日本語でも歓迎します。車やAIアカウントを使わずにできるドキュメントやモックのテストもあります。詳しくは各Issueをご確認ください。
 
 配布・導入に関わる変更では `npm run test:package` も実行してください。ビルド前のソースから作った配布物を、一時ディレクトリへインストールして検証します。[公開前チェックリスト](./docs/releasing.md)も参照してください。
 

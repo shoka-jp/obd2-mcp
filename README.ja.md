@@ -2,6 +2,8 @@
 
 **[実際の出力を見る・AIクライアントなしでデモを実行する](./docs/demo-results.md)**
 
+**開発に参加する：** [初めての方向けIssue](https://github.com/shoka-jp/obd2-mcp/issues?q=is%3Aissue%20is%3Aopen%20label%3A%22good%20first%20issue%22)から選べます。[貢献ガイド](./CONTRIBUTING.md)もご覧ください。ドキュメント修正・テスト・質問を日本語でも歓迎します。
+
 ![3ステップ：ソースから準備、模擬デモを実行、AIクライアントに接続。デモは車不要でコード消去もしません。](docs/images/get-started-ja.svg)
 
 **車もAIクライアントも不要：** Node.js 22または24とnpmを用意し、ターミナルで次を実行してください。ビルド済みパッケージと依存ライブラリを取得するので、Gitの操作や手元でのビルド作業を省けます。
