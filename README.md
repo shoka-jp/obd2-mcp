@@ -101,7 +101,9 @@ claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- node "/absolute/path
 
 After building from current source, ask your MCP client: **"Run read_diagnostic_report and turn its observations, missing values and errors into a workshop handover note. Keep freeze-frame values separate from live readings."** The published v0.2.0 tarball above has the original seven tools; this new tool is available on `main` for the next release.
 
-`read_diagnostic_report` collects codes, freeze frame, default live sensors and readiness in one response, with collection timestamps and structured JSON. It reuses the individual readers and preserves their null values and errors if part of the collection fails. Collection is sequential, so the readings can come from different moments.
+`read_diagnostic_report` collects codes, freeze frame, live sensors and readiness in one response, with collection timestamps and structured JSON. It reuses the individual readers and preserves their null values and errors if part of the collection fails. Collection is sequential, so the readings can come from different moments.
+
+To select only the live sensors you need, pass PID **names**, for example `{"pids":["rpm","coolant_temp"]}`. Omit `pids` or pass an empty array to use the same default set as `read_live_data`. An unknown name is retained as a per-sensor error, and other requested sensors are still read. This selection affects live data only; codes, freeze frame and readiness are collected as usual.
 
 The report does not request VIN or clear codes, and omits the connection source field. Review its contents before sharing, since adapter error text can still contain device details. Save or format the returned report in your MCP client for a workshop discussion; it is not a vehicle-specific diagnosis.
 
@@ -109,7 +111,7 @@ The report does not request VIN or clear codes, and omits the connection source 
 
 | Tool | What it does |
 |---|---|
-| `read_diagnostic_report` | Collect a timestamped evidence report from four readers, including unavailable fields and errors (0.3.0 development version). |
+| `read_diagnostic_report` | Collect a timestamped evidence report from four readers, optionally selecting live sensors and including unavailable fields and errors (0.3.0 development version). |
 | `read_dtcs` | Stored + pending trouble codes, MIL state, DTC count. A code list is `null` when the adapter returns no data; this is not a confirmed empty list. |
 | `read_freeze_frame` | The DTC that set the freeze frame and the engine conditions at that moment |
 | `read_live_data` | Live sensors: RPM, coolant temp, fuel trims, MAF, O2 voltages, and more (22 PIDs) |
