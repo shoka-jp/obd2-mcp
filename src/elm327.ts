@@ -73,7 +73,9 @@ export class Elm327 {
     if (multiFrame) {
       const frames = lines.filter(l => /^[0-9A-F]{1,2}:/i.test(l));
       const lengths = lines.filter(l => /^[0-9A-F]{3}$/i.test(l));
-      if (lengths.length !== 1) throw new Error(`Ambiguous multi-frame response to "${cmd}"`);
+      if (lengths.length !== 1 || frames.length + lengths.length !== lines.length) {
+        throw new Error(`Ambiguous multi-frame response to "${cmd}"`);
+      }
       for (const [i, line] of frames.entries()) {
         const match = /^([0-9A-F]{1,2}):\s*([0-9A-F\s]+)$/i.exec(line);
         if (!match || parseInt(match[1], 16) !== i) throw new Error(`Invalid frame sequence for "${cmd}"`);

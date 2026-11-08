@@ -60,6 +60,13 @@ test('rejects invalid or incomplete ISO-TP frames', async () => {
   }
 });
 
+test('rejects a multi-frame response mixed with extra adapter data', async () => {
+  for (const extra of ['49 02 01 31', 'UNEXPECTED ADAPTER TEXT']) {
+    const elm = new Elm327(adapter({ '0902': `004\r0: 49 02\r1: 01 31\r${extra}\r` }));
+    await assert.rejects(elm.obd('0902', '4902'), /Ambiguous/);
+  }
+});
+
 test('rejects short status data and incomplete PID data', async () => {
   const { client, server } = await clientFor({ '0101': '41 01 80', '010C': '41 0C 1A' });
   try {
@@ -146,6 +153,26 @@ test('invalid VIN is returned as an error', async () => {
     assert.equal(result.isError, true);
     assert.match(result.content[0].text, /Incomplete/);
   } finally { await client.close(); await server.close(); }
+});
+
+test('VIN reads reject extra, invalid, or conflicting data instead of constructing a VIN', async () => {
+  const vin = Buffer.from('1HGFC2F59GA000042', 'ascii'); // fictional test data
+  const responses = [
+    [0x01, ...vin, 0x31], // extra printable byte would previously replace the first VIN character
+    [0x01, 0x00, ...vin], // non-printable data would previously be silently removed
+    [0x02, ...vin], // unsupported data-item count
+    [0x01, ...vin.subarray(0, 8), 0x00, ...vin.subarray(9)],
+  ];
+  for (const bytes of responses) {
+    const hex = [0x49, 0x02, ...bytes].map(byte => byte.toString(16).padStart(2, '0')).join(' ');
+    const { client, server } = await clientFor({ '0902': hex });
+    try {
+      const result = await client.callTool({ name: 'read_vin', arguments: {} });
+      assert.equal(result.isError, true);
+      assert.match(result.content[0].text, /VIN response/);
+      assert.doesNotMatch(result.content[0].text, /1HGFC2F59GA000042/);
+    } finally { await client.close(); await server.close(); }
+  }
 });
 
 test('real adapter clearing is disabled by default', async () => {

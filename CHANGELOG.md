@@ -2,6 +2,7 @@
 
 ## [0.3.0] - Unreleased
 
+- Reject mixed multi-frame responses and ambiguous VIN payloads instead of dropping bytes or returning a potentially incorrect VIN.
 - Add a bilingual first-use feedback form and browser-only contribution guidance.
 
 - Add `read_diagnostic_report` to collect codes, freeze frame, live data and readiness into one timestamped MCP response with structured JSON.
