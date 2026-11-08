@@ -160,7 +160,7 @@ test('VIN reads reject extra, invalid, or conflicting data instead of constructi
   const responses = [
     [0x01, ...vin, 0x31], // extra printable byte would previously replace the first VIN character
     [0x01, 0x00, ...vin], // non-printable data would previously be silently removed
-    [0x02, ...vin], // unsupported record indicator
+    [0x02, ...vin], // unsupported data-item count
     [0x01, ...vin.subarray(0, 8), 0x00, ...vin.subarray(9)],
   ];
   for (const bytes of responses) {
