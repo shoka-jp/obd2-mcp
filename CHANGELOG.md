@@ -2,6 +2,7 @@
 
 ## [0.3.0] - Unreleased
 
+- Add read-only `read_supported_pids` discovery for Mode 01 PIDs 01–60, with per-sensor support states, partial failure evidence and matching mock bitmaps.
 - Allow `read_diagnostic_report` callers to select live sensor names while retaining the default set for existing calls.
 - Reject mixed multi-frame responses and ambiguous VIN payloads instead of dropping bytes or returning a potentially incorrect VIN.
 - Add a bilingual first-use feedback form and browser-only contribution guidance.

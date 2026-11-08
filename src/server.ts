@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Elm327, NoDataError } from "./elm327.js";
 import { parseDtcPayload, decodeDtcPair } from "./dtc.js";
 import { PIDS, PID_BY_NAME, DEFAULT_PIDS, FREEZE_PIDS } from "./pids.js";
+import { discoverSupportedPids } from "./supported-pids.js";
 
 const MONITORS_B = ["misfire", "fuel_system", "components"] as const;
 const MONITORS_CD = [
@@ -90,6 +91,19 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
     "Read diagnostic trouble codes: stored (confirmed) DTCs, pending DTCs, MIL (check-engine light) state, and DTC count. A null code list means the adapter returned no data, not that there are no codes. Use first when a warning light is on.",
     {},
     readDtcs
+  );
+
+  server.registerTool(
+    "read_supported_pids",
+    {
+      description: "Discover advertised Mode 01 support for this server's live sensors (PID range 01-60). Returns supported_sensor_names for a later read_live_data or read_diagnostic_report call, plus per-sensor supported/not_advertised/unknown states. Partial failures retain earlier results. Support does not guarantee a reading. If no names are supported, do not pass an empty pids array expecting no reads: it selects the defaults. No VIN request or code clearing.",
+      inputSchema: {},
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+    },
+    async () => {
+      const result = await discoverSupportedPids(elm);
+      return { ...wrap(result), ...(!result.complete ? { isError: true } : {}) };
+    }
   );
 
   const readLiveData = async ({ pids }: { pids?: string[] }) => {

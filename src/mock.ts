@@ -142,6 +142,18 @@ export class MockTransport implements Transport {
       this.state.continuousIncomplete = 0x70;
       return "44\r";
     }
+    // Mode 01 support bitmaps: advertise exactly the implemented mock commands.
+    if (["0100", "0120", "0140"].includes(cmd)) {
+      const base = parseInt(cmd.slice(2), 16);
+      const bytes = [0, 0, 0, 0];
+      const supported = [0x01, 0x20, 0x40, ...[...PID_BY_CODE.values()]
+        .filter(def => def.name in this.state.live).map(def => parseInt(def.pid, 16))];
+      for (const pid of supported) {
+        const bit = pid - base - 1;
+        if (bit >= 0 && bit < 32) bytes[Math.floor(bit / 8)] |= 0x80 >> (bit % 8);
+      }
+      return `41 ${hex(base)} ${join(bytes)}\r`;
+    }
     // Mode 01 PID 01: MIL / DTC count / readiness
     if (cmd === "0101") {
       const a = (this.state.milOn ? 0x80 : 0) | (this.state.storedDtcs.length & 0x7f);

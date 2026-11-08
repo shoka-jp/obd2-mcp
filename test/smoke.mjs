@@ -60,7 +60,7 @@ try {
 
   const tools = await request("tools/list", {});
   const names = tools.result.tools.map(t => t.name).sort();
-  assert(names.length === 8 && names.includes("read_diagnostic_report"), `8 tools registered (${names.join(", ")})`);
+  assert(names.length === 9 && names.includes("read_diagnostic_report") && names.includes("read_supported_pids"), `9 tools registered (${names.join(", ")})`);
 
   const dtcs = toolJson(await request("tools/call", { name: "read_dtcs", arguments: {} }));
   assert(dtcs.stored_dtcs?.includes("P0420"), "read_dtcs finds stored P0420");

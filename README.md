@@ -107,10 +107,21 @@ To select only the live sensors you need, pass PID **names**, for example `{"pid
 
 The report does not request VIN or clear codes, and omits the connection source field. Review its contents before sharing, since adapter error text can still contain device details. Save or format the returned report in your MCP client for a workshop discussion; it is not a vehicle-specific diagnosis.
 
+## Discover available live sensors (0.3.0 development version)
+
+Ask your MCP client to run `read_supported_pids` before choosing live sensors. It reads the Mode 01 support bitmaps for the `01`–`60` hexadecimal range used by this server, following continuation flags. It returns `supported_sensor_names` for use as the `pids` argument of `read_live_data` or `read_diagnostic_report`.
+
+Each sensor is `supported` (the vehicle advertises support), `not_advertised` (its bit or continuation is absent), or `unknown` (the required reply could not be read). Incomplete discovery returns `complete: false`, a tool error, the successful earlier results and the failed request. `NO DATA`, truncated and ambiguous replies are never treated as proof of no support. Discovery is refreshed on each call and does not read sensor values, request VIN or clear codes.
+
+Use only a **nonempty** list of supported names for the next read: passing `pids: []` still selects the existing default set. Advertised support does not guarantee a reading, and `complete` covers only this stated PID range. This feature has mock/protocol test coverage; real vehicle and adapter compatibility remains unverified.
+
+Protocol references: [ELM327 datasheet, “Talking to the Vehicle”](https://elmelectronics.com/wp-content/uploads/2020/05/ELM327DSL.pdf) and [python-OBD command tables](https://python-obd.readthedocs.io/en/latest/Command%20Tables/).
+
 ## Tools
 
 | Tool | What it does |
 |---|---|
+| `read_supported_pids` | Discover advertised support for this server's live sensors; preserve unknowns and partial failures (0.3.0 development version). |
 | `read_diagnostic_report` | Collect a timestamped evidence report from four readers, optionally selecting live sensors and including unavailable fields and errors (0.3.0 development version). |
 | `read_dtcs` | Stored + pending trouble codes, MIL state, DTC count. A code list is `null` when the adapter returns no data; this is not a confirmed empty list. |
 | `read_freeze_frame` | The DTC that set the freeze frame and the engine conditions at that moment |

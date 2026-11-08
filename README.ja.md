@@ -107,10 +107,21 @@ ELM327互換アダプタ(USB / Bluetooth / WiFi、1,000〜3,000円程度)をOBD-
 claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- node "/absolute/path/to/obd2-mcp/dist/index.js"
 ```
 
+## 対応するライブセンサーの確認（0.3.0開発版）
+
+センサーを選ぶ前に、MCPクライアントで `read_supported_pids` を実行できます。このサーバーが使用する16進数のPID `01`〜`60` の範囲について、後続の対応表があることを示すビットを確認しながらMode 01の対応情報を読み取ります。返された `supported_sensor_names` を、`read_live_data` や `read_diagnostic_report` の `pids` に指定できます。
+
+センサーごとに `supported`（車両が対応を通知）、`not_advertised`（対応ビットまたは後続の対応表の通知なし）、`unknown`（必要な応答を取得できず不明）を区別します。途中で失敗した場合は `complete: false` とツールエラーを返し、それまでの結果と失敗したリクエストを残します。`NO DATA`・不足した応答・曖昧な応答を「非対応」の証拠として扱いません。呼び出しごとに再取得し、センサー値の読み取り・VIN取得・コード消去は行いません。
+
+次の読み取りに渡すのは、**1件以上**の対応センサー名にしてください。`pids: []` は引き続き既定の項目を取得します。対応の通知は値の取得成功を保証せず、`complete` は上記のPID範囲だけを指します。モックとプロトコルのテストによる検証であり、実車・アダプターとの互換性は未検証です。
+
+プロトコルの参考資料：[ELM327データシートの「Talking to the Vehicle」](https://elmelectronics.com/wp-content/uploads/2020/05/ELM327DSL.pdf)、[python-OBDのコマンド表](https://python-obd.readthedocs.io/en/latest/Command%20Tables/)。
+
 ## ツール一覧
 
 | ツール | 内容 |
 |---|---|
+| `read_supported_pids` | ライブセンサーの対応通知を確認。不明や途中の取得失敗を保持（0.3.0開発版） |
 | `read_diagnostic_report` | 4種類の読み取り結果を取得時刻・未取得項目・エラー付きでまとめる整備相談用レポート。ライブセンサーを選択可能（0.3.0開発版） |
 | `read_dtcs` | 記録済み・保留中の故障コード、警告灯の状態、コード数。アダプターがデータを返さない場合、該当する一覧は `null`（未確認）です。 |
 | `read_freeze_frame` | フリーズフレームを記録させたDTCと、その瞬間のエンジン状態 |
