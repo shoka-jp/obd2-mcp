@@ -22,7 +22,7 @@
     "start": "node dist/index.js",
     "demo": "npm run build && node dist/index.js --demo --summary",
     "demo:ja": "npm run build && node dist/index.js --demo --summary --lang ja",
-    "test": "npm run build && node --test test/cli.mjs test/safety.mjs test/scenarios.mjs test/demo.mjs test/diagnostic-report.mjs test/supported-pids.mjs && node test/smoke.mjs",
+    "test": "npm run build && node --test test/cli.mjs test/dtc.mjs test/safety.mjs test/scenarios.mjs test/demo.mjs test/diagnostic-report.mjs test/supported-pids.mjs && node test/smoke.mjs",
     "test:package": "node test/package.mjs",
     "prepack": "npm run build"
   },
