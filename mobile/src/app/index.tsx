@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
   eyebrow: { color: '#8be2cb', fontSize: 10, letterSpacing: 1.5, fontWeight: '800', flexShrink: 1 },
   beta: { color: '#d0f4e8', borderWidth: 1, borderColor: '#547d75', overflow: 'hidden', borderRadius: 20, paddingHorizontal: 9, paddingVertical: 4, fontSize: 11, fontWeight: '700' },
-  heroTitle: { color: '#fff', fontSize: 30, lineHeight: 43, fontWeight: '800', marginTop: 22, letterSpacing: -0.4 },
+  heroTitle: { color: '#fff', fontSize: 27, lineHeight: 39, fontWeight: '800', marginTop: 22, letterSpacing: -0.4 },
   heroBody: { color: '#d6e8e3', fontSize: 15, lineHeight: 25, marginTop: 14 },
   heroLine: { marginTop: 24, flexDirection: 'row', alignItems: 'center', gap: 8 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#6ee1c1' },
