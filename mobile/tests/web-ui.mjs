@@ -56,7 +56,7 @@ try {
       await page.screenshot({ path: `browser-artifacts/${name}-connection.png`, fullPage: true });
       await page.getByTestId('choose-ble').click();
       assert.equal(await page.getByTestId('scan-ble').getAttribute('aria-disabled'), 'true');
-      assert.equal(await page.getByText('Android 11以前では検索に位置情報の許可が必要ですが、このアプリは位置情報を取得しません。').count(), 1);
+      assert.equal(await page.getByText('見つけた機器の情報は端末内でのみ使用し、保存・送信しません。').count(), 1);
       await page.screenshot({ path: `browser-artifacts/${name}-bluetooth.png`, fullPage: true });
       await page.getByRole('button', { name: '戻る' }).click();
       await page.getByTestId('choose-wifi').click();

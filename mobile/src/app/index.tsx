@@ -309,7 +309,8 @@ export default function HomeScreen() {
       {phase === 'bleIntro' && <>
         <Text style={styles.sectionKicker}>01  /  BLUETOOTH LE</Text><Text accessibilityRole="header" style={styles.title}>{t.bleSetupTitle}</Text>
         <View style={styles.notice}><Text style={styles.noticeText}>{t.safety}</Text></View>
-        {[t.step1, t.bleStep, t.blePrivacy].map((text, index) => <View style={styles.step} key={text}>
+        {[t.step1, t.bleStep, t.blePrivacyGeneral,
+          ...(Platform.OS === 'android' && Number(Platform.Version) <= 30 ? [t.blePrivacy] : [])].map((text, index) => <View style={styles.step} key={text}>
           <Text style={styles.stepNumber}>0{index + 1}</Text><Text style={styles.stepText}>{text}</Text>
         </View>)}
         {bleProblem && <Text accessibilityRole="alert" style={styles.error}>{bleProblem}</Text>}
@@ -327,7 +328,9 @@ export default function HomeScreen() {
         {nearby.map(device => <Pressable key={device.id} accessibilityRole="button"
           accessibilityLabel={`${device.name || t.unnamed} ${device.id.slice(-4)}`}
           onPress={() => void selectBleDevice(device)} style={styles.device}>
-          <Text style={styles.deviceName}>{device.name || t.unnamed}</Text><Text style={styles.deviceSuffix}>···{device.id.slice(-4)}</Text>
+          <Text style={styles.deviceName}>{device.name || t.unnamed}</Text>
+          <View style={styles.deviceRight}><Text style={styles.deviceSuffix}>···{device.id.slice(-4)}</Text>
+            <Text style={styles.deviceChoose}>{t.selectDevice} ›</Text></View>
         </Pressable>)}
         {scanning ? <Action label={t.scanStop} onPress={() => void stopBleScan()} secondary />
           : <Action label={t.scanAgain} onPress={() => void scanBle()} />}
@@ -426,7 +429,9 @@ const styles = StyleSheet.create({
   input: { backgroundColor: '#f6faf8', borderWidth: 1, borderColor: '#b9ceca', borderRadius: 10, minHeight: 48, paddingHorizontal: 12, color: '#193b42', fontSize: 16 },
   device: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#dfe8e3', borderRadius: 14, padding: 16, marginBottom: 10, flexDirection: 'row', alignItems: 'center', gap: 10 },
   deviceName: { color: '#193b42', fontWeight: '700', fontSize: 16, flex: 1 },
+  deviceRight: { alignItems: 'flex-end', gap: 4 },
   deviceSuffix: { color: '#58706c', fontSize: 13 },
+  deviceChoose: { color: '#087968', fontWeight: '700', fontSize: 13 },
   error: { color: '#9b322d', fontSize: 14, lineHeight: 22, marginTop: 12 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, borderTopWidth: 1, borderColor: '#edf2ee', paddingVertical: 13 },
   rowLabel: { color: '#536e6a', fontSize: 14, lineHeight: 21, flex: 1 },
