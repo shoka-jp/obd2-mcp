@@ -99,7 +99,7 @@ export default function HomeScreen() {
       session.current = null; scanner.current = null;
     };
   }, [reset]);
-  useEffect(() => { scroll.current?.scrollTo({ y: 0, animated: true }); }, [phase]);
+  useEffect(() => { scroll.current?.scrollTo({ y: 0, animated: false }); }, [phase]);
 
   const start = async (mode: 'demo' | 'wifi' | 'ble') => {
     if (busy.current) return;
