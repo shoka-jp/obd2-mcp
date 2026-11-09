@@ -17,10 +17,10 @@ An MCP server that lets AI assistants read your car's OBD-II data through cheap 
 **Try it without an AI client or car:** with Node.js 22 or 24 and npm installed, run this in a terminal. npm downloads the built package and its dependencies; Git and a local build are not needed.
 
 ```bash
-npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.2.0/obd2-mcp-0.2.0.tgz -- obd2-mcp --demo --summary
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.3.0/obd2-mcp-0.3.0.tgz -- obd2-mcp --demo --summary
 ```
 
-The command uses the package attached to this repository's [v0.2.0 release](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.2.0). It prints simulated observations and exits. [See the output and what to check next](./docs/demo-results.md).
+The command uses the package attached to this repository's [v0.3.0 release](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.3.0). It prints simulated observations and exits. [See the output and what to check next](./docs/demo-results.md).
 
 **Example from the mock vehicle:** stored code `P0420`; freeze frame at 98 km/h and 2,210 rpm; current reading 0 km/h and 740 rpm. These are simulated observations, not a diagnosis. [See the captured results and their limits](./docs/demo-results.md#observed-output--実際に取得した結果).
 
@@ -79,7 +79,7 @@ Restart the server after changing the setting. Each server has independent mock 
 
 ## Connecting a real car
 
-You need an ELM327-compatible adapter (USB, Bluetooth-serial, or WiFi — typically $5–30) plugged into the OBD-II port (all gasoline cars since 1996 in the US, roughly 2001+ elsewhere; ignition on).
+You need an ELM327-compatible USB, Bluetooth-serial, or WiFi adapter plugged into the vehicle's OBD-II port, with the ignition on. Support varies by vehicle, market, protocol, adapter and connection method; this project has not yet verified a real-vehicle or real-adapter combination. Start with read-only checks while parked, and do not assume that an adapter connection confirms vehicle communication.
 
 Set the connection via environment variable or CLI flag:
 
@@ -97,9 +97,9 @@ Claude Code example with a real adapter:
 claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- node "/absolute/path/to/obd2-mcp/dist/index.js"
 ```
 
-## One-call evidence report (0.3.0 development version)
+## One-call evidence report
 
-After building from current source, ask your MCP client: **"Run read_diagnostic_report and turn its observations, missing values and errors into a workshop handover note. Keep freeze-frame values separate from live readings."** The published v0.2.0 tarball above has the original seven tools; this new tool is available on `main` for the next release.
+With the v0.3.0 server configured in your MCP client, ask: **"Run read_diagnostic_report and turn its observations, missing values and errors into a workshop handover note. Keep freeze-frame values separate from live readings."**
 
 `read_diagnostic_report` collects codes, freeze frame, live sensors and readiness in one response, with collection timestamps and structured JSON. It reuses the individual readers and preserves their null values and errors if part of the collection fails. Collection is sequential, so the readings can come from different moments.
 
@@ -107,7 +107,7 @@ To select only the live sensors you need, pass PID **names**, for example `{"pid
 
 The report does not request VIN or clear codes, and omits the connection source field. Review its contents before sharing, since adapter error text can still contain device details. Save or format the returned report in your MCP client for a workshop discussion; it is not a vehicle-specific diagnosis.
 
-## Discover available live sensors (0.3.0 development version)
+## Discover available live sensors
 
 Ask your MCP client to run `read_supported_pids` before choosing live sensors. It reads the Mode 01 support bitmaps for the `01`–`60` hexadecimal range used by this server, following continuation flags. It returns `supported_sensor_names` for use as the `pids` argument of `read_live_data` or `read_diagnostic_report`.
 
@@ -121,8 +121,8 @@ Protocol references: [ELM327 datasheet, “Talking to the Vehicle”](https://el
 
 | Tool | What it does |
 |---|---|
-| `read_supported_pids` | Discover advertised support for this server's live sensors; preserve unknowns and partial failures (0.3.0 development version). |
-| `read_diagnostic_report` | Collect a timestamped evidence report from four readers, optionally selecting live sensors and including unavailable fields and errors (0.3.0 development version). |
+| `read_supported_pids` | Discover advertised support for this server's live sensors; preserve unknowns and partial failures. |
+| `read_diagnostic_report` | Collect a timestamped evidence report from four readers, optionally selecting live sensors and including unavailable fields and errors. |
 | `read_dtcs` | Stored + pending trouble codes, MIL state, DTC count. A code list is `null` when the adapter returns no data; this is not a confirmed empty list. |
 | `read_freeze_frame` | The DTC that set the freeze frame and the engine conditions at that moment |
 | `read_live_data` | Live sensors: RPM, coolant temp, fuel trims, MAF, O2 voltages, and more (22 PIDs) |

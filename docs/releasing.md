@@ -21,8 +21,8 @@ CI checks Node.js 22 and 24 on Linux. These checks use simulated vehicle data, s
 A GitHub release can distribute the built npm tarball while npm registry publication is pending. From a clean, reviewed commit whose Node.js 22/24 CI passed:
 
 1. Run the verification commands above, then `npm pack --json`.
-2. Inspect the file list and test that exact tarball from a separate directory with `npm exec --yes --package=/absolute/path/to/obd2-mcp-0.2.0.tgz -- obd2-mcp --demo --summary`. Also check `--lang ja`.
-3. Calculate `sha256sum obd2-mcp-0.2.0.tgz > SHA256SUMS`. Create the version tag at the reviewed commit and attach both files to its GitHub release.
+2. Inspect the file list and test that exact tarball from a separate directory with `npm exec --yes --package=/absolute/path/to/obd2-mcp-0.3.0.tgz -- obd2-mcp --demo --summary`. Also check `--lang ja`.
+3. Calculate `sha256sum obd2-mcp-0.3.0.tgz > SHA256SUMS`. Create the version tag at the reviewed commit and attach both files to its GitHub release.
 4. Download the published asset again, compare its checksum, and run the README command from a fresh directory. Confirm both language summaries return simulated data and exit successfully.
 
 GitHubのリリースには、ビルド済みの `.tgz` と `SHA256SUMS` を添付できます。Node.js 22/24のCIが成功したコミットから作成し、配布するファイルそのものを別ディレクトリから実行します。公開後は再ダウンロードしてハッシュを照合し、READMEの英日コマンドも確認してください。GitHubの配布URLを使う手順は、npmレジストリでの公開状況に依存しません。

@@ -8,8 +8,7 @@ The goal is to make a vehicle's recorded observations easier to understand and s
 
 | Where | What you can try |
 |---|---|
-| GitHub release **v0.2.0** | A no-car mock demo, four simulated scenarios, and seven MCP tools. [Try the demo](./try-mock.md). |
-| Current **main**, unreleased | The above plus `read_diagnostic_report` for workshop evidence and `read_supported_pids` for advertised live sensor support in the Mode 01 PID 01–60 range. Build from source to try them. |
+| GitHub release **v0.3.0** | A no-car mock demo, four simulated scenarios and nine MCP tools, including `read_diagnostic_report` for workshop evidence and `read_supported_pids` for advertised live sensor support in the Mode 01 PID 01–60 range. [Try the demo](./try-mock.md). |
 
 The report uses sequential reads and does not request VIN or clear codes; it is not a diagnosis. Mock tests do not establish compatibility with a real vehicle or adapter. See the [safety and scope notes](../README.md#safety-and-scope).
 
@@ -17,13 +16,13 @@ The report uses sequential reads and does not request VIN or clear codes; it is 
 
 ### 1. Make the report easy to try and trust
 
-- **Next release preparation:** verify the development report and package using the [release checklist](./releasing.md), then document the actual release and install path after it exists.
+- **Release verification:** follow the [release checklist](./releasing.md) for each package and document the verified install path.
 - **Clearer handover:** explore an easy-to-read, shareable report that preserves unavailable values, errors, timestamps and the difference between freeze-frame and live readings. Keep the structured MCP response usable.
 - **More useful simulations:** add focused mock scenarios, such as an EVAP-related example and partial or unavailable readings, with expected observations and limitations. Simulated outcomes must stay clearly labeled.
 
 ### 2. Reduce uncertainty when connecting a real adapter
 
-- **Supported PID discovery:** available on current source for `0100`, `0120` and `0140`, with explicit unknown states and partial results. Next, collect reproducible real-adapter evidence before considering broader ranges or automatic sensor selection.
+- **Supported PID discovery:** available in v0.3.0 for `0100`, `0120` and `0140`, with explicit unknown states and partial results. Next, collect reproducible real-adapter evidence before considering broader ranges or automatic sensor selection.
 - **Evidence from real setups:** document reproducible, privacy-reviewed reports by operating system, connection type, adapter and vehicle context. Mark only combinations actually tested; mock coverage is not hardware validation.
 - **Connection guidance:** improve troubleshooting for pairing, port selection, timeouts and reconnects based on reproducible reports. Preserve the existing advice to restart after a timeout or disconnect until recovery is implemented and tested.
 
