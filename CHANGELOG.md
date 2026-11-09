@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- Add an Android/iPhone phone-app source prototype with a fictional sample, a read-only Wi-Fi adapter flow, and a shareable workshop note. Native builds and physical devices remain unverified.
+
 ## [0.3.0] - 2026-11-09
 
 - Add read-only `read_supported_pids` discovery for Mode 01 PIDs 01–60, with per-sensor support states, partial failure evidence and matching mock bitmaps.

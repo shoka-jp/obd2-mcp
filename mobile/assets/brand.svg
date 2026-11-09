@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+<title id="title">Automotive AI Skills</title>
+<desc id="desc">A car silhouette and connected circuit nodes on a dark rounded square.</desc>
+<rect width="256" height="256" rx="56" fill="#10243b"/>
+<path d="M48 145h15l17-38c4-9 12-14 22-14h50c10 0 18 5 23 14l18 38h15c6 0 10 5 10 11v21h-15a19 19 0 0 1-37 0H90a19 19 0 0 1-37 0H38v-21c0-6 4-11 10-11Z" fill="none" stroke="#e9f5f4" stroke-width="9" stroke-linejoin="round"/>
+<path d="M76 143h104M91 174h74" fill="none" stroke="#e9f5f4" stroke-width="8" stroke-linecap="round"/>
+<circle cx="72" cy="174" r="10" fill="#56d6bd"/><circle cx="184" cy="174" r="10" fill="#56d6bd"/>
+<path d="M128 92V64m0 0 22-14m-22 14-22-14" fill="none" stroke="#56d6bd" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="128" cy="64" r="6" fill="#56d6bd"/><circle cx="102" cy="48" r="6" fill="#56d6bd"/><circle cx="154" cy="48" r="6" fill="#56d6bd"/>
+</svg>

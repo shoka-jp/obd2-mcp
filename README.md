@@ -4,6 +4,8 @@
 
 **New here? [Try the step-by-step mock demo — no car required](./docs/try-mock.md).**
 
+**Phone app prototype:** [Android/iPhone source and development status](https://github.com/shoka-jp/obd2-mcp/blob/main/mobile/README.md). It is not yet available in app stores or verified with a physical vehicle.
+
 **Want to contribute?** [Find a first issue](https://github.com/shoka-jp/obd2-mcp/issues?q=is%3Aissue%20is%3Aopen%20label%3A%22good%20first%20issue%22) or read the [contribution guide](./CONTRIBUTING.md). Documentation, tests and questions are welcome in English or Japanese. [Share first-use feedback](https://github.com/shoka-jp/obd2-mcp/issues/new?template=first-experience.yml) (a public GitHub issue).
 
 **English** | [日本語](./README.ja.md)
