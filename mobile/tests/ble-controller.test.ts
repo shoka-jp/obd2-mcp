@@ -14,6 +14,7 @@ class FakeManager {
   scanStopped = false;
   disconnected = false;
   unsupported = false;
+  failStop = false;
   notificationRemoved = false;
   lastScanFilter: string[] | null | undefined;
 
@@ -21,7 +22,7 @@ class FakeManager {
   async startDeviceScan(filter: string[] | null, _options: unknown, callback: typeof this.scan) {
     this.lastScanFilter = filter; this.scan = callback;
   }
-  async stopDeviceScan() { this.scanStopped = true; }
+  async stopDeviceScan() { if (this.failStop) throw new Error('Could not stop scan'); this.scanStopped = true; }
   emitDevice(id: string, name: string) { this.scan?.(null, { id, name, localName: null } as unknown as Device); }
   async connectToDevice() { return {}; }
   onDeviceDisconnected() { return { remove() {} }; }
@@ -94,6 +95,20 @@ test('only a discovered device can be connected after scanning has stopped', asy
   assert.throws(() => scanner.makeTransport('seen'), /stopping the scan/);
   await scanner.stop();
   assert.throws(() => scanner.makeTransport('unseen'), /discovered/);
+  await scanner.close();
+});
+
+test('a failed scan stop prevents connecting until the scan is stopped', async () => {
+  const manager = new FakeManager();
+  const scanner = new NativeBleScanner(() => manager as unknown as BleManager, async () => {});
+  await scanner.start(() => {}, () => {});
+  manager.emitDevice('seen', 'OBDII');
+  manager.failStop = true;
+  await assert.rejects(scanner.stop(), /Could not stop scan/);
+  assert.throws(() => scanner.makeTransport('seen'), /stopping the scan/);
+  manager.failStop = false;
+  await scanner.stop();
+  assert.doesNotThrow(() => scanner.makeTransport('seen'));
   await scanner.close();
 });
 

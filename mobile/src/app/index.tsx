@@ -182,13 +182,15 @@ export default function HomeScreen() {
         if (scanTimer.current) clearTimeout(scanTimer.current);
         scanTimer.current = null;
         setScanning(false); setProblem(error.reason);
-        void activeScanner.stop();
+        void activeScanner.stop().catch(() => undefined);
       });
       if (attempt !== generation.current) { await next.close(); return; }
       if (!scanFailed) scanTimer.current = setTimeout(() => {
         if (attempt !== generation.current) return;
         scanTimer.current = null; setScanning(false);
-        void activeScanner.stop();
+        void activeScanner.stop().catch(() => {
+          if (attempt === generation.current) setProblem('scan');
+        });
       }, 12000);
     } catch (error) {
       if (next) await next.close().catch(() => undefined);
@@ -206,7 +208,9 @@ export default function HomeScreen() {
     const attempt = generation.current;
     if (scanTimer.current) clearTimeout(scanTimer.current);
     scanTimer.current = null; setScanning(false);
-    try { await scanner.current?.stop(); } finally { if (attempt === generation.current) busy.current = false; }
+    try { await scanner.current?.stop(); }
+    catch { if (attempt === generation.current) reset('bleIntro', 'scan'); }
+    finally { if (attempt === generation.current) busy.current = false; }
   };
 
   const selectBleDevice = async (device: NearbyDevice) => {
@@ -218,7 +222,8 @@ export default function HomeScreen() {
     try {
       await scanner.current.stop();
       if (attempt === generation.current) { setSelected(device); setProblem(null); setPhase('bleConfirm'); }
-    } finally { if (attempt === generation.current) busy.current = false; }
+    } catch { if (attempt === generation.current) reset('bleIntro', 'scan'); }
+    finally { if (attempt === generation.current) busy.current = false; }
   };
 
   const share = async () => {

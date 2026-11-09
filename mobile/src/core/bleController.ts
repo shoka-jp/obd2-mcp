@@ -96,6 +96,7 @@ class NativeBleLink implements BleLink {
 export class NativeBleScanner implements BleScanner {
   private closed = false;
   private active = false;
+  private needsStop = false;
   private manager: BleManager | null = null;
   private stopping: Promise<void> | null = null;
   private readonly seen = new Set<string>();
@@ -111,6 +112,7 @@ export class NativeBleScanner implements BleScanner {
     await waitForPoweredOn(manager);
     if (this.closed) throw new BleSetupError('scan');
     this.active = true;
+    this.needsStop = true;
     await queueScan(async () => {
       if (!this.active || this.closed) return;
       // No service filter: many BLE adapters do not advertise their service.
@@ -127,18 +129,18 @@ export class NativeBleScanner implements BleScanner {
 
   async stop(): Promise<void> {
     if (this.stopping) return this.stopping;
-    if (!this.active || !this.manager) return;
+    if (!this.needsStop || !this.manager) return;
     this.active = false;
     const manager = this.manager;
-    this.stopping = queueScan(() => manager.stopDeviceScan()).catch(() => undefined);
-    await this.stopping;
-    this.stopping = null;
+    const stopping = queueScan(() => manager.stopDeviceScan()).then(() => { this.needsStop = false; });
+    this.stopping = stopping;
+    try { await stopping; } finally { if (this.stopping === stopping) this.stopping = null; }
   }
 
   async close(): Promise<void> { this.closed = true; await this.stop(); }
 
   makeTransport(deviceId: string): BleTransport {
-    if (this.closed || this.active || this.stopping || !this.manager || !this.seen.has(deviceId)) {
+    if (this.closed || this.active || this.needsStop || this.stopping || !this.manager || !this.seen.has(deviceId)) {
       throw new Error('Select a discovered Bluetooth device after stopping the scan.');
     }
     return new BleTransport(new NativeBleLink(this.manager, deviceId));
