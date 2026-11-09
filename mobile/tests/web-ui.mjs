@@ -34,6 +34,7 @@ try {
       await page.goto(base, { waitUntil: 'networkidle' });
       await page.getByTestId('try-demo').waitFor();
       assert.equal(await page.getByText('まずは、車なしで体験').count(), 1);
+      assert.equal(await page.getByText('Bluetooth型は未対応です。').count(), 1);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       await page.screenshot({ path: `browser-artifacts/${name}-home.png`, fullPage: true });
       const requests = [];
@@ -52,11 +53,13 @@ try {
       assert.deepEqual(requests, [], 'Sample reading and copying must not send network requests');
       await page.getByRole('button', { name: '別の方法を選ぶ' }).click();
       await page.getByTestId('prepare-device').click();
+      assert.equal(await page.getByText('診断機の説明書にあるIPアドレスとポート番号を入力します。下の数値は一例です。').count(), 1);
       assert.equal(await page.getByTestId('connect-device').getAttribute('aria-disabled'), 'true');
       assert.equal(await page.getByText('このブラウザー版はサンプル専用です。実車接続にはスマホアプリの開発ビルドが必要です。').count(), 1);
       await page.getByRole('button', { name: '戻る' }).click();
       await page.getByRole('button', { name: 'Switch to English' }).click();
       assert.equal(await page.getByText('Try it without a car').count(), 1);
+      assert.equal(await page.getByText('Bluetooth adapters are not supported yet.').count(), 1);
       await page.getByTestId('try-demo').click();
       await page.getByText('Your results').waitFor();
       assert.equal(await page.getByText('[SAMPLE — NOT A REAL VEHICLE RECORD]').count(), 1);

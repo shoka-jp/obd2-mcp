@@ -32,6 +32,12 @@ jobs:
       - run: npm test
       - run: npm run typecheck
       - run: npm run lint
+      - name: Test against an independent ELM327 simulator
+        run: |
+          python3 -m venv "$RUNNER_TEMP/phone-elmulator"
+          "$RUNNER_TEMP/phone-elmulator/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: --require-hashes -r tests/elmulator-requirements.txt
+          "$RUNNER_TEMP/phone-elmulator/bin/python" -m elmulator validate tests/fixtures/headerless.scenario.json
+          ELMULATOR_PYTHON="$RUNNER_TEMP/phone-elmulator/bin/python" npm run test:elmulator
       - run: npx expo export --platform all --max-workers 2
         env:
           CI: '1'

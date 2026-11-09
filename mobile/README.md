@@ -37,6 +37,23 @@ npm run lint
 npx expo export --platform all
 ```
 
+The CI workflow also exercises the phone's command queue and parser over a
+real local TCP stream with the independently maintained, MIT-licensed
+[elmulator](https://github.com/qadanm/elmulator). It tests a fictional
+headerless response and rejects unexpected header-bearing responses as
+unknown. To run that optional check locally:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install --only-binary=:all: --require-hashes -r tests/elmulator-requirements.txt
+.venv/bin/python -m elmulator validate tests/fixtures/headerless.scenario.json
+ELMULATOR_PYTHON=.venv/bin/python npm run test:elmulator
+```
+
+This Node TCP test does not exercise the phone's native socket module or
+replace testing with a real adapter and vehicle. The simulator is a test-only
+dependency and is not bundled in the app.
+
 The browser export is **sample-only**; it cannot connect to an adapter. The
 TCP library contains native code, so real connections require a custom native
 development build; Expo Go alone is insufficient. To create local builds use
@@ -52,6 +69,17 @@ excludes mode 04, mode 09 and arbitrary commands.
 
 The app icon is rendered from the companion Automotive AI Skills project logo.
 
+## References for future connections
+
+- [shinyorg/obd](https://github.com/shinyorg/obd) separates Wi-Fi, BLE and
+  classic Bluetooth transports. Generic classic Bluetooth support should not
+  be assumed on iPhone.
+- [react-native-ble-plx](https://github.com/dotintent/react-native-ble-plx)
+  is a possible BLE library, but does not cover classic Bluetooth. It has not
+  been integrated or verified with this prototype's Expo version or devices.
+- [ReDrive](https://github.com/iUnreallx/ReDrive) is a reference for adapter
+  selection and a demo mode. Its GPL-3.0 source is not included here.
+
 ## 日本語
 
 Android・iPhone向けの**ソースコード段階の試作**です。ストアでは配布しておらず、実際のスマホ・アダプター・車両での検証もまだです。通信ライブラリは新しいReact Native構成での互換性が未確認と報告されているため、配布前に両OSのビルドと実機確認が必要です。
@@ -63,3 +91,7 @@ Android・iPhone向けの**ソースコード段階の試作**です。ストア
 現在のExpo/React Nativeの標準設定はAndroid SDK 36を対象とします。SDK 37以降を対象にする前に、Android 17のローカルネットワーク権限の要求と拒否時の動作を実装・検証してください。
 
 上の開発コマンドでサンプルと通信処理を検証できます。ブラウザー版はサンプル専用です。実機接続には独自のネイティブ開発ビルドが必要で、Expo Goだけでは使えません。AndroidにはAndroid Studio/SDK、iOSのローカルビルドにはmacOSとXcodeが必要です。iPhoneへの配布にはAppleの署名も必要です。`app.json`の識別子は配布前に確認してください。
+
+上記の追加コマンドでは、MITライセンスの独立した[elmulator](https://github.com/qadanm/elmulator)を使い、架空の診断機とTCP通信して読み取りや予想外の応答を検証できます。このテストはスマホの通信ライブラリや実車・実機の代わりにはなりません。
+
+将来のBluetooth対応に向け、上記の参考実装も調査しました。BLEと従来型Bluetoothは別方式であり、現在の試作ではどちらも未対応です。

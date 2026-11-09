@@ -1,0 +1,3 @@
+# MIT-licensed external ELM327 simulator, used only by the integration test.
+elmulator==0.3.2 \
+    --hash=sha256:3172e6e36f051c0e001573f0abe43135f6e9b84c239dc870be5ad9ce2c3fd250

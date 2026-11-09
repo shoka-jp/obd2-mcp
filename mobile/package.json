@@ -35,6 +35,7 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test tests/*.test.ts",
+    "test:elmulator": "node --import tsx --test tests/elmulator.integration.ts",
     "test:web": "node tests/web-ui.mjs"
   },
   "private": true
