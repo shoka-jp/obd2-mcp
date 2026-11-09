@@ -2,12 +2,14 @@ import { useCallback, useEffect, useRef, useState, type ComponentRef } from 'rea
 import { AppState, Platform, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { messages, type Language } from '../components/strings';
+import { createBleScanner } from '../core/ble';
+import { BleSetupError, sortNearby, type BleProblem, type BleScanner, type NearbyDevice } from '../core/bleDiscovery';
 import { PhoneSession, type Observations } from '../core/session';
 import { makeWifiTransport } from '../core/socket';
 import { DemoTransport, isPrivateIPv4 } from '../core/transport';
 
-type Phase = 'home' | 'setup' | 'connecting' | 'ready' | 'reading' | 'result';
-type Problem = 'connect' | 'invalid' | 'closed' | null;
+type Phase = 'home' | 'choose' | 'setup' | 'bleIntro' | 'bleScan' | 'bleConfirm' | 'connecting' | 'ready' | 'reading' | 'result';
+type Problem = 'connect' | 'bleConnect' | 'invalid' | 'closed' | BleProblem | null;
 type Copy = typeof messages.ja;
 
 function Action({ label, onPress, secondary = false, disabled = false, testID }:
@@ -49,8 +51,15 @@ export default function HomeScreen() {
   const [port, setPort] = useState('35000');
   const [result, setResult] = useState<Observations | null>(null);
   const [shareStatus, setShareStatus] = useState('');
+  const [nearby, setNearby] = useState<NearbyDevice[]>([]);
+  const [selected, setSelected] = useState<NearbyDevice | null>(null);
+  const [scanning, setScanning] = useState(false);
   const session = useRef<PhoneSession | null>(null);
+  const scanner = useRef<BleScanner | null>(null);
+  const scanTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cleanup = useRef<Promise<void>>(Promise.resolve());
   const currentMode = useRef<'demo' | 'device'>('demo');
+  const connection = useRef<'wifi' | 'ble'>('wifi');
   const generation = useRef(0);
   const busy = useRef(false);
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
@@ -59,9 +68,20 @@ export default function HomeScreen() {
     generation.current += 1;
     busy.current = false;
     const previous = session.current;
+    const previousScanner = scanner.current;
     session.current = null;
-    if (previous) void previous.close().catch(() => undefined);
+    scanner.current = null;
+    if (scanTimer.current) clearTimeout(scanTimer.current);
+    scanTimer.current = null;
+    cleanup.current = Promise.allSettled([
+      cleanup.current,
+      ...(previous ? [previous.close()] : []),
+      ...(previousScanner ? [previousScanner.close()] : []),
+    ]).then(() => undefined);
     setResult(null);
+    setNearby([]);
+    setSelected(null);
+    setScanning(false);
     setShareStatus('');
     setProblem(reason);
     setPhase(next);
@@ -69,28 +89,37 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const listener = AppState.addEventListener('change', state => {
-      if (state === 'background' && currentMode.current === 'device' && session.current) reset('home', 'closed');
+      if (state === 'background' && currentMode.current === 'device' && (session.current || scanner.current || busy.current)) reset('home', 'closed');
     });
-    return () => { listener.remove(); generation.current += 1; void session.current?.close().catch(() => undefined); session.current = null; };
+    return () => {
+      listener.remove(); generation.current += 1;
+      if (scanTimer.current) clearTimeout(scanTimer.current);
+      void session.current?.close().catch(() => undefined);
+      void scanner.current?.close().catch(() => undefined);
+      session.current = null; scanner.current = null;
+    };
   }, [reset]);
   useEffect(() => { scroll.current?.scrollTo({ y: 0, animated: true }); }, [phase]);
 
-  const start = async (mode: 'demo' | 'device') => {
+  const start = async (mode: 'demo' | 'wifi' | 'ble') => {
     if (busy.current) return;
     const numericPort = Number(port);
-    if (mode === 'device' && (!isPrivateIPv4(host.trim()) || !/^\d+$/.test(port) || numericPort < 1 || numericPort > 65535)) {
+    if (mode === 'wifi' && (!isPrivateIPv4(host.trim()) || !/^\d+$/.test(port) || numericPort < 1 || numericPort > 65535)) {
       setProblem('invalid');
       return;
     }
+    if (mode === 'ble' && (!selected || !scanner.current)) { reset('bleIntro', 'scan'); return; }
     busy.current = true;
     const attempt = ++generation.current;
-    currentMode.current = mode;
+    currentMode.current = mode === 'demo' ? 'demo' : 'device';
+    if (mode !== 'demo') connection.current = mode;
     setProblem(null);
     setResult(null);
     setPhase('connecting');
     let next: PhoneSession | null = null;
     try {
-      const transport = mode === 'demo' ? new DemoTransport() : makeWifiTransport(host.trim(), numericPort);
+      const transport = mode === 'demo' ? new DemoTransport() : mode === 'wifi'
+        ? makeWifiTransport(host.trim(), numericPort) : scanner.current!.makeTransport(selected!.id);
       next = new PhoneSession(transport, mode === 'demo');
       session.current = next;
       await next.connect();
@@ -103,7 +132,7 @@ export default function HomeScreen() {
       } else setPhase('ready');
     } catch {
       if (next) await next.close().catch(() => undefined);
-      if (attempt === generation.current) { session.current = null; setProblem('connect'); setPhase(mode === 'demo' ? 'home' : 'setup'); }
+      if (attempt === generation.current) reset(mode === 'demo' ? 'home' : mode === 'ble' ? 'bleIntro' : 'setup', mode === 'ble' ? 'bleConnect' : 'connect');
     } finally { if (attempt === generation.current) busy.current = false; }
   };
 
@@ -118,7 +147,77 @@ export default function HomeScreen() {
       const observations = await session.current.read();
       if (attempt === generation.current) { setResult(observations); setPhase('result'); }
     } catch {
-      if (attempt === generation.current) reset('setup', 'connect');
+      if (attempt === generation.current) reset(connection.current === 'ble' ? 'bleIntro' : 'setup', connection.current === 'ble' ? 'bleConnect' : 'connect');
+    } finally { if (attempt === generation.current) busy.current = false; }
+  };
+
+  const scanBle = async () => {
+    if (busy.current) return;
+    busy.current = true;
+    const attempt = ++generation.current;
+    currentMode.current = 'device';
+    setPhase('bleScan'); setProblem(null); setNearby([]); setSelected(null); setScanning(true);
+    if (scanTimer.current) clearTimeout(scanTimer.current);
+    scanTimer.current = null;
+    const previousScanner = scanner.current;
+    scanner.current = null;
+    let next: BleScanner | null = null;
+    try {
+      await cleanup.current;
+      if (previousScanner) await previousScanner.close();
+      if (attempt !== generation.current) return;
+      next = createBleScanner();
+      scanner.current = next;
+      const activeScanner = next;
+      let scanFailed = false;
+      await next.start(device => {
+        if (attempt !== generation.current) return;
+        setNearby(items => {
+          const rest = items.filter(item => item.id !== device.id);
+          return sortNearby([...rest, device]).slice(0, 60);
+        });
+      }, error => {
+        if (attempt !== generation.current) return;
+        scanFailed = true;
+        if (scanTimer.current) clearTimeout(scanTimer.current);
+        scanTimer.current = null;
+        setScanning(false); setProblem(error.reason);
+        void activeScanner.stop();
+      });
+      if (attempt !== generation.current) { await next.close(); return; }
+      if (!scanFailed) scanTimer.current = setTimeout(() => {
+        if (attempt !== generation.current) return;
+        scanTimer.current = null; setScanning(false);
+        void activeScanner.stop();
+      }, 12000);
+    } catch (error) {
+      if (next) await next.close().catch(() => undefined);
+      if (attempt === generation.current) {
+        scanner.current = null;
+        setScanning(false);
+        setProblem(error instanceof BleSetupError ? error.reason : 'scan');
+      }
+    } finally { if (attempt === generation.current) busy.current = false; }
+  };
+
+  const stopBleScan = async () => {
+    if (busy.current) return;
+    busy.current = true;
+    const attempt = generation.current;
+    if (scanTimer.current) clearTimeout(scanTimer.current);
+    scanTimer.current = null; setScanning(false);
+    try { await scanner.current?.stop(); } finally { if (attempt === generation.current) busy.current = false; }
+  };
+
+  const selectBleDevice = async (device: NearbyDevice) => {
+    if (busy.current || !scanner.current) return;
+    busy.current = true;
+    const attempt = ++generation.current;
+    if (scanTimer.current) clearTimeout(scanTimer.current);
+    scanTimer.current = null; setScanning(false);
+    try {
+      await scanner.current.stop();
+      if (attempt === generation.current) { setSelected(device); setProblem(null); setPhase('bleConfirm'); }
     } finally { if (attempt === generation.current) busy.current = false; }
   };
 
@@ -134,6 +233,10 @@ export default function HomeScreen() {
       } else await Share.share({ message: note });
     } catch { setShareStatus(t.shareError); }
   };
+
+  const bleProblem = problem === 'permission' ? t.permissionError : problem === 'poweredOff' ? t.poweredOffError
+    : problem === 'unsupported' ? t.unsupportedError : problem === 'scan' ? t.scanError
+      : problem === 'bleConnect' ? t.bleConnectError : null;
 
   return <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
     <View style={styles.topbar}>
@@ -161,9 +264,24 @@ export default function HomeScreen() {
           <Text style={styles.cardIndex}>02  /  CONNECT</Text><Text accessibilityRole="header" style={styles.cardTitle}>{t.realTitle}</Text>
           <Text style={styles.body}>{t.realBody}</Text>
           {Platform.OS === 'web' && <Text style={styles.smallNotice}>{t.webNotice}</Text>}
-          <Action label={t.realButton} onPress={() => { setProblem(null); setPhase('setup'); }} secondary testID="prepare-device" />
+          <Action label={t.realButton} onPress={() => { setProblem(null); setPhase('choose'); }} secondary testID="prepare-device" />
         </View>
         <Text style={styles.footnote}>{t.safety}</Text><Text style={styles.footnote}>{t.private}</Text>
+      </>}
+
+      {phase === 'choose' && <>
+        <Text style={styles.sectionKicker}>01  /  CONNECTION</Text><Text accessibilityRole="header" style={styles.title}>{t.chooseTitle}</Text>
+        <Text style={styles.body}>{t.chooseBody}</Text>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>{t.wifiTitle}</Text><Text style={styles.body}>{t.wifiBody}</Text>
+          <Action label={t.wifiSelect} onPress={() => { setProblem(null); setPhase('setup'); }} testID="choose-wifi" />
+        </View>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>{t.bleTitle}</Text><Text style={styles.body}>{t.bleBody}</Text>
+          <Action label={t.bleSelect} onPress={() => { setProblem(null); setPhase('bleIntro'); }} testID="choose-ble" />
+        </View>
+        {Platform.OS === 'web' && <Text style={styles.smallNotice}>{t.webNotice}</Text>}
+        <Action label={t.back} onPress={() => reset()} secondary />
       </>}
 
       {phase === 'setup' && <>
@@ -182,10 +300,47 @@ export default function HomeScreen() {
           {problem === 'invalid' && <Text accessibilityRole="alert" style={styles.error}>{t.invalid}</Text>}
           {problem === 'connect' && <Text accessibilityRole="alert" style={styles.error}>{t.errorTitle} {t.errorBody}</Text>}
           {Platform.OS === 'web' && <Text style={styles.smallNotice}>{t.webNotice}</Text>}
-          <Action label={t.connect} onPress={() => void start('device')} disabled={Platform.OS === 'web'} testID="connect-device" />
-          <Action label={t.back} onPress={() => reset()} secondary />
+          <Action label={t.connect} onPress={() => void start('wifi')} disabled={Platform.OS === 'web'} testID="connect-device" />
+          <Action label={t.back} onPress={() => reset('choose')} secondary />
         </View>
         <Text style={styles.footnote}>{t.private}</Text>
+      </>}
+
+      {phase === 'bleIntro' && <>
+        <Text style={styles.sectionKicker}>01  /  BLUETOOTH LE</Text><Text accessibilityRole="header" style={styles.title}>{t.bleSetupTitle}</Text>
+        <View style={styles.notice}><Text style={styles.noticeText}>{t.safety}</Text></View>
+        {[t.step1, t.bleStep, t.blePrivacy].map((text, index) => <View style={styles.step} key={text}>
+          <Text style={styles.stepNumber}>0{index + 1}</Text><Text style={styles.stepText}>{text}</Text>
+        </View>)}
+        {bleProblem && <Text accessibilityRole="alert" style={styles.error}>{bleProblem}</Text>}
+        {Platform.OS === 'web' && <Text style={styles.smallNotice}>{t.webNotice}</Text>}
+        <Action label={t.scanButton} onPress={() => void scanBle()} disabled={Platform.OS === 'web'} testID="scan-ble" />
+        <Action label={t.back} onPress={() => reset('choose')} secondary />
+      </>}
+
+      {phase === 'bleScan' && <>
+        <Text style={styles.sectionKicker}>02  /  NEARBY</Text><Text accessibilityRole="header" style={styles.title}>{t.bleSetupTitle}</Text>
+        <Text accessibilityLiveRegion="polite" style={styles.body}>{scanning ? t.scanRunning : t.scanDone}</Text>
+        <View style={styles.notice}><Text style={styles.noticeText}>{t.scanHint}</Text></View>
+        {bleProblem && <Text accessibilityRole="alert" style={styles.error}>{bleProblem}</Text>}
+        {!scanning && !nearby.length && !bleProblem && <Text style={styles.body}>{t.noneFound}</Text>}
+        {nearby.map(device => <Pressable key={device.id} accessibilityRole="button"
+          accessibilityLabel={`${device.name || t.unnamed} ${device.id.slice(-4)}`}
+          onPress={() => void selectBleDevice(device)} style={styles.device}>
+          <Text style={styles.deviceName}>{device.name || t.unnamed}</Text><Text style={styles.deviceSuffix}>···{device.id.slice(-4)}</Text>
+        </Pressable>)}
+        {scanning ? <Action label={t.scanStop} onPress={() => void stopBleScan()} secondary />
+          : <Action label={t.scanAgain} onPress={() => void scanBle()} />}
+        <Action label={t.back} onPress={() => reset('bleIntro')} secondary />
+      </>}
+
+      {phase === 'bleConfirm' && selected && <>
+        <Text style={styles.sectionKicker}>02  /  CHECK DEVICE</Text><Text accessibilityRole="header" style={styles.title}>{t.confirmTitle}</Text>
+        <View style={styles.card}><Text style={styles.cardTitle}>{selected.name || t.unnamed}</Text>
+          <Text style={styles.footnote}>···{selected.id.slice(-4)}</Text></View>
+        <View style={styles.notice}><Text style={styles.noticeText}>{t.confirmHint}</Text></View>
+        <Action label={t.bleConnect} onPress={() => void start('ble')} disabled={Platform.OS === 'web'} testID="connect-ble" />
+        <Action label={t.back} onPress={() => reset('bleIntro')} secondary />
       </>}
 
       {(phase === 'connecting' || phase === 'reading') && <>
@@ -269,6 +424,9 @@ const styles = StyleSheet.create({
   stepText: { color: '#304d4e', fontSize: 15, lineHeight: 24, flex: 1 },
   inputLabel: { color: '#264c4c', fontWeight: '700', fontSize: 14, marginTop: 8, marginBottom: 6 },
   input: { backgroundColor: '#f6faf8', borderWidth: 1, borderColor: '#b9ceca', borderRadius: 10, minHeight: 48, paddingHorizontal: 12, color: '#193b42', fontSize: 16 },
+  device: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#dfe8e3', borderRadius: 14, padding: 16, marginBottom: 10, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  deviceName: { color: '#193b42', fontWeight: '700', fontSize: 16, flex: 1 },
+  deviceSuffix: { color: '#58706c', fontSize: 13 },
   error: { color: '#9b322d', fontSize: 14, lineHeight: 22, marginTop: 12 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, borderTopWidth: 1, borderColor: '#edf2ee', paddingVertical: 13 },
   rowLabel: { color: '#536e6a', fontSize: 14, lineHeight: 21, flex: 1 },

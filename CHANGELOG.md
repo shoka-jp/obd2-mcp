@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- Add an Android/iPhone phone-app source prototype with a fictional sample, a read-only Wi-Fi adapter flow, and a shareable workshop note. Native builds and physical devices remain unverified.
+- Add an Android/iPhone phone-app source prototype with a fictional sample, read-only Wi-Fi and Bluetooth LE adapter flows, and a shareable workshop note. Native builds and physical devices require verification.
 
 ## [0.3.0] - 2026-11-09
 

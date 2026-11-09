@@ -76,8 +76,14 @@ jobs:
       - run: npx expo prebuild --platform android --no-install
         env:
           CI: '1'
+      - run: python3 tests/check_native_config.py android android/app/src/main/AndroidManifest.xml
       - run: ./gradlew assembleDebug --no-daemon
         working-directory: mobile/android
+      - name: Check merged Android permissions
+        run: |
+          manifest=$(find android/app/build/intermediates/merged_manifests/debug -name AndroidManifest.xml -print -quit)
+          test -n "$manifest"
+          python3 tests/check_native_config.py android "$manifest"
 
   ios-build:
     name: iOS simulator build
@@ -99,6 +105,11 @@ jobs:
       - run: npx expo prebuild --platform ios --no-install
         env:
           CI: '1'
+      - name: Check iOS permission descriptions
+        run: |
+          plist=$(find ios -mindepth 2 -maxdepth 2 -name Info.plist -print -quit)
+          test -n "$plist"
+          python3 tests/check_native_config.py ios "$plist"
       - run: pod install --project-directory=ios
       - name: Build without signing
         run: |

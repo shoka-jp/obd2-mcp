@@ -7,6 +7,10 @@ const READ_ONLY_COMMANDS: ReadonlySet<string> = new Set([
   '0101', '03', '07', '010C', '0105', '020200', '020C00', '020500',
 ]);
 
+export function isReadOnlyCommand(command: string): boolean {
+  return READ_ONLY_COMMANDS.has(command);
+}
+
 export class RestrictedTransport implements Transport {
   private closed = false;
   constructor(private readonly inner: Transport) {}
@@ -14,7 +18,7 @@ export class RestrictedTransport implements Transport {
   close() { this.closed = true; return this.inner.close(); }
   describe() { return this.inner.describe(); }
   sendRaw(command: string, timeoutMs?: number) {
-    if (this.closed || !READ_ONLY_COMMANDS.has(command)) {
+    if (this.closed || !isReadOnlyCommand(command)) {
       return Promise.reject(new Error('This app only supports its read-only command set.'));
     }
     return this.inner.sendRaw(command, timeoutMs);
@@ -133,7 +137,7 @@ export class WifiTransport implements Transport {
   }
 
   sendRaw(command: string, timeoutMs = 8000): Promise<string> {
-    if (!READ_ONLY_COMMANDS.has(command)) return Promise.reject(new Error('Command not allowed.'));
+    if (!isReadOnlyCommand(command)) return Promise.reject(new Error('Command not allowed.'));
     const run = () => new Promise<string>((resolve, reject) => {
       if (this.failed || !this.socket) return reject(this.failed ?? new Error('Not connected.'));
       this.buffer = '';

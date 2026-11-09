@@ -16,7 +16,10 @@
     },
     "android": {
       "package": "jp.shokajp.obd2phone",
-      "permissions": ["android.permission.INTERNET", "android.permission.ACCESS_NETWORK_STATE"],
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#10243b",
         "foregroundImage": "./assets/icon.png"
@@ -28,7 +31,12 @@
     },
     "plugins": [
       "expo-router",
-      "expo-status-bar"
+      "expo-status-bar",
+      ["react-native-ble-plx", {
+        "neverForLocation": true,
+        "bluetoothAlwaysPermission": "Bluetooth LE診断機を探して、車の記録を読み取るために使用します。"
+      }],
+      "./plugins/withLegacyBlePermissions"
     ]
   }
 }
