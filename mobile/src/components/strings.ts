@@ -1,6 +1,6 @@
 export const messages = {
   ja: {
-    brand: 'CAR CHECK  /  車のチェック', beta: '試作版', title: '車のことを、\nもっとわかりやすく。',
+    brand: 'CAR CHECK  /  車のチェック', beta: '試作版', title: '車の記録を、\nわかりやすく。',
     intro: '警告灯が気になったときに。車の記録を読み、整備士に相談するためのメモを作ります。',
     trialTitle: 'まずは、車なしで体験', trialBody: '架空の車のデータを使います。診断機もアカウントも必要ありません。',
     trialButton: 'サンプルを見る', realTitle: '自分の車の記録を見る',
