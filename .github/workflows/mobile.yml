@@ -1,0 +1,119 @@
+name: Phone prototype checks
+
+on:
+  push:
+    branches: [main]
+    paths: ['mobile/**', 'src/elm327.ts', 'src/dtc.ts', '.github/workflows/mobile.yml']
+  pull_request:
+    paths: ['mobile/**', 'src/elm327.ts', 'src/dtc.ts', '.github/workflows/mobile.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Phone code and sample interface
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run lint
+      - name: Test against an independent ELM327 simulator
+        run: |
+          python3 -m venv "$RUNNER_TEMP/phone-elmulator"
+          "$RUNNER_TEMP/phone-elmulator/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: --require-hashes -r tests/elmulator-requirements.txt
+          "$RUNNER_TEMP/phone-elmulator/bin/python" -m elmulator validate tests/fixtures/headerless.scenario.json
+          ELMULATOR_PYTHON="$RUNNER_TEMP/phone-elmulator/bin/python" npm run test:elmulator
+      - run: npx expo export --platform all --max-workers 2
+        env:
+          CI: '1'
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:web
+      - name: Save preview screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phone-preview-screenshots
+          path: mobile/browser-artifacts/
+          if-no-files-found: ignore
+          retention-days: 3
+
+  android-build:
+    name: Android native build
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npx expo prebuild --platform android --no-install
+        env:
+          CI: '1'
+      - run: python3 tests/check_native_config.py android android/app/src/main/AndroidManifest.xml
+      - run: ./gradlew assembleDebug --no-daemon
+        working-directory: mobile/android
+      - name: Check merged Android permissions
+        run: |
+          manifest=$(find android/app/build/intermediates/merged_manifests/debug -name AndroidManifest.xml -print -quit)
+          test -n "$manifest"
+          python3 tests/check_native_config.py android "$manifest"
+
+  ios-build:
+    name: iOS simulator build
+    runs-on: macos-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npx expo prebuild --platform ios --no-install
+        env:
+          CI: '1'
+      - name: Check iOS permission descriptions
+        run: |
+          plist=$(find ios -mindepth 2 -maxdepth 2 -name Info.plist -print -quit)
+          test -n "$plist"
+          python3 tests/check_native_config.py ios "$plist"
+      - run: pod install --project-directory=ios
+      - name: Build without signing
+        run: |
+          workspace=$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)
+          test -n "$workspace"
+          scheme=$(basename "$workspace" .xcworkspace)
+          xcodebuild -workspace "$workspace" -scheme "$scheme" -configuration Debug -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build
