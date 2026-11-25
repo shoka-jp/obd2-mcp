@@ -93,6 +93,8 @@ Serial baud rate defaults to 38400; override with `OBD2MCP_BAUD=115200` if your 
 
 A malformed connection, port number or baud rate stops startup with a message naming the setting. Write an IPv6 address in brackets, for example `tcp:[fe80::1]:35000`.
 
+A WiFi adapter that does not accept the connection within 10 seconds returns a timeout error. Check that the computer is on the adapter's network, then restart the server before trying again.
+
 Claude Code example with a real adapter:
 
 ```bash
