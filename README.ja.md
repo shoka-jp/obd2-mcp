@@ -125,7 +125,7 @@ claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- node "/absolute/path
 | `read_diagnostic_report` | 4種類の読み取り結果を取得時刻・未取得項目・エラー付きでまとめる整備相談用レポート。ライブセンサーを選択可能 |
 | `read_dtcs` | 記録済み・保留中の故障コード、警告灯の状態、コード数。アダプターがデータを返さない場合、該当する一覧は `null`（未確認）です。 |
 | `read_freeze_frame` | フリーズフレームを記録させたDTCと、その瞬間のエンジン状態 |
-| `read_live_data` | ライブセンサー:回転数、水温、燃料補正、MAF、O2電圧など(22 PID) |
+| `read_live_data` | ライブセンサー:回転数、水温、燃料補正、MAF、O2電圧など(21 PID) |
 | `read_readiness` | レディネスモニタの完了状態(検査に通る状態かの判定材料) |
 | `read_vin` | ECUから車台番号を読み取り |
 | `connection_status` | アダプター情報と取得できた場合のポート電圧。アダプターへの接続だけでは車両との通信は確認できません。 |
