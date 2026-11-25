@@ -2,6 +2,7 @@
 
 ## [0.4.0] - Unreleased
 
+- Time out a WiFi (TCP) adapter connection after 10 seconds instead of waiting for the operating system's TCP timeout, and keep the first connection error in later restart messages.
 - Stop startup with a message naming the setting for an invalid `OBD2MCP_BAUD`, TCP host or port, or an empty serial path, and accept bracketed IPv6 addresses such as `tcp:[fe80::1]:35000`.
 
 ## [0.3.0] - 2026-11-09
