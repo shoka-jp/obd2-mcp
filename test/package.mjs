@@ -29,7 +29,7 @@ try {
   assert(!existsSync(join(source, 'dist')), 'staging must start without build output');
   const [pack] = JSON.parse(runNpm(['pack', '--json', '--pack-destination', temporary], source));
   const included = new Set(pack.files.map(file => file.path));
-  for (const required of ['dist/index.js', 'dist/server.js', 'dist/mock.js', 'dist/demo.js',
+  for (const required of ['dist/index.js', 'dist/connection.js', 'dist/server.js', 'dist/mock.js', 'dist/demo.js',
     'README.md', 'README.ja.md', 'CHANGELOG.md', 'LICENSE', 'CONTRIBUTING.md',
     'docs/demo-results.md', 'docs/try-mock.md', 'docs/images/get-started-en.svg',
     'docs/images/get-started-ja.svg', 'examples/mock-demo.mjs']) {
