@@ -91,6 +91,8 @@ Set the connection via environment variable or CLI flag:
 
 Serial baud rate defaults to 38400; override with `OBD2MCP_BAUD=115200` if your adapter needs it. Bluetooth adapters must first be paired at the OS level so they expose a serial port.
 
+A malformed connection, port number or baud rate stops startup with a message naming the setting. Write an IPv6 address in brackets, for example `tcp:[fe80::1]:35000`.
+
 Claude Code example with a real adapter:
 
 ```bash

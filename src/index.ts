@@ -1,45 +1,9 @@
 #!/usr/bin/env node
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { Elm327 } from "./elm327.js";
-import { MockTransport, MOCK_SCENARIOS, type MockScenario } from "./mock.js";
-import { SerialTransport, TcpTransport } from "./transport.js";
-import type { Transport } from "./transport.js";
+import { parseConnection } from "./connection.js";
 import { buildServer } from "./server.js";
 import { runDemo } from "./demo.js";
-
-/**
- * Connection selection (first match wins):
- *   --connection <spec> CLI argument
- *   OBD2MCP_CONNECTION  environment variable
- *   default: mock
- *
- * spec: "mock" | "serial:<path>" (e.g. serial:COM3, serial:/dev/ttyUSB0)
- *       | "tcp:<host>:<port>" (e.g. tcp:192.168.0.10:35000)
- * Baud rate for serial: OBD2MCP_BAUD (default 38400).
- */
-function parseConnection(): { transport: Transport; mock: boolean } {
-  const argIdx = process.argv.indexOf("--connection");
-  if (argIdx !== -1 && process.argv[argIdx + 1] === undefined) {
-    throw new Error("Missing value for --connection — expected mock, serial:<path>, or tcp:<host>:<port>");
-  }
-  const spec = (argIdx !== -1 ? process.argv[argIdx + 1] : process.env.OBD2MCP_CONNECTION) ?? "mock";
-  if (spec === "mock") {
-    const scenario = process.env.OBD2MCP_MOCK_SCENARIO ?? "catalyst";
-    if (!MOCK_SCENARIOS.includes(scenario as MockScenario)) throw new Error(`Unknown mock scenario "${scenario}" — choose ${MOCK_SCENARIOS.join(", ")}`);
-    return { transport: new MockTransport(scenario as MockScenario), mock: true };
-  }
-  if (spec.startsWith("serial:")) {
-    const baud = Number(process.env.OBD2MCP_BAUD ?? 38400);
-    return { transport: new SerialTransport(spec.slice("serial:".length), baud), mock: false };
-  }
-  if (spec.startsWith("tcp:")) {
-    const rest = spec.slice("tcp:".length);
-    const sep = rest.lastIndexOf(":");
-    if (sep === -1) throw new Error(`Invalid tcp spec "${spec}" — expected tcp:host:port`);
-    return { transport: new TcpTransport(rest.slice(0, sep), Number(rest.slice(sep + 1))), mock: false };
-  }
-  throw new Error(`Invalid connection "${spec}" — expected mock, serial:<path>, or tcp:<host>:<port>`);
-}
 
 async function main(): Promise<void> {
   const langIndex = process.argv.indexOf("--lang");
@@ -57,7 +21,7 @@ async function main(): Promise<void> {
     return;
   }
   if (process.argv.includes("--summary")) throw new Error("--summary requires --demo");
-  const { transport, mock } = parseConnection();
+  const { transport, mock } = parseConnection(process.argv, process.env);
   const elm = new Elm327(transport);
   const server = buildServer(elm, mock);
   const stdio = new StdioServerTransport();

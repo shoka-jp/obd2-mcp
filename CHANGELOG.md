@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.4.0] - Unreleased
+
+- Stop startup with a message naming the setting for an invalid `OBD2MCP_BAUD`, TCP host or port, or an empty serial path, and accept bracketed IPv6 addresses such as `tcp:[fe80::1]:35000`.
+
 ## [0.3.0] - 2026-11-09
 
 - Add read-only `read_supported_pids` discovery for Mode 01 PIDs 01–60, with per-sensor support states, partial failure evidence and matching mock bitmaps.

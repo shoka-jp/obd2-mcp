@@ -72,7 +72,7 @@ export class TcpTransport extends StreamTransport {
     super();
   }
   describe(): string {
-    return `tcp:${this.host}:${this.port}`;
+    return `tcp:${this.host.includes(":") ? `[${this.host}]` : this.host}:${this.port}`;
   }
   open(): Promise<void> {
     return new Promise((resolve, reject) => {
