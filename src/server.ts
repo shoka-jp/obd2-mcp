@@ -17,6 +17,14 @@ const MONITORS_CD = [
   "egr_system",
 ] as const;
 
+/**
+ * MCP tool annotations let clients decide how to present a tool, for example
+ * whether to ask before running it. Every reader only queries the adapter;
+ * clear_dtcs is the only tool that changes vehicle state.
+ */
+const READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true } as const;
+const DESTRUCTIVE = { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true } as const;
+
 export function buildServer(elm: Elm327, mock: boolean): McpServer {
   const server = new McpServer({ name: "obd2-mcp", version: "0.3.0" });
 
@@ -34,10 +42,14 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
     isError: true,
   });
 
-  server.tool(
+  server.registerTool(
     "connection_status",
-    "Report the OBD-II adapter connection, identity, and port voltage if available. Adapter connectivity does not establish communication with a vehicle; vehicle_communication is not_checked.",
-    {},
+    {
+      title: "Check adapter connection",
+      description: "Report the OBD-II adapter connection, identity, and port voltage if available. Adapter connectivity does not establish communication with a vehicle; vehicle_communication is not_checked.",
+      inputSchema: {},
+      annotations: READ_ONLY,
+    },
     async () => {
       try {
         const identity = await elm.at("ATI");
@@ -86,19 +98,24 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
     }
   };
 
-  server.tool(
+  server.registerTool(
     "read_dtcs",
-    "Read diagnostic trouble codes: stored (confirmed) DTCs, pending DTCs, MIL (check-engine light) state, and DTC count. A null code list means the adapter returned no data, not that there are no codes. Use first when a warning light is on.",
-    {},
+    {
+      title: "Read trouble codes",
+      description: "Read diagnostic trouble codes: stored (confirmed) DTCs, pending DTCs, MIL (check-engine light) state, and DTC count. A null code list means the adapter returned no data, not that there are no codes. Use first when a warning light is on.",
+      inputSchema: {},
+      annotations: READ_ONLY,
+    },
     readDtcs
   );
 
   server.registerTool(
     "read_supported_pids",
     {
+      title: "Discover supported live sensors",
       description: "Discover advertised Mode 01 support for this server's live sensors (PID range 01-60). Returns supported_sensor_names for a later read_live_data or read_diagnostic_report call, plus per-sensor supported/not_advertised/unknown states. Partial failures retain earlier results. Support does not guarantee a reading. If no names are supported, do not pass an empty pids array expecting no reads: it selects the defaults. No VIN request or code clearing.",
       inputSchema: {},
-      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+      annotations: READ_ONLY,
     },
     async () => {
       const result = await discoverSupportedPids(elm);
@@ -126,10 +143,14 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
     return wrap({ live_data: values });
   };
 
-  server.tool(
+  server.registerTool(
     "read_live_data",
-    `Read live sensor values (mode 01 PIDs). Omit "pids" for a sensible default set. Available names: ${PIDS.map(p => p.name).join(", ")}.`,
-    { pids: z.array(z.string()).optional().describe("PID names to read; omit for the default set") },
+    {
+      title: "Read live sensor data",
+      description: `Read live sensor values (mode 01 PIDs). Omit "pids" for a sensible default set. Available names: ${PIDS.map(p => p.name).join(", ")}.`,
+      inputSchema: { pids: z.array(z.string()).optional().describe("PID names to read; omit for the default set") },
+      annotations: READ_ONLY,
+    },
     readLiveData
   );
 
@@ -157,10 +178,14 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
     }
   };
 
-  server.tool(
+  server.registerTool(
     "read_freeze_frame",
-    "Read the freeze frame (frame 0): the DTC that froze it plus engine conditions captured at the moment the fault set. Read this BEFORE clearing codes — clearing erases it.",
-    {},
+    {
+      title: "Read freeze frame",
+      description: "Read the freeze frame (frame 0): the DTC that froze it plus engine conditions captured at the moment the fault set. Read this BEFORE clearing codes — clearing erases it.",
+      inputSchema: {},
+      annotations: READ_ONLY,
+    },
     readFreezeFrame
   );
 
@@ -186,19 +211,24 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
     }
   };
 
-  server.tool(
+  server.registerTool(
     "read_readiness",
-    "Read readiness monitors (emissions self-tests): which monitors this vehicle supports and whether each has completed. Useful when preparing for an emissions inspection; this result alone does not determine whether the vehicle will pass.",
-    {},
+    {
+      title: "Read readiness monitors",
+      description: "Read readiness monitors (emissions self-tests): which monitors this vehicle supports and whether each has completed. Useful when preparing for an emissions inspection; this result alone does not determine whether the vehicle will pass.",
+      inputSchema: {},
+      annotations: READ_ONLY,
+    },
     readReadiness
   );
 
   server.registerTool(
     "read_diagnostic_report",
     {
+      title: "Collect diagnostic evidence report",
       description: `Collect stored/pending codes, freeze frame, live data and readiness into one timestamped evidence record for a workshop discussion. Optionally select live sensor names with pids; omit or pass an empty list for the defaults. Available names: ${PIDS.map(p => p.name).join(", ")}. Readings are collected sequentially. Preserve each section's errors and unknown values when summarizing. VIN is not requested and codes are not cleared. The result contains observations, not a diagnosis.`,
       inputSchema: { pids: z.array(z.string()).optional().describe("Live PID names to read; omit or pass an empty list for the default set") },
-      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+      annotations: READ_ONLY,
     },
     async ({ pids }) => {
       const startedAt = new Date().toISOString();
@@ -243,10 +273,14 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
     }
   );
 
-  server.tool(
+  server.registerTool(
     "read_vin",
-    "Read the Vehicle Identification Number (VIN) from the ECU (mode 09 PID 02).",
-    {},
+    {
+      title: "Read VIN",
+      description: "Read the Vehicle Identification Number (VIN) from the ECU (mode 09 PID 02). A VIN identifies the vehicle; remove it before sharing results publicly.",
+      inputSchema: {},
+      annotations: READ_ONLY,
+    },
     async () => {
       try {
         const bytes = await elm.obd("0902", "4902");
@@ -263,10 +297,14 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
     }
   );
 
-  server.tool(
+  server.registerTool(
     "clear_dtcs",
-    "Clear stored DTCs and turn off the MIL (mode 04). DESTRUCTIVE: also erases freeze frame data and resets readiness monitors, which can make the vehicle fail an emissions inspection until drive cycles complete. Read read_dtcs and read_freeze_frame first, and only call this with confirm=true after the user explicitly agrees.",
-    { confirm: z.boolean().describe("Must be true. Confirms the user understands freeze frame data will be lost and readiness monitors reset.") },
+    {
+      title: "Clear trouble codes (destructive)",
+      description: "Clear stored DTCs and turn off the MIL (mode 04). DESTRUCTIVE: also erases freeze frame data and resets readiness monitors, which can make the vehicle fail an emissions inspection until drive cycles complete. Read read_dtcs and read_freeze_frame first, and only call this with confirm=true after the user explicitly agrees.",
+      inputSchema: { confirm: z.boolean().describe("Must be true. Confirms the user understands freeze frame data will be lost and readiness monitors reset.") },
+      annotations: DESTRUCTIVE,
+    },
     async ({ confirm }) => {
       if (!confirm) {
         return fail(
