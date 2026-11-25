@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+- Annotate every tool for MCP clients: readers are marked read-only and `clear_dtcs` is marked destructive, and each tool has a display title.
+- Stop startup with a specific message for an invalid `OBD2MCP_BAUD`, TCP port or host, or an empty serial path, instead of failing later at the adapter.
+- Time out a WiFi (TCP) adapter connection after 10 seconds instead of waiting for the operating system's TCP timeout, and keep the first connection error in later "restart the server" messages.
+- Accept bracketed IPv6 addresses such as `tcp:[fe80::1]:35000`.
+- Correct the documented live sensor count to 21 PIDs.
+
 ## [0.3.0] - 2026-11-09
 
 - Add read-only `read_supported_pids` discovery for Mode 01 PIDs 01–60, with per-sensor support states, partial failure evidence and matching mock bitmaps.

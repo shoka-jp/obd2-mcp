@@ -91,6 +91,8 @@ Set the connection via environment variable or CLI flag:
 
 Serial baud rate defaults to 38400; override with `OBD2MCP_BAUD=115200` if your adapter needs it. Bluetooth adapters must first be paired at the OS level so they expose a serial port.
 
+A malformed connection, port number or baud rate stops startup with a message naming the setting. A WiFi adapter that does not accept the connection within 10 seconds returns a timeout error; check that the computer is on the adapter's network, then restart the server before trying again. Write an IPv6 address in brackets, for example `tcp:[fe80::1]:35000`.
+
 Claude Code example with a real adapter:
 
 ```bash
@@ -125,7 +127,7 @@ Protocol references: [ELM327 datasheet, “Talking to the Vehicle”](https://el
 | `read_diagnostic_report` | Collect a timestamped evidence report from four readers, optionally selecting live sensors and including unavailable fields and errors. |
 | `read_dtcs` | Stored + pending trouble codes, MIL state, DTC count. A code list is `null` when the adapter returns no data; this is not a confirmed empty list. |
 | `read_freeze_frame` | The DTC that set the freeze frame and the engine conditions at that moment |
-| `read_live_data` | Live sensors: RPM, coolant temp, fuel trims, MAF, O2 voltages, and more (22 PIDs) |
+| `read_live_data` | Live sensors: RPM, coolant temp, fuel trims, MAF, O2 voltages, and more (21 PIDs) |
 | `read_readiness` | Emissions monitor completion status (inspection readiness) |
 | `read_vin` | Vehicle Identification Number from the ECU |
 | `connection_status` | Adapter identity and port voltage if available. A connected adapter does not itself confirm communication with the vehicle. |

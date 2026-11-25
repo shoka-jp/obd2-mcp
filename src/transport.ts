@@ -36,7 +36,9 @@ abstract class StreamTransport implements Transport {
   }
 
   protected fail(err: Error): void {
-    this.unusable = err;
+    // Keep the first cause: a socket "close" that follows an error or timeout
+    // would otherwise replace the useful message reported on later calls.
+    this.unusable ??= err;
     if (this.waiter) {
       const w = this.waiter;
       this.waiter = null;
@@ -65,21 +67,38 @@ abstract class StreamTransport implements Transport {
   }
 }
 
+const DEFAULT_CONNECT_TIMEOUT = 10000;
+
 /** TCP transport for WiFi ELM327 adapters (commonly 192.168.0.10:35000). */
 export class TcpTransport extends StreamTransport {
   private socket: net.Socket | null = null;
-  constructor(private host: string, private port: number) {
+  constructor(private host: string, private port: number, private connectTimeoutMs = DEFAULT_CONNECT_TIMEOUT) {
     super();
   }
   describe(): string {
-    return `tcp:${this.host}:${this.port}`;
+    return `tcp:${this.host.includes(":") ? `[${this.host}]` : this.host}:${this.port}`;
   }
   open(): Promise<void> {
     return new Promise((resolve, reject) => {
       const s = net.createConnection({ host: this.host, port: this.port });
       s.setEncoding("ascii");
-      s.once("connect", () => resolve());
+      // Without a deadline, an unreachable WiFi adapter can leave the first tool
+      // call waiting for the operating system's TCP timeout (often 20 s or more).
+      const timer = setTimeout(() => {
+        const err = new Error(
+          `Timed out after ${this.connectTimeoutMs} ms connecting to the adapter at ${this.describe()}. ` +
+            "Check that this computer is on the adapter's WiFi network and that the address and port are correct."
+        );
+        this.fail(err);
+        s.destroy();
+        reject(err);
+      }, this.connectTimeoutMs);
+      s.once("connect", () => {
+        clearTimeout(timer);
+        resolve();
+      });
       s.once("error", err => {
+        clearTimeout(timer);
         this.fail(err as Error);
         reject(err);
       });
