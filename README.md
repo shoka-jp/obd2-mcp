@@ -138,6 +138,8 @@ A malformed connection, port number or baud rate stops startup with a message na
 
 A WiFi adapter that does not accept the connection within 10 seconds returns a timeout error. Check that the computer is on the adapter's network, then restart the server before trying again.
 
+If the port, pairing, permissions or vehicle replies cause trouble, see [connection troubleshooting](./docs/troubleshooting.md).
+
 Claude Code example with a real adapter:
 
 ```bash
