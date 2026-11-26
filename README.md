@@ -32,6 +32,18 @@ Ask Claude *"why is my check-engine light on?"* and it reads the actual codes fr
 
 **No hardware? It still works.** A built-in mock vehicle (a warm idling sedan with a stored P0420, MIL on, and realistic live data) lets you try everything before buying an adapter.
 
+## Choose how to start
+
+| You want to… | Start here | You need |
+|---|---|---|
+| See what it returns, without an AI client or a car | The demo command above | Node.js 22 or 24 |
+| Use it in Claude Desktop | [Install the `.mcpb` extension](#claude-desktop-install-as-an-extension) | Claude Desktop |
+| Use it in Claude Code or another MCP client | [Register the release package with `npx`](#without-git-or-a-build) | Node.js 22 or 24 |
+| Read your own car | [Connect an ELM327 adapter](#connecting-a-real-car), then [troubleshooting](./docs/troubleshooting.md) if needed | A USB, Bluetooth (serial) or WiFi ELM327 adapter |
+| Change the code or contribute | [Build from source](#from-source) and the [contribution guide](./CONTRIBUTING.md) | Git and Node.js |
+
+Every path starts with the simulated vehicle, so you can check the setup before connecting a car. In your MCP client, the [guided prompts](#guided-prompts) such as `check_engine_light` are an easy first question.
+
 ## Claude Desktop: install as an extension
 
 Each [GitHub release](https://github.com/shoka-jp/obd2-mcp/releases/latest) from v0.4.0 includes `obd2-mcp-<version>.mcpb`, a Claude Desktop extension. It needs no Git, build step or JSON editing:
