@@ -152,6 +152,8 @@ A WiFi adapter that does not accept the connection within 10 seconds returns a t
 
 If the port, pairing, permissions or vehicle replies cause trouble, see [connection troubleshooting](./docs/troubleshooting.md).
 
+**Tried it with a real car?** Please [report your setup](https://github.com/shoka-jp/obd2-mcp/issues/new?template=hardware-report.yml), whether it worked or not. Reports are listed in [reported setups](./docs/compatibility.md); none have been verified by the project yet.
+
 Claude Code example with a real adapter:
 
 ```bash

@@ -48,7 +48,7 @@ The server does not reconnect automatically yet. Restart the MCP server (or the 
 
 ### Report what you found
 
-Open a [bug report](https://github.com/shoka-jp/obd2-mcp/issues/new?template=bug_report.md) with the operating system, adapter type and model, connection type, what you ran, and the error text. Remove the VIN, licence plate, names, contact details, credentials and private network addresses first. Reports from real setups help the project document which combinations work.
+Open a [real setup report](https://github.com/shoka-jp/obd2-mcp/issues/new?template=hardware-report.yml) with the operating system, adapter type and model, connection type, what you ran, and the error text. It also helps when something works: reported setups are listed in [compatibility](./compatibility.md). Remove the VIN, licence plate, names, contact details, credentials and private network addresses first. Reports from real setups help the project document which combinations work.
 
 ## 日本語
 
@@ -96,4 +96,4 @@ Claudeに `list_serial_ports` を実行してもらうか、`obd2-mcp --list-por
 
 ### 結果を報告する
 
-OS、アダプタの種類と型番、接続方法、実行した操作、エラーの文面を添えて[不具合報告](https://github.com/shoka-jp/obd2-mcp/issues/new?template=bug_report.md)を作成してください。車台番号、ナンバー、氏名・連絡先、認証情報、非公開ネットワークアドレスは事前に削除してください。実際の環境での報告は、動作する組み合わせを記録するのに役立ちます。
+OS、アダプタの種類と型番、接続方法、実行した操作、エラーの文面を添えて[実機での動作報告](https://github.com/shoka-jp/obd2-mcp/issues/new?template=hardware-report.yml)を作成してください。うまく動いた場合の報告も役立ちます。報告のあった環境は[動作報告のあった環境](./compatibility.md#日本語)に掲載します。車台番号、ナンバー、氏名・連絡先、認証情報、非公開ネットワークアドレスは事前に削除してください。実際の環境での報告は、動作する組み合わせを記録するのに役立ちます。
