@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Add a bilingual "Real setup report" issue form and a reported-setups page, so people can share adapter and vehicle results safely (no VIN, parked, read-only) and others can see which combinations have been tried.
+- Update the mock walkthrough with the no-Git demo command and the Claude Desktop extension and `npx` setup, and point to the `check_engine_light` prompt.
 
 ## [0.4.0] - 2026-11-26
 
