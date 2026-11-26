@@ -4,7 +4,7 @@
 
 **開発に参加する：** [初めての方向けIssue](https://github.com/shoka-jp/obd2-mcp/issues?q=is%3Aissue%20is%3Aopen%20label%3A%22good%20first%20issue%22)から選べます。[貢献ガイド](./CONTRIBUTING.md)もご覧ください。ドキュメント修正・テスト・質問を日本語でも歓迎します。[感想・質問を送る](https://github.com/shoka-jp/obd2-mcp/issues/new?template=first-experience.yml)（GitHub上で公開されます）。
 
-![3ステップ：ソースから準備、模擬デモを実行、AIクライアントに接続。デモは車不要でコード消去もしません。](docs/images/get-started-ja.svg)
+![3ステップ：Claude Desktop拡張またはnpxでインストール、check_engine_lightプロンプトで模擬車両を試す、list_serial_portsでアダプタを確認して接続先を設定。最初は模擬データで、既定は読み取りのみ、実車のコード消去は無効です。](docs/images/get-started-ja.svg)
 
 **車もAIクライアントも不要：** Node.js 22または24とnpmを用意し、ターミナルで次を実行してください。ビルド済みパッケージと依存ライブラリを取得するので、Gitの操作や手元でのビルド作業を省けます。
 
@@ -226,6 +226,7 @@ claude mcp add obd2 -- node "/absolute/path/to/obd2-mcp/dist/index.js"
 - **応答の制限。** 複数ECUの応答や混在した応答、未対応の圧縮着火エンジンのレディネスは、推測せずエラーを返します。車台番号の読み取りは、データ項目数 `01` に続く有効な17文字のCAN形式の応答に対応し、それ以外の形式ではエラーを返します。アダプターのタイムアウトや切断後はサーバーを再起動してください。実車とアダプターでの互換性は別途確認が必要です。
 - **診断の支援であって、判決ではありません。** コードは「失敗したテスト」を示すもので「壊れた部品」ではありません。お金を使う前に物理テストで確定させ、安全系(ブレーキ、燃料、SRS、高電圧)はプロに任せてください。
 - 運転しながらAIとやり取りしないでください。読み取りは停車中に。
+- **安全やセキュリティに関わる問題を見つけたら、** 公開Issueではなく[SECURITY.md](./SECURITY.md#日本語)の手順で非公開で報告してください。
 
 ## 開発
 

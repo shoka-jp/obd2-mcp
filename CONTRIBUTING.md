@@ -45,6 +45,18 @@ Preserve explicit confirmation for clearing diagnostic codes. Avoid changes that
 4. **検証と限界を記載。** コード変更では `npm test`、配布・導入の変更では `npm run test:package` も実行します。文書のみならリンクを確認し、コードテストを省いた理由を記載します。モックと実機の結果を区別し、コード消去の確認手順を維持してください。実行したコマンドと結果、未実施・実行できなかった理由を正直に記載します。AI支援や外部資料を実質的に利用した場合はその旨も書き、内容の正確さは投稿者が確認してください。
 5. **マージ前に確認。** メンテナーは範囲、検証、関連CI、安全・個人情報、未解決の指摘を確認します。失敗した検証は調査し、環境要因で実行できない場合は合格扱いにせず、制約と判断を記録します。下書きPRや質問も歓迎します。
 
+## AI-assisted maintenance / AIを使った保守
+
+The maintainer uses Claude to help maintain this project. So you know what to expect:
+
+- Pull requests opened this way carry the `autopilot` label and say that AI assistance was used.
+- They are merged automatically only when CI passes **and** they do not touch vehicle communication, code clearing, CI or release configuration, or dependencies. Anything else gets `autopilot: needs review` and waits for the maintainer.
+- Pull requests from contributors are never merged automatically. The maintainer decides. Claude may help review them or resolve a merge conflict, keeping your commits and credit.
+- Issues labeled `good first issue` or `help wanted` are left for people.
+- Replies on your issues and pull requests come from the maintainer's account. AI-drafted replies are approved by the maintainer before posting.
+
+メンテナーはClaudeを使って保守を行っています。この方法で作成したPRには `autopilot` ラベルが付き、AIを使ったことを明記します。CIが成功し、かつ車両通信・コード消去・CI/リリース設定・依存関係に触れない変更だけを自動でマージします。それ以外は `autopilot: needs review` を付けてメンテナーの判断を待ちます。コントリビューターのPRを自動でマージすることはなく、判断はメンテナーが行います。レビューや衝突の解消をClaudeが手伝う場合も、あなたのコミットとクレジットは残します。`good first issue` と `help wanted` のIssueは人のために残しておきます。IssueやPRへの返信はメンテナーのアカウントから行い、AIが下書きした返信はメンテナーが確認してから投稿します。
+
 ## Share feedback or edit in your browser
 
 You can [share a question or first-use feedback](https://github.com/shoka-jp/obd2-mcp/issues/new?template=first-experience.yml) without writing code. Submitting opens a public GitHub issue and requires a GitHub account; remove identifying details before posting.

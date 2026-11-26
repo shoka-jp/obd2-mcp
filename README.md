@@ -14,7 +14,7 @@
 
 An MCP server that lets AI assistants read your car's OBD-II data through cheap ELM327 adapters — trouble codes, live sensors, freeze frame, readiness monitors, and VIN.
 
-![Three steps: install and build from source, run the simulated demo, then connect an AI client. The demo needs no car and never clears codes.](docs/images/get-started-en.svg)
+![Three steps: install with the Claude Desktop extension or npx, try the simulated car with the check_engine_light prompt, then find your adapter with list_serial_ports and set the connection. It starts with mock data, reads only by default, and code clearing is off for real cars.](docs/images/get-started-en.svg)
 
 **Try it without an AI client or car:** with Node.js 22 or 24 and npm installed, run this in a terminal. npm downloads the built package and its dependencies; Git and a local build are not needed.
 
@@ -226,6 +226,7 @@ With both installed, Claude reads the codes from your car *and* runs the diagnos
 - **Response limitations.** Multiple or mixed ECU replies and unsupported compression-ignition readiness data are reported as errors instead of combining or guessing values. VIN reading accepts the CAN-formatted response with data-item count `01` followed by exactly 17 valid VIN characters; other response formats return an error. Following an adapter timeout or disconnect, restart the server before trying again. Real-vehicle and adapter compatibility must be verified independently.
 - **Diagnosis support, not a verdict.** Codes identify failed tests, not failed parts. Verify with physical tests before spending money, and defer safety-critical work (brakes, fuel, SRS, high-voltage) to professionals.
 - Never drive while interacting with an AI assistant. Read with the vehicle parked.
+- **Found a safety or security problem?** Report it privately as described in [SECURITY.md](./SECURITY.md), not in a public issue.
 
 ## Development
 
