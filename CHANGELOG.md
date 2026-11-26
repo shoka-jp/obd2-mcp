@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Add the `evap` mock scenario (`P0456` evaporative emission system small leak with MIL on and matching freeze frame) (thanks @playlikeboy).
 - Add focused tests for the Mode 01 live-data conversion formulas in `src/pids.ts`, with known byte fixtures and a round-trip check for every PID (thanks @playlikeboy).
 - Add a "Choose how to start" table to both READMEs that points to the demo, the Claude Desktop extension, `npx` registration, real-adapter setup and building from source.
 - Add a next step to common serial-port open errors (permission denied, port in use, wrong port name) while keeping the original error text.
