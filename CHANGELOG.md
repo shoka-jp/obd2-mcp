@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Run the mock tests, package check and serial port listing on Windows and macOS in CI, in addition to Linux.
 - Add a bilingual "Real setup report" issue form and a reported-setups page, so people can share adapter and vehicle results safely (no VIN, parked, read-only) and others can see which combinations have been tried.
 
 ## [0.4.0] - 2026-11-26
