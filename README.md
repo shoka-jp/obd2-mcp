@@ -9,6 +9,8 @@
 **English** | [日本語](./README.ja.md)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Mock and package checks](https://github.com/shoka-jp/obd2-mcp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/shoka-jp/obd2-mcp/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/shoka-jp/obd2-mcp)](https://github.com/shoka-jp/obd2-mcp/releases/latest)
 
 An MCP server that lets AI assistants read your car's OBD-II data through cheap ELM327 adapters — trouble codes, live sensors, freeze frame, readiness monitors, and VIN.
 
