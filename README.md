@@ -156,7 +156,7 @@ Not sure what to ask? The server provides three ready-made prompts. Claude Deskt
 | `workshop_handover` | Turns the diagnostic report into a short note for a mechanic, with unknowns and errors kept visible and the VIN and personal details left out. |
 | `connect_adapter` | Finds the connection value for a USB, Bluetooth or WiFi adapter with `list_serial_ports`, explains how to apply it, and checks the connection after a restart. |
 
-The prompts only instruct Claude; every vehicle access still goes through the read-only tools. They tell Claude not to clear codes or request the VIN, and to label mock data and missing values.
+The server also sends usage instructions when a client connects, so Claude knows to label mock data, check supported sensors first and leave codes uncleared even without a prompt. The prompts only instruct Claude; every vehicle access still goes through the read-only tools. They tell Claude not to clear codes or request the VIN, and to label mock data and missing values.
 
 ## One-call evidence report
 

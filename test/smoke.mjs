@@ -59,6 +59,8 @@ try {
   assert(init.result?.serverInfo?.name === "obd2-mcp", "initialize returns server info");
   const { version } = JSON.parse(readFileSync("package.json", "utf8"));
   assert(init.result?.serverInfo?.version === version, `server reports package version ${version} (${init.result?.serverInfo?.version})`);
+  const instructions = init.result?.instructions ?? "";
+  assert(/read_diagnostic_report/.test(instructions) && /Do not call clear_dtcs unless the user explicitly asks/.test(instructions) && /simulated/.test(instructions), "initialize returns usage instructions with the clearing and mock-data rules");
   notify("notifications/initialized", {});
 
   const tools = await request("tools/list", {});

@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Send server instructions at initialization so MCP clients know how to use the tools safely: label mock data, check supported sensors first, keep missing values visible, avoid clearing codes and the VIN unless asked, and how to change the adapter.
 - Add an English/Japanese connection troubleshooting guide covering port discovery, Bluetooth pairing and BLE limits, serial permissions, WiFi networks, adapter-versus-vehicle errors and how to report a setup.
 - Add `--help` and `--version`. Unknown or misspelled arguments (for example `--list-port` or `--connection=serial:COM3`) now stop startup with a hint instead of being ignored, which previously started the mock vehicle.
 
