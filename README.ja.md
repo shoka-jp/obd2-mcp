@@ -220,6 +220,7 @@ npm ci
 npm test        # ビルド+モック車両に対するstdioスモークテスト
 npm run test:package  # 配布用tarballを別環境へインストールして検証
 npm run build:mcpb    # Claude Desktop拡張機能を build/mcpb に準備（docs/releasing.md 参照）
+node dist/index.js --help  # コマンドラインのオプションと環境変数の一覧
 ```
 
 モック車両はELM327プロトコルレベルで応答するため、テストはパース系全体(マルチフレームのVIN応答含む)を通ります。

@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- Add `--help` and `--version`. Unknown or misspelled arguments (for example `--list-port` or `--connection=serial:COM3`) now stop startup with a hint instead of being ignored, which previously started the mock vehicle.
+
 ## [0.4.0] - 2026-11-26
 
 ### Easier to install and connect

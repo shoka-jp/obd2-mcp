@@ -5,8 +5,21 @@ import { parseConnection } from "./connection.js";
 import { buildServer } from "./server.js";
 import { runDemo } from "./demo.js";
 import { formatPortList, listSerialPorts } from "./ports.js";
+import { helpText, unknownArgumentError, unknownArguments } from "./cli.js";
+import { VERSION } from "./version.js";
 
 async function main(): Promise<void> {
+  const args = process.argv.slice(2);
+  if (args.includes("--help") || args.includes("-h")) {
+    console.log(helpText());
+    return;
+  }
+  if (args.includes("--version") || args.includes("-v")) {
+    console.log(VERSION);
+    return;
+  }
+  const unknown = unknownArguments(args);
+  if (unknown.length) throw unknownArgumentError(unknown);
   if (process.argv.includes("--list-ports")) {
     const others = ["--demo", "--summary", "--lang", "--connection"].filter(flag => process.argv.includes(flag));
     if (others.length) throw new Error(`--list-ports cannot be combined with ${others.join(", ")}`);

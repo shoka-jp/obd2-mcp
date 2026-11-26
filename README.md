@@ -220,6 +220,7 @@ npm ci
 npm test        # builds + runs the stdio smoke test against the mock vehicle
 npm run test:package  # tests an isolated installation of the actual npm tarball
 npm run build:mcpb    # stages the Claude Desktop extension in build/mcpb (see docs/releasing.md)
+node dist/index.js --help  # command-line options and environment variables
 ```
 
 The mock vehicle answers at the ELM327 protocol level, so tests exercise the full parsing stack (including multi-frame ISO-TP VIN responses).
