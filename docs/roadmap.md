@@ -8,7 +8,7 @@ The goal is to make a vehicle's recorded observations easier to understand and s
 
 | Where | What you can try |
 |---|---|
-| GitHub release **v0.4.0** | A no-car mock demo, four simulated scenarios and ten MCP tools, including `read_diagnostic_report` for workshop evidence, `read_supported_pids` for advertised live sensor support in the Mode 01 PID 01–60 range and `list_serial_ports` to find an adapter's port. Install it in Claude Desktop from the `.mcpb` file or register the release package with `npx`; three guided prompts help you start. [Try the demo](./try-mock.md). |
+| GitHub release **v0.4.0** | A no-car mock demo, five simulated scenarios and ten MCP tools, including `read_diagnostic_report` for workshop evidence, `read_supported_pids` for advertised live sensor support in the Mode 01 PID 01–60 range and `list_serial_ports` to find an adapter's port. Install it in Claude Desktop from the `.mcpb` file or register the release package with `npx`; three guided prompts help you start, and a [connection troubleshooting guide](./troubleshooting.md) covers real adapters. [Try the demo](./try-mock.md). |
 
 The report uses sequential reads and does not request VIN or clear codes; it is not a diagnosis. Mock tests do not establish compatibility with a real vehicle or adapter. See the [safety and scope notes](../README.md#safety-and-scope).
 
@@ -18,7 +18,7 @@ The report uses sequential reads and does not request VIN or clear codes; it is 
 
 - **Release verification:** follow the [release checklist](./releasing.md) for each package and document the verified install path.
 - **Clearer handover:** explore an easy-to-read, shareable report that preserves unavailable values, errors, timestamps and the difference between freeze-frame and live readings. Keep the structured MCP response usable.
-- **More useful simulations:** add focused mock scenarios, such as an EVAP-related example and partial or unavailable readings, with expected observations and limitations. Simulated outcomes must stay clearly labeled.
+- **More useful simulations:** an EVAP example (`evap`, P0456) is available in v0.4.0. Next, add focused scenarios with partial or unavailable readings, with expected observations and limitations. Simulated outcomes must stay clearly labeled.
 
 ### 2. Reduce uncertainty when connecting a real adapter
 
