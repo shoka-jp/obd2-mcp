@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: "Security or vehicle-safety problem / セキュリティ・車両の安全に関わる問題"
+    url: https://github.com/shoka-jp/obd2-mcp/blob/main/SECURITY.md
+    about: "Report privately, not in a public issue: commands sent without safeguards, misleading results, prompt injection, data exposure. / 公開Issueではなく非公開で報告してください。"

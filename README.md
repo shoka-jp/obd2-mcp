@@ -226,6 +226,7 @@ With both installed, Claude reads the codes from your car *and* runs the diagnos
 - **Response limitations.** Multiple or mixed ECU replies and unsupported compression-ignition readiness data are reported as errors instead of combining or guessing values. VIN reading accepts the CAN-formatted response with data-item count `01` followed by exactly 17 valid VIN characters; other response formats return an error. Following an adapter timeout or disconnect, restart the server before trying again. Real-vehicle and adapter compatibility must be verified independently.
 - **Diagnosis support, not a verdict.** Codes identify failed tests, not failed parts. Verify with physical tests before spending money, and defer safety-critical work (brakes, fuel, SRS, high-voltage) to professionals.
 - Never drive while interacting with an AI assistant. Read with the vehicle parked.
+- **Found a safety or security problem?** Report it privately as described in [SECURITY.md](./SECURITY.md), not in a public issue.
 
 ## Development
 
