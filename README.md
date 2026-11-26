@@ -32,6 +32,16 @@ Ask Claude *"why is my check-engine light on?"* and it reads the actual codes fr
 
 **No hardware? It still works.** A built-in mock vehicle (a warm idling sedan with a stored P0420, MIL on, and realistic live data) lets you try everything before buying an adapter.
 
+## Claude Desktop: install as an extension
+
+From v0.4.0, each [GitHub release](https://github.com/shoka-jp/obd2-mcp/releases/latest) includes `obd2-mcp-<version>.mcpb`, a Claude Desktop extension. It needs no Git, build step or JSON editing:
+
+1. Download the `.mcpb` file from the release.
+2. Open it with Claude Desktop (double-click it, or install it from **Settings → Extensions**) and confirm the installation.
+3. Ask: *"Read my car's trouble codes and tell me what to check before I spend money."* The extension starts with the simulated vehicle.
+
+To use a real adapter, open the extension's settings and change **Adapter connection** to a value such as `serial:COM3`, `serial:/dev/ttyUSB0` or `tcp:192.168.0.10:35000`. Ask Claude to run `list_serial_ports` to find the value for a USB or Bluetooth adapter. The extension includes its dependencies and serial-port support for Windows, macOS and Linux. Release checks start it with the mock vehicle on Linux; Windows and macOS installs and real adapters have not been verified.
+
 ## Quick start (mock mode — no hardware)
 
 Build from source using Git and Node.js/npm. Verify npm availability before using registry installation.

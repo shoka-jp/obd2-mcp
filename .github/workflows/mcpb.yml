@@ -1,0 +1,80 @@
+name: Claude Desktop extension
+
+# Build the .mcpb bundle (one-click install for Claude Desktop), start it the
+# way Claude Desktop does, and attach it to published GitHub releases.
+# Checks use the mock vehicle; they do not validate adapters or vehicles.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mcpb-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MCPB_CLI: "@anthropic-ai/mcpb@2.1.2"
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    name: Build and check .mcpb
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run build:mcpb
+      - name: Validate and pack
+        run: |
+          bundle="obd2-mcp-$(node -p "require('./package.json').version").mcpb"
+          echo "BUNDLE=$bundle" >> "$GITHUB_ENV"
+          npx --yes "$MCPB_CLI" validate build/mcpb/manifest.json
+          npx --yes "$MCPB_CLI" pack build/mcpb "$bundle"
+          ls -l "$bundle"
+      - name: Start the packed bundle like Claude Desktop
+        run: |
+          check_dir="$RUNNER_TEMP/mcpb-check"
+          mkdir -p "$check_dir"
+          unzip -q "$BUNDLE" -d "$check_dir"
+          node scripts/check-mcpb.mjs "$check_dir"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: obd2-mcp-mcpb
+          path: ${{ env.BUNDLE }}
+          if-no-files-found: error
+          retention-days: 30
+
+  attach-to-release:
+    if: github.event_name == 'release'
+    needs: bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: obd2-mcp-mcpb
+      - name: Attach the bundle to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          bundle=$(ls obd2-mcp-*.mcpb)
+          # Only attach a bundle whose version matches the release tag.
+          test "$bundle" = "obd2-mcp-${TAG#v}.mcpb" || { echo "::error::$bundle does not match tag $TAG"; exit 1; }
+          sha256sum "$bundle" > "$bundle.sha256"
+          gh release upload "$TAG" "$bundle" "$bundle.sha256" --clobber --repo "$GITHUB_REPOSITORY"

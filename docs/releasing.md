@@ -27,6 +27,14 @@ A GitHub release can distribute the built npm tarball while npm registry publica
 
 GitHubのリリースには、ビルド済みの `.tgz` と `SHA256SUMS` を添付できます。Node.js 22/24のCIが成功したコミットから作成し、配布するファイルそのものを別ディレクトリから実行します。公開後は再ダウンロードしてハッシュを照合し、READMEの英日コマンドも確認してください。GitHubの配布URLを使う手順は、npmレジストリでの公開状況に依存しません。
 
+## Claude Desktop extension / Claude Desktop拡張機能
+
+The `Claude Desktop extension` workflow builds `obd2-mcp-<version>.mcpb` on every pull request and push to `main`, validates its manifest with the pinned `@anthropic-ai/mcpb` CLI, and starts the packed bundle the way Claude Desktop does (`scripts/check-mcpb.mjs`). The bundle is available as a workflow artifact for manual testing. When a GitHub release is published, the workflow attaches the bundle and its SHA-256 file, but only if the bundle version matches the release tag.
+
+To build it locally: `npm ci`, `npm run build:mcpb`, then `npx @anthropic-ai/mcpb pack build/mcpb obd2-mcp-<version>.mcpb`. The manifest lives in `mcpb/manifest.json`; its version is taken from `package.json`, and its tool list must match the server's tools. Before announcing a release, install the attached `.mcpb` in Claude Desktop on at least one desktop platform and confirm the mock vehicle and `list_serial_ports` respond.
+
+`Claude Desktop extension` ワークフローは、PRと `main` へのpushごとに `.mcpb` を作成し、マニフェストを検証したうえで、Claude Desktopと同じ方法で起動を確認します。リリースを公開すると、バージョンがタグと一致する場合に限り、`.mcpb` とSHA-256ファイルをリリースへ添付します。公開前に、少なくとも1つのOSのClaude Desktopへ実際にインストールし、模擬車両と `list_serial_ports` が応答することを確認してください。
+
 ## npm registry publishing checklist for an authorized maintainer
 
 1. Check the current package name, version, license, and account ownership. A missing registry package is not proof that the name is available to your account.
