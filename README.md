@@ -115,6 +115,18 @@ Claude Code example with a real adapter:
 claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- node "/absolute/path/to/obd2-mcp/dist/index.js"
 ```
 
+## Guided prompts
+
+Not sure what to ask? The server provides three ready-made prompts. Claude Desktop lists them in the attachment (+) menu under the server's name, and Claude Code offers them as slash commands such as `/mcp__obd2__check_engine_light`.
+
+| Prompt | What it does |
+|---|---|
+| `check_engine_light` | Reads the diagnostic report, explains each code in plain words, keeps the freeze frame separate from live readings, and lists inexpensive checks before a workshop visit. Optional: your symptoms and reply language. |
+| `workshop_handover` | Turns the diagnostic report into a short note for a mechanic, with unknowns and errors kept visible and the VIN and personal details left out. |
+| `connect_adapter` | Finds the connection value for a USB, Bluetooth or WiFi adapter with `list_serial_ports`, explains how to apply it, and checks the connection after a restart. |
+
+The prompts only instruct Claude; every vehicle access still goes through the read-only tools. They tell Claude not to clear codes or request the VIN, and to label mock data and missing values.
+
 ## One-call evidence report
 
 With the v0.3.0 server configured in your MCP client, ask: **"Run read_diagnostic_report and turn its observations, missing values and errors into a workshop handover note. Keep freeze-frame values separate from live readings."**

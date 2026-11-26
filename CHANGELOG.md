@@ -4,6 +4,7 @@
 
 - Build a Claude Desktop extension (`obd2-mcp-<version>.mcpb`) in CI and attach it to published GitHub releases. Its settings select the adapter connection, mock scenario and baud rate. CI packs the bundle and starts it like Claude Desktop with default, cleared and changed settings.
 - Treat blank `OBD2MCP_CONNECTION` and `OBD2MCP_MOCK_SCENARIO` values as unset, so a cleared setting falls back to the mock vehicle instead of stopping startup.
+- Add guided MCP prompts — `check_engine_light`, `workshop_handover` and `connect_adapter` — that Claude Desktop shows in its menu and Claude Code offers as slash commands. They accept optional symptoms and a reply language, and instruct Claude not to clear codes or request the VIN.
 - Add the read-only `list_serial_ports` tool and `--list-ports` command to find the `serial:` connection value for a USB or paired Bluetooth adapter. They do not open a port, omit serial numbers and other device identifiers, and work in mock mode.
 - Register every tool with a display title and MCP annotations: readers are read-only and `clear_dtcs` is destructive. The `read_vin` description now asks users to remove the VIN before sharing results publicly.
 - Time out a WiFi (TCP) adapter connection after 10 seconds instead of waiting for the operating system's TCP timeout, and keep the first connection error in later restart messages.
