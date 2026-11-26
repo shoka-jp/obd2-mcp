@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Add a "Choose how to start" table to both READMEs that points to the demo, the Claude Desktop extension, `npx` registration, real-adapter setup and building from source.
 - Add a next step to common serial-port open errors (permission denied, port in use, wrong port name) while keeping the original error text.
 - Send server instructions at initialization so MCP clients know how to use the tools safely: label mock data, check supported sensors first, keep missing values visible, avoid clearing codes and the VIN unless asked, and how to change the adapter.
 - Add an English/Japanese connection troubleshooting guide covering port discovery, Bluetooth pairing and BLE limits, serial permissions, WiFi networks, adapter-versus-vehicle errors and how to report a setup.
