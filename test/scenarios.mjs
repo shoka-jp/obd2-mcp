@@ -22,7 +22,7 @@ async function call(client, name, args = {}) {
   return JSON.parse(r.content[0].text);
 }
 
-for (const [scenario, code] of [['catalyst', 'P0420'], ['misfire', 'P0301'], ['lean', 'P0171'], ['healthy', null]]) {
+for (const [scenario, code] of [['catalyst', 'P0420'], ['misfire', 'P0301'], ['lean', 'P0171'], ['evap', 'P0456'], ['healthy', null]]) {
   test(`${scenario}: codes, freeze frame and simulation label`, async () => {
     const { client, server } = await createClient(scenario);
     try {

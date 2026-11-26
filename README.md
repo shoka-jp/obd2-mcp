@@ -120,7 +120,7 @@ Then ask: *"Read my car's trouble codes and tell me what to check before I spend
 
 ### Try another mock scenario
 
-Set `OBD2MCP_MOCK_SCENARIO` in your MCP client configuration while using `OBD2MCP_CONNECTION=mock`. Available values are `catalyst` (default, P0420), `healthy` (no codes), `misfire` (P0301), and `lean` (P0171 with elevated bank 1 fuel trims). These are synthetic teaching examples, not diagnoses or verified vehicle profiles. An unknown scenario stops startup instead of falling back silently. The setting is ignored for real connections.
+Set `OBD2MCP_MOCK_SCENARIO` in your MCP client configuration while using `OBD2MCP_CONNECTION=mock`. Available values are `catalyst` (default, P0420), `healthy` (no codes), `misfire` (P0301), `lean` (P0171 with elevated bank 1 fuel trims), and `evap` (P0456 evaporative emission system small leak). These are synthetic teaching examples, not diagnoses or verified vehicle profiles. An unknown scenario stops startup instead of falling back silently. The setting is ignored for real connections.
 
 For example, register a separate Claude Code mock server:
 

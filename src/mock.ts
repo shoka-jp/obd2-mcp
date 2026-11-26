@@ -66,7 +66,7 @@ function defaultState(): MockState {
   };
 }
 
-export const MOCK_SCENARIOS = ["catalyst", "healthy", "misfire", "lean"] as const;
+export const MOCK_SCENARIOS = ["catalyst", "healthy", "misfire", "lean", "evap"] as const;
 export type MockScenario = (typeof MOCK_SCENARIOS)[number];
 
 function scenarioState(scenario: MockScenario): MockState {
@@ -88,6 +88,9 @@ function scenarioState(scenario: MockScenario): MockState {
     state.live.ltft_b1 = 15;
     state.freeze.stft_b1 = 19;
     state.freeze.ltft_b1 = 16;
+  } else if (scenario === "evap") {
+    state.storedDtcs = ["P0456"];
+    state.freezeDtc = "P0456";
   }
   return state;
 }
