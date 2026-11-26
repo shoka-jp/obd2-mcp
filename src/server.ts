@@ -5,6 +5,7 @@ import { parseDtcPayload, decodeDtcPair } from "./dtc.js";
 import { PIDS, PID_BY_NAME, DEFAULT_PIDS, FREEZE_PIDS } from "./pids.js";
 import { discoverSupportedPids } from "./supported-pids.js";
 import { listSerialPorts } from "./ports.js";
+import { registerPrompts } from "./prompts.js";
 
 const MONITORS_B = ["misfire", "fuel_system", "components"] as const;
 const MONITORS_CD = [
@@ -370,6 +371,7 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
     }
   );
 
+  registerPrompts(server);
   return server;
 }
 
