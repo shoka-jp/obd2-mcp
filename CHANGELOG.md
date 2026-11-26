@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Turn on Dependabot version updates for npm packages and GitHub Actions: weekly, at least 7 days after a release (30 for major versions), always waiting for the maintainer's review.
 - Add Mode 01 PIDs `1F` (`run_time`) and `21` (`distance_with_mil`) with mock values and unit tests.
 - Explain in the contribution guide how AI-assisted maintenance works: the `autopilot` label, what may be merged automatically, and that contributor PRs and good first issues stay with people.
 - Lead the demo results page with the no-Git release-package command, and link the guided prompt and the real setup report.

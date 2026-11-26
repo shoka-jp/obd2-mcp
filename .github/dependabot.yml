@@ -1,0 +1,53 @@
+# Dependabot version updates: weekly pull requests for npm packages and
+# GitHub Actions. Every update PR is a dependency change, so it waits for the
+# maintainer's review (see CONTRIBUTING.md, "AI-assisted maintenance").
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    # Wait before proposing a new release, so a compromised version that is
+    # caught and pulled within days never reaches a pull request.
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - "autopilot: needs review"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(dev-deps)"
+    groups:
+      # Runtime dependencies (MCP SDK, zod, serialport) stay as separate PRs
+      # because they ship inside the .mcpb and npm packages.
+      dev-dependencies:
+        dependency-type: development
+        update-types: [minor, patch]
+    ignore:
+      # Type definitions follow the oldest Node.js major tested in CI (22).
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    cooldown:
+      default-days: 7
+    labels:
+      - dependencies
+      - "autopilot: needs review"
+    commit-message:
+      prefix: ci
+    groups:
+      # Workflows pin actions to commit SHAs; one PR updates them together.
+      github-actions:
+        patterns: ["*"]
