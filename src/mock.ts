@@ -53,6 +53,8 @@ function defaultState(): MockState {
       module_voltage: 14.32,
       ambient_temp: 26,
       oil_temp: 96,
+      run_time: 640,
+      distance_with_mil: 128,
     },
     freeze: {
       engine_load: 34.5,
@@ -76,6 +78,7 @@ function scenarioState(scenario: MockScenario): MockState {
     state.milOn = false;
     state.freezeDtc = null;
     state.readinessIncomplete = 0;
+    state.live.distance_with_mil = 0;
   } else if (scenario === "misfire") {
     state.storedDtcs = ["P0301"];
     state.freezeDtc = "P0301";

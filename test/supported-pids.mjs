@@ -57,7 +57,7 @@ test('bitmap byte boundaries and continuation flags retain their exact PID numbe
   const { data } = await read();
   assert.deepEqual(data.blocks[0].supported_pids, ['01', '10', '11', '20']);
   assert.deepEqual(data.blocks[1].supported_pids, ['21']);
-  assert.deepEqual(data.supported_sensor_names, ['maf', 'throttle']);
+  assert.deepEqual(data.supported_sensor_names, ['maf', 'throttle', 'distance_with_mil']);
   assert.equal(data.sensors.find(sensor => sensor.name === 'rpm').support, 'not_advertised');
   assert.equal(data.sensors.find(sensor => sensor.name === 'oil_temp').support, 'not_advertised');
   assert(!commands.includes('0140'));
