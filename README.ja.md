@@ -174,6 +174,8 @@ WiFiアダプターに10秒以内に接続できない場合はタイムアウ�
 
 ポート・ペアリング・権限・車両の応答で困ったときは、[接続のトラブルシューティング](./docs/troubleshooting.md#日本語)を参照してください。
 
+**実車で試しましたか？** 動いた場合も動かなかった場合も、[動作報告](https://github.com/shoka-jp/obd2-mcp/issues/new?template=hardware-report.yml)をお願いします。報告は[動作報告のあった環境](./docs/compatibility.md#日本語)に掲載します（現時点でプロジェクトとして検証済みの環境はありません）。
+
 実車接続でのClaude Code登録例:
 
 ```bash
