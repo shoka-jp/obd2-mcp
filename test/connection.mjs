@@ -56,3 +56,13 @@ test("unknown connection kinds and missing CLI values are still rejected", () =>
   assert.throws(() => describe(["--connection"], { OBD2MCP_CONNECTION: "mock" }), /Missing value for --connection/);
   assert.throws(() => describe([], { OBD2MCP_MOCK_SCENARIO: "unknown" }), /Unknown mock scenario/);
 });
+
+test("blank environment settings use the defaults", () => {
+  for (const blank of ["", "  "]) {
+    const result = parseConnection(["node", "index.js"], { OBD2MCP_CONNECTION: blank, OBD2MCP_MOCK_SCENARIO: blank, OBD2MCP_BAUD: blank });
+    assert.equal(result.mock, true);
+    assert.match(result.transport.describe(), /^mock:catalyst/);
+  }
+  assert.equal(describe([], { OBD2MCP_CONNECTION: " serial:COM3 " }), "serial:COM3@38400");
+  assert.throws(() => describe(["--connection", ""]), /Invalid connection/);
+});

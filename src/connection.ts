@@ -8,7 +8,7 @@ const DEFAULT_BAUD = 38400;
 /**
  * Connection selection (first match wins):
  *   --connection <spec> CLI argument
- *   OBD2MCP_CONNECTION  environment variable
+ *   OBD2MCP_CONNECTION  environment variable (blank means unset)
  *   default: mock
  *
  * spec: "mock" | "serial:<path>" (e.g. serial:COM3, serial:/dev/ttyUSB0)
@@ -26,9 +26,11 @@ export function parseConnection(
   if (argIdx !== -1 && argv[argIdx + 1] === undefined) {
     throw new Error(`Missing value for --connection — ${EXPECTED}`);
   }
-  const spec = (argIdx !== -1 ? argv[argIdx + 1] : env.OBD2MCP_CONNECTION) ?? "mock";
+  // A blank environment value means "not set", e.g. a desktop extension setting
+  // the user cleared may arrive as an empty string.
+  const spec = (argIdx !== -1 ? argv[argIdx + 1] : blankToUndefined(env.OBD2MCP_CONNECTION)) ?? "mock";
   if (spec === "mock") {
-    const scenario = env.OBD2MCP_MOCK_SCENARIO ?? "catalyst";
+    const scenario = blankToUndefined(env.OBD2MCP_MOCK_SCENARIO) ?? "catalyst";
     if (!MOCK_SCENARIOS.includes(scenario as MockScenario)) {
       throw new Error(`Unknown mock scenario "${scenario}" — choose ${MOCK_SCENARIOS.join(", ")}`);
     }
@@ -44,6 +46,11 @@ export function parseConnection(
     return { transport: new TcpTransport(host, port), mock: false };
   }
   throw new Error(`Invalid connection "${spec}" — ${EXPECTED}`);
+}
+
+function blankToUndefined(value: string | undefined): string | undefined {
+  const text = value?.trim();
+  return text ? text : undefined;
 }
 
 /** OBD2MCP_BAUD must be a positive whole number; unset or blank uses the default. */

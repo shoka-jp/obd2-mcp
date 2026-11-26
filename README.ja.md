@@ -9,10 +9,10 @@
 **車もAIクライアントも不要：** Node.js 22または24とnpmを用意し、ターミナルで次を実行してください。ビルド済みパッケージと依存ライブラリを取得するので、Gitの操作や手元でのビルド作業を省けます。
 
 ```bash
-npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.3.0/obd2-mcp-0.3.0.tgz -- obd2-mcp --demo --summary --lang ja
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.4.0/obd2-mcp-0.4.0.tgz -- obd2-mcp --demo --summary --lang ja
 ```
 
-このリポジトリの[v0.3.0リリース](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.3.0)に添付したパッケージを取得し、模擬データと確認手順を表示して終了します。[出力例と確認事項を見る](./docs/demo-results.md)。
+このリポジトリの[v0.4.0リリース](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.4.0)に添付したパッケージを取得し、模擬データと確認手順を表示して終了します。[出力例と確認事項を見る](./docs/demo-results.md)。
 
 **模擬車両の結果例：** 記録コード `P0420`、記録時は時速98 km・2,210 rpm、現在値は時速0 km・740 rpm。模擬データであり、故障診断ではありません。[実際の取得結果と限界を見る](./docs/demo-results.md#observed-output--実際に取得した結果)。
 
@@ -32,7 +32,46 @@ Claudeに「エンジン警告灯が点いたのはなぜ?」と聞くと、**�
 
 **アダプタがなくても動きます。** 内蔵のモック車両(暖機済みアイドリング中のセダン、P0420記録済み、警告灯点灯、リアルなライブデータ)で、アダプタを買う前にすべて試せます。
 
+## Claude Desktop：拡張機能としてインストール
+
+v0.4.0以降の各[GitHubリリース](https://github.com/shoka-jp/obd2-mcp/releases/latest)には、Claude Desktop用の拡張機能 `obd2-mcp-<バージョン>.mcpb` を添付します。Git・ビルド・JSONの編集は不要です。
+
+1. リリースから `.mcpb` ファイルをダウンロードします。
+2. Claude Desktopで開き（ダブルクリック、または **設定 → 拡張機能** からインストール）、インストールを確定します。
+3. 「車の故障コードを読んで、お金をかける前に確認すべきことを教えて」と聞いてみてください。最初は模擬車両で動きます。
+
+実車のアダプタを使うときは、拡張機能の設定で **Adapter connection** を `serial:COM3`、`serial:/dev/ttyUSB0`、`tcp:192.168.0.10:35000` などに変更します。USB・Bluetoothアダプタの設定値は、Claudeに `list_serial_ports` を実行してもらうと調べられます。拡張機能には依存パッケージと、Windows・macOS・Linux用のシリアル通信部品を同梱しています。リリース時の確認はLinux上の模擬車両で行っており、Windows・macOSへのインストールと実アダプタでの動作は未検証です。
+
 ## クイックスタート(モックモード — ハードウェア不要)
+
+### Gitもビルドも使わない方法
+
+Node.js 22または24とnpmがあれば、MCPクライアントからv0.4.0のリリースパッケージを直接起動できます。先にこのページ冒頭のデモコマンドを1回実行してください。パッケージがnpmのキャッシュに保存され、クライアントの初回起動でダウンロードを待たずに済みます（Windowsでの確認では約40秒かかりました）。
+
+**Claude Code:**
+
+```bash
+claude mcp add obd2 -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.4.0/obd2-mcp-0.4.0.tgz obd2-mcp
+```
+
+Windows（WSLではない環境）では `npx` の前に `cmd /c` を付けます。
+
+**Claude Desktop**（`claude_desktop_config.json`）:
+
+```json
+{
+  "mcpServers": {
+    "obd2": {
+      "command": "npx",
+      "args": ["-y", "--package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.4.0/obd2-mcp-0.4.0.tgz", "obd2-mcp"]
+    }
+  }
+}
+```
+
+Windowsでは `"command": "cmd"` とし、`args` の先頭に `"/c", "npx"` を加えます。Claude Desktopが `npx` を見つけられない場合は、フルパス（macOS/Linuxは `which npx`、Windowsは `where npx` で確認）を指定してください。実車のアダプタを使う場合は `"env": {"OBD2MCP_CONNECTION": "serial:COM3"}` を追加します（[実車への接続](#実車への接続)を参照）。URLはv0.4.0を指しているため、更新するときはURLを変更してください。
+
+### ソースからビルドする方法
 
 GitとNode.js/npmを用意し、ソースからビルドします。npm経由で導入する場合は、先にパッケージの公開状況を確認してください。
 
@@ -79,9 +118,21 @@ claude mcp add obd2-lean --env OBD2MCP_CONNECTION=mock --env OBD2MCP_MOCK_SCENAR
 
 設定変更後はサーバーを再起動してください。モックの状態はサーバーごとに独立しています。モックの消去はレディネスをリセットしますが、実車には影響しません。
 
+## ガイド付きプロンプト
+
+何を聞けばよいか分からないときは、用意された3つのプロンプトを使えます。Claude Desktopでは添付（＋）メニューのサーバー名の下に表示され、Claude Codeでは `/mcp__obd2__check_engine_light` のようなスラッシュコマンドとして使えます。
+
+| プロンプト | 内容 |
+|---|---|
+| `check_engine_light` | 整備相談レポートを取得し、各故障コードを平易に説明します。フリーズフレームと現在値を分け、整備工場へ行く前に確認できる安価な点検を挙げます。症状と返答言語（例：日本語）を任意で指定できます。 |
+| `workshop_handover` | レポートを整備士に渡す短いメモにまとめます。未取得の値やエラーを残し、車台番号や個人情報は含めません。 |
+| `connect_adapter` | `list_serial_ports` などでUSB・Bluetooth・WiFiアダプタの設定値を調べ、設定方法を案内し、再起動後に接続を確認します。 |
+
+プロンプトはClaudeへの指示文で、車両へのアクセスは読み取り専用のツールを通じて行います。コードを消去しない、車台番号を要求しない、模擬データや未取得の値を明示する、と指示しています。
+
 ## 整備相談レポート
 
-v0.3.0のMCPサーバーをクライアントに設定すると、**「read_diagnostic_reportを実行し、観測値・未取得項目・エラーを整備相談用のメモにまとめて。フリーズフレームと現在値は分けて」**と依頼できます。
+MCPサーバーをクライアントに設定すると、**「read_diagnostic_reportを実行し、観測値・未取得項目・エラーを整備相談用のメモにまとめて。フリーズフレームと現在値は分けて」**と依頼できます。
 
 故障コード・フリーズフレーム・ライブセンサー・レディネスを1回の呼び出しで取得し、取得時刻付きのJSONにまとめます。既存の読み取り処理を利用し、一部が取得できなくても、ほかの結果と未取得項目・エラーを残します。順番に読み取るため、同一瞬間の値とは限りません。
 
@@ -100,6 +151,8 @@ ELM327互換アダプタ（USB / Bluetoothシリアル / WiFi）をOBD-IIポー�
 | USB / Bluetooth(シリアル) | `OBD2MCP_CONNECTION=serial:COM3`(Windows)/ `serial:/dev/ttyUSB0`(Linux)/ `serial:/dev/tty.usbserial-XXXX`(macOS) |
 | WiFi | `OBD2MCP_CONNECTION=tcp:192.168.0.10:35000` |
 | モック(デフォルト) | `OBD2MCP_CONNECTION=mock` |
+
+**シリアルポート名を調べる：** MCPクライアントで `list_serial_ports` を実行するか、ターミナルで `node dist/index.js --list-ports` を実行します。OSが認識しているポートと、そのまま使える `serial:` の設定値を一覧表示します。ポートを開いたり車両と通信したりはしません。どれがアダプタか分からない場合は、アダプタを抜く（またはペアリングを解除する）前後で一覧を比べてください。既知のUSBシリアルチップ（FTDI・CH340・PL2303・CP210x）の表示は目安で、OBD-IIアダプタであることの証明ではありません。一覧表示には任意依存の `serialport` が必要です。WiFiアダプタは表示されません。
 
 シリアルのボーレートは既定38400。必要なら`OBD2MCP_BAUD=115200`で変更。BluetoothアダプタはOS側でペアリングしてシリアルポートとして見える状態にしてください。
 
@@ -135,6 +188,7 @@ claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- node "/absolute/path
 | `read_readiness` | レディネスモニタの完了状態(検査に通る状態かの判定材料) |
 | `read_vin` | ECUから車台番号を読み取り |
 | `connection_status` | アダプター情報と取得できた場合のポート電圧。アダプターへの接続だけでは車両との通信は確認できません。 |
+| `list_serial_ports` | このPCのシリアルポートと `serial:` の設定値を一覧表示し、USB・Bluetoothアダプタの接続先を探す。ポートは開かず、モックモードでも使えます |
 | `clear_dtcs` | コード消去 — **実車では初期状態で無効**。フリーズフレームが消え、モニタがリセットされます |
 
 ## automotive-ai-skills との連携 🔧
@@ -165,6 +219,7 @@ cd obd2-mcp
 npm ci
 npm test        # ビルド+モック車両に対するstdioスモークテスト
 npm run test:package  # 配布用tarballを別環境へインストールして検証
+npm run build:mcpb    # Claude Desktop拡張機能を build/mcpb に準備（docs/releasing.md 参照）
 ```
 
 モック車両はELM327プロトコルレベルで応答するため、テストはパース系全体(マルチフレームのVIN応答含む)を通ります。

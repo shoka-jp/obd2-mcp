@@ -1,0 +1,77 @@
+{
+  "manifest_version": "0.3",
+  "name": "obd2-mcp",
+  "display_name": "OBD-II Car Diagnostics (ELM327)",
+  "version": "0.0.0",
+  "description": "Read trouble codes, freeze frame, live sensors and readiness monitors from your car through an ELM327 adapter. Starts with a mock vehicle, so no car is needed to try it.",
+  "long_description": "Lets Claude read OBD-II data from your own car through an inexpensive ELM327-compatible USB, Bluetooth (serial) or WiFi adapter: stored and pending trouble codes, the freeze frame, live sensors, readiness monitors and VIN. A diagnostic report tool collects the evidence for a workshop discussion.\n\nThe default connection is a simulated vehicle with a stored P0420, so you can try every tool without hardware. To use a real adapter, change **Adapter connection** in the extension settings. Ask Claude to run `list_serial_ports` to find the value for a USB or Bluetooth adapter.\n\nResults are observations, not a diagnosis. Clearing codes on a real vehicle is disabled. Real-vehicle and real-adapter compatibility has not yet been verified by the project; start with read-only checks while safely parked.",
+  "author": {
+    "name": "Sho Kamakura",
+    "url": "https://github.com/shoka-jp"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shoka-jp/obd2-mcp.git"
+  },
+  "homepage": "https://github.com/shoka-jp/obd2-mcp#readme",
+  "documentation": "https://github.com/shoka-jp/obd2-mcp#connecting-a-real-car",
+  "support": "https://github.com/shoka-jp/obd2-mcp/issues",
+  "icon": "icon.png",
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/index.js"],
+      "env": {
+        "OBD2MCP_CONNECTION": "${user_config.connection}",
+        "OBD2MCP_MOCK_SCENARIO": "${user_config.mock_scenario}",
+        "OBD2MCP_BAUD": "${user_config.baud}"
+      }
+    }
+  },
+  "tools": [
+    { "name": "connection_status", "description": "Check the adapter identity and port voltage." },
+    { "name": "list_serial_ports", "description": "Find the serial: connection value for a USB or Bluetooth adapter." },
+    { "name": "read_dtcs", "description": "Read stored and pending trouble codes and the check-engine light state." },
+    { "name": "read_supported_pids", "description": "Discover which live sensors the vehicle advertises." },
+    { "name": "read_live_data", "description": "Read live sensors such as RPM, coolant temperature and fuel trims." },
+    { "name": "read_freeze_frame", "description": "Read the engine conditions recorded when a code was set." },
+    { "name": "read_readiness", "description": "Read emissions readiness monitor status." },
+    { "name": "read_diagnostic_report", "description": "Collect codes, freeze frame, live data and readiness in one evidence report." },
+    { "name": "read_vin", "description": "Read the Vehicle Identification Number." },
+    { "name": "clear_dtcs", "description": "Clear trouble codes (destructive; disabled for real vehicles by default)." }
+  ],
+  "prompts_generated": true,
+  "keywords": ["obd2", "obd-ii", "elm327", "car", "vehicle", "diagnostics", "dtc", "automotive"],
+  "license": "MIT",
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": { "node": ">=18.0.0" }
+  },
+  "user_config": {
+    "connection": {
+      "type": "string",
+      "title": "Adapter connection",
+      "description": "mock for the simulated car (default). For a USB or paired Bluetooth adapter use serial:<port>, for example serial:COM3 or serial:/dev/ttyUSB0 (ask Claude to run list_serial_ports). For a WiFi adapter use tcp:<host>:<port>, commonly tcp:192.168.0.10:35000.",
+      "default": "mock",
+      "required": false
+    },
+    "mock_scenario": {
+      "type": "string",
+      "title": "Mock scenario",
+      "description": "Used only with mock: catalyst (P0420, default), healthy, misfire (P0301) or lean (P0171). Synthetic examples, not diagnoses.",
+      "default": "catalyst",
+      "required": false
+    },
+    "baud": {
+      "type": "number",
+      "title": "Serial baud rate",
+      "description": "Used only with serial: connections. Most ELM327 adapters use 38400; some need 115200.",
+      "default": 38400,
+      "min": 1200,
+      "max": 4000000,
+      "required": false
+    }
+  }
+}

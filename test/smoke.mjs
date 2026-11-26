@@ -2,6 +2,7 @@
 // with raw MCP JSON-RPC (newline-delimited). Verifies the full stack:
 // transport → ELM327 parsing → tool responses.
 import { spawn } from "node:child_process";
+import { readFileSync } from "node:fs";
 
 const child = spawn(process.execPath, ["dist/index.js"], {
   stdio: ["pipe", "pipe", "inherit"],
@@ -56,11 +57,13 @@ try {
     clientInfo: { name: "smoke", version: "0.0.0" },
   });
   assert(init.result?.serverInfo?.name === "obd2-mcp", "initialize returns server info");
+  const { version } = JSON.parse(readFileSync("package.json", "utf8"));
+  assert(init.result?.serverInfo?.version === version, `server reports package version ${version} (${init.result?.serverInfo?.version})`);
   notify("notifications/initialized", {});
 
   const tools = await request("tools/list", {});
   const names = tools.result.tools.map(t => t.name).sort();
-  assert(names.length === 9 && names.includes("read_diagnostic_report") && names.includes("read_supported_pids"), `9 tools registered (${names.join(", ")})`);
+  assert(names.length === 10 && names.includes("read_diagnostic_report") && names.includes("read_supported_pids") && names.includes("list_serial_ports"), `10 tools registered (${names.join(", ")})`);
   const byName = Object.fromEntries(tools.result.tools.map(t => [t.name, t]));
   assert(tools.result.tools.every(t => typeof t.title === "string" && t.title.length > 0), "every tool has a display title");
   assert(
