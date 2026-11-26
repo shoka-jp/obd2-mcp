@@ -36,3 +36,29 @@ jobs:
       # This verifies stream handling, not real-adapter or vehicle compatibility.
       - run: python3 test/transport_sim.py
       - run: npm run test:package
+
+  desktop:
+    # Most users run obd2-mcp on Windows or macOS (Claude Desktop, USB and
+    # Bluetooth adapters). Run the same mock tests there and load serialport's
+    # native binary with --list-ports. The POSIX pseudo-terminal simulation
+    # above stays Linux-only.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    name: ${{ matrix.os }} / mock and package
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm test
+      - run: npm run test:package
+      - name: Load serialport and list ports
+        run: node dist/index.js --list-ports
