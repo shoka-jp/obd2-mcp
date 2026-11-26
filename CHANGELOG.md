@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Security: update the MCP TypeScript SDK to 1.32.2 and zod to 4, with seven transitive packages, resolving the open Dependabot alerts. obd2-mcp only uses the stdio transport, so the reported HTTP server and OAuth issues were not reachable, but the packages shipped inside the `.mcpb` and npm package.
+- Update `serialport` to 13 for USB and Bluetooth adapters. **Node.js 20 or later is now required** (22 and 24 are tested), also for the Claude Desktop extension. Checked with the simulated ELM327 over a Linux pseudo-terminal and by loading the native module on Windows and macOS; not yet checked with a real adapter.
+- Build with TypeScript 7.
 - Turn on Dependabot version updates for npm packages and GitHub Actions: weekly, at least 7 days after a release (30 for major versions), always waiting for the maintainer's review.
 - Add Mode 01 PIDs `1F` (`run_time`) and `21` (`distance_with_mil`) with mock values and unit tests.
 - Explain in the contribution guide how AI-assisted maintenance works: the `autopilot` label, what may be merged automatically, and that contributor PRs and good first issues stay with people.

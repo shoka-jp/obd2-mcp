@@ -50,14 +50,14 @@
   "homepage": "https://github.com/shoka-jp/obd2-mcp#readme",
   "bugs": "https://github.com/shoka-jp/obd2-mcp/issues",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",
     "zod": "^4.6.7"
   },
   "optionalDependencies": {
-    "serialport": "^12.0.0"
+    "serialport": "^13.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
