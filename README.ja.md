@@ -101,6 +101,8 @@ ELM327互換アダプタ（USB / Bluetoothシリアル / WiFi）をOBD-IIポー�
 | WiFi | `OBD2MCP_CONNECTION=tcp:192.168.0.10:35000` |
 | モック(デフォルト) | `OBD2MCP_CONNECTION=mock` |
 
+**シリアルポート名を調べる：** MCPクライアントで `list_serial_ports` を実行するか、ターミナルで `node dist/index.js --list-ports` を実行します。OSが認識しているポートと、そのまま使える `serial:` の設定値を一覧表示します。ポートを開いたり車両と通信したりはしません。どれがアダプタか分からない場合は、アダプタを抜く（またはペアリングを解除する）前後で一覧を比べてください。既知のUSBシリアルチップ（FTDI・CH340・PL2303・CP210x）の表示は目安で、OBD-IIアダプタであることの証明ではありません。一覧表示には任意依存の `serialport` が必要です。WiFiアダプタは表示されません。
+
 シリアルのボーレートは既定38400。必要なら`OBD2MCP_BAUD=115200`で変更。BluetoothアダプタはOS側でペアリングしてシリアルポートとして見える状態にしてください。
 
 接続先・ポート番号・ボーレートの形式が正しくない場合は、該当する設定名を示して起動を中止します。IPv6アドレスは `tcp:[fe80::1]:35000` のように角括弧で囲んで指定します。
@@ -135,6 +137,7 @@ claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- node "/absolute/path
 | `read_readiness` | レディネスモニタの完了状態(検査に通る状態かの判定材料) |
 | `read_vin` | ECUから車台番号を読み取り |
 | `connection_status` | アダプター情報と取得できた場合のポート電圧。アダプターへの接続だけでは車両との通信は確認できません。 |
+| `list_serial_ports` | このPCのシリアルポートと `serial:` の設定値を一覧表示し、USB・Bluetoothアダプタの接続先を探す。ポートは開かず、モックモードでも使えます |
 | `clear_dtcs` | コード消去 — **実車では初期状態で無効**。フリーズフレームが消え、モニタがリセットされます |
 
 ## automotive-ai-skills との連携 🔧

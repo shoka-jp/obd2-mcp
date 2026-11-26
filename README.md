@@ -91,6 +91,8 @@ Set the connection via environment variable or CLI flag:
 | WiFi | `OBD2MCP_CONNECTION=tcp:192.168.0.10:35000` |
 | Mock (default) | `OBD2MCP_CONNECTION=mock` |
 
+**Find the serial port name.** Ask your MCP client to run `list_serial_ports`, or run `node dist/index.js --list-ports` in a terminal. Both list the ports the operating system reports, with the exact `serial:` value to use, without opening a port or contacting the vehicle. If you are unsure which entry is the adapter, unplug or unpair it and list again. A known USB-serial chip (FTDI, CH340, PL2303 or CP210x) is a hint, not proof that the port is an OBD-II adapter. Listing requires the optional `serialport` dependency; WiFi adapters are not listed.
+
 Serial baud rate defaults to 38400; override with `OBD2MCP_BAUD=115200` if your adapter needs it. Bluetooth adapters must first be paired at the OS level so they expose a serial port.
 
 A malformed connection, port number or baud rate stops startup with a message naming the setting. Write an IPv6 address in brackets, for example `tcp:[fe80::1]:35000`.
@@ -135,6 +137,7 @@ Protocol references: [ELM327 datasheet, “Talking to the Vehicle”](https://el
 | `read_readiness` | Emissions monitor completion status (inspection readiness) |
 | `read_vin` | Vehicle Identification Number from the ECU |
 | `connection_status` | Adapter identity and port voltage if available. A connected adapter does not itself confirm communication with the vehicle. |
+| `list_serial_ports` | List this computer's serial ports and their `serial:` connection values to find a USB or Bluetooth adapter. Does not open a port; works in mock mode. |
 | `clear_dtcs` | Clear codes — **disabled for real adapters by default**; warns that freeze frame evidence is erased and readiness monitors reset |
 
 ## Pairs with automotive-ai-skills 🔧

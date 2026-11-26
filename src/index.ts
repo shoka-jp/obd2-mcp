@@ -4,8 +4,15 @@ import { Elm327 } from "./elm327.js";
 import { parseConnection } from "./connection.js";
 import { buildServer } from "./server.js";
 import { runDemo } from "./demo.js";
+import { formatPortList, listSerialPorts } from "./ports.js";
 
 async function main(): Promise<void> {
+  if (process.argv.includes("--list-ports")) {
+    const others = ["--demo", "--summary", "--lang", "--connection"].filter(flag => process.argv.includes(flag));
+    if (others.length) throw new Error(`--list-ports cannot be combined with ${others.join(", ")}`);
+    console.log(formatPortList(await listSerialPorts()));
+    return;
+  }
   const langIndex = process.argv.indexOf("--lang");
   let lang: "en" | "ja" = "en";
   if (langIndex !== -1) {

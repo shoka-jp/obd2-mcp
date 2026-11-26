@@ -4,6 +4,7 @@ import { Elm327, NoDataError } from "./elm327.js";
 import { parseDtcPayload, decodeDtcPair } from "./dtc.js";
 import { PIDS, PID_BY_NAME, DEFAULT_PIDS, FREEZE_PIDS } from "./pids.js";
 import { discoverSupportedPids } from "./supported-pids.js";
+import { listSerialPorts } from "./ports.js";
 
 const MONITORS_B = ["misfire", "fuel_system", "components"] as const;
 const MONITORS_CD = [
@@ -24,6 +25,8 @@ const MONITORS_CD = [
  */
 const READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true } as const;
 const DESTRUCTIVE = { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true } as const;
+/** Reads only local operating-system information, never the adapter or vehicle. */
+const LOCAL_READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } as const;
 
 export function buildServer(elm: Elm327, mock: boolean): McpServer {
   const server = new McpServer({ name: "obd2-mcp", version: "0.3.0" });
@@ -65,6 +68,34 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
           battery_voltage: voltageValid ? voltage : null,
           ...(!voltageValid ? { battery_voltage_note: "Voltage unavailable or unsupported by this adapter." } : {}),
         });
+      } catch (err) {
+        return fail(err);
+      }
+    }
+  );
+
+  server.registerTool(
+    "list_serial_ports",
+    {
+      title: "Find adapter serial ports",
+      description:
+        "List the serial ports this computer reports, to find the connection value for a USB or paired Bluetooth ELM327 adapter (for example serial:COM3). Does not open any port or contact a vehicle, and works in mock mode. WiFi adapters are not listed. Changing the connection requires setting OBD2MCP_CONNECTION and restarting the server.",
+      inputSchema: {},
+      annotations: LOCAL_READ_ONLY,
+    },
+    async () => {
+      try {
+        const ports = await listSerialPorts();
+        const payload = {
+          ports,
+          count: ports.length,
+          current_connection: elm.describe(),
+          note:
+            ports.length === 0
+              ? "No serial ports found. Plug in a USB adapter or pair a Bluetooth adapter in the operating system first. WiFi adapters use tcp:<host>:<port>."
+              : "A listed port is not necessarily an OBD-II adapter. To identify it, unplug or unpair the adapter and list again. Use the chosen 'connection' value as OBD2MCP_CONNECTION and restart the server.",
+        };
+        return { content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }] };
       } catch (err) {
         return fail(err);
       }

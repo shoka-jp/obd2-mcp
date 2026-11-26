@@ -2,6 +2,7 @@
 
 ## [0.4.0] - Unreleased
 
+- Add the read-only `list_serial_ports` tool and `--list-ports` command to find the `serial:` connection value for a USB or paired Bluetooth adapter. They do not open a port, omit serial numbers and other device identifiers, and work in mock mode.
 - Register every tool with a display title and MCP annotations: readers are read-only and `clear_dtcs` is destructive. The `read_vin` description now asks users to remove the VIN before sharing results publicly.
 - Time out a WiFi (TCP) adapter connection after 10 seconds instead of waiting for the operating system's TCP timeout, and keep the first connection error in later restart messages.
 - Stop startup with a message naming the setting for an invalid `OBD2MCP_BAUD`, TCP host or port, or an empty serial path, and accept bracketed IPv6 addresses such as `tcp:[fe80::1]:35000`.
