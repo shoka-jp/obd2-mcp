@@ -55,7 +55,7 @@ To explore other simulated cases, set `OBD2MCP_MOCK_SCENARIO` to `healthy`, `mis
 
 ## If it does not work
 
-Check Node.js availability and that the client can start the MCP server. Include the package version, client, OS, exact reproduction steps, and sanitized error output in a [bug report](https://github.com/shoka-jp/obd2-mcp/issues/new?template=bug_report.md). Never post VINs or credentials.
+Check Node.js availability and that the client can start the MCP server. For a real adapter, see [connection troubleshooting](./troubleshooting.md). Include the package version, client, OS, exact reproduction steps, and sanitized error output in a [bug report](https://github.com/shoka-jp/obd2-mcp/issues/new?template=bug_report.md). Never post VINs or credentials.
 
 ## 日本語
 
