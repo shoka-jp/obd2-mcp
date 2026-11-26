@@ -44,6 +44,35 @@ v0.4.0以降の各[GitHubリリース](https://github.com/shoka-jp/obd2-mcp/rele
 
 ## クイックスタート(モックモード — ハードウェア不要)
 
+### Gitもビルドも使わない方法
+
+Node.js 22または24とnpmがあれば、MCPクライアントからv0.3.0のリリースパッケージを直接起動できます。先にこのページ冒頭のデモコマンドを1回実行してください。パッケージがnpmのキャッシュに保存され、クライアントの初回起動でダウンロードを待たずに済みます（Windowsでの確認では約40秒かかりました）。
+
+**Claude Code:**
+
+```bash
+claude mcp add obd2 -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.3.0/obd2-mcp-0.3.0.tgz obd2-mcp
+```
+
+Windows（WSLではない環境）では `npx` の前に `cmd /c` を付けます。
+
+**Claude Desktop**（`claude_desktop_config.json`）:
+
+```json
+{
+  "mcpServers": {
+    "obd2": {
+      "command": "npx",
+      "args": ["-y", "--package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.3.0/obd2-mcp-0.3.0.tgz", "obd2-mcp"]
+    }
+  }
+}
+```
+
+Windowsでは `"command": "cmd"` とし、`args` の先頭に `"/c", "npx"` を加えます。Claude Desktopが `npx` を見つけられない場合は、フルパス（macOS/Linuxは `which npx`、Windowsは `where npx` で確認）を指定してください。実車のアダプタを使う場合は `"env": {"OBD2MCP_CONNECTION": "serial:COM3"}` を追加します（[実車への接続](#実車への接続)を参照）。URLはv0.3.0を指しているため、更新するときはURLを変更してください。
+
+### ソースからビルドする方法
+
 GitとNode.js/npmを用意し、ソースからビルドします。npm経由で導入する場合は、先にパッケージの公開状況を確認してください。
 
 ```bash
