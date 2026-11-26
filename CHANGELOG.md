@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Lead the demo results page with the no-Git release-package command, and link the guided prompt and the real setup report.
 - Add a bilingual security and vehicle-safety policy (`SECURITY.md`) with a private reporting route and obd2-mcp-specific scope (commands without safeguards, misleading results, prompt injection through tool output, identifying data, supply chain), linked from the READMEs and the new-issue page.
 - Redraw the README getting-started images (EN/JA) for the current path: install with the Claude Desktop extension or `npx`, try the mock car with a guided prompt, then connect an adapter.
 - Add a bilingual "Real setup report" issue form and a reported-setups page, so people can share adapter and vehicle results safely (no VIN, parked, read-only) and others can see which combinations have been tried.
