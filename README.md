@@ -34,6 +34,35 @@ Ask Claude *"why is my check-engine light on?"* and it reads the actual codes fr
 
 ## Quick start (mock mode — no hardware)
 
+### Without Git or a build
+
+With Node.js 22 or 24 and npm installed, an MCP client can start the v0.3.0 release package directly. First run the demo command near the top of this page once: it downloads the package into npm's cache, so the client's first start does not wait for the download (about 40 seconds in a Windows test).
+
+**Claude Code:**
+
+```bash
+claude mcp add obd2 -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.3.0/obd2-mcp-0.3.0.tgz obd2-mcp
+```
+
+On native Windows, put `cmd /c` before `npx`.
+
+**Claude Desktop** (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "obd2": {
+      "command": "npx",
+      "args": ["-y", "--package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.3.0/obd2-mcp-0.3.0.tgz", "obd2-mcp"]
+    }
+  }
+}
+```
+
+On Windows, use `"command": "cmd"` and start `args` with `"/c", "npx"`. If Claude Desktop cannot find `npx`, use its full path (`which npx` on macOS/Linux, `where npx` on Windows). For a real adapter, add `"env": {"OBD2MCP_CONNECTION": "serial:COM3"}`; see [Connecting a real car](#connecting-a-real-car). The release URL always refers to v0.3.0; change it to upgrade.
+
+### From source
+
 Build from source using Git and Node.js/npm. Verify npm availability before using registry installation.
 
 ```bash
