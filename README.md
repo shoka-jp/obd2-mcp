@@ -11,6 +11,8 @@
 **English** | [日本語](./README.ja.md)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Mock and package checks](https://github.com/shoka-jp/obd2-mcp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/shoka-jp/obd2-mcp/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/shoka-jp/obd2-mcp)](https://github.com/shoka-jp/obd2-mcp/releases/latest)
 
 An MCP server that lets AI assistants read your car's OBD-II data through cheap ELM327 adapters — trouble codes, live sensors, freeze frame, readiness monitors, and VIN.
 
@@ -19,10 +21,10 @@ An MCP server that lets AI assistants read your car's OBD-II data through cheap 
 **Try it without an AI client or car:** with Node.js 22 or 24 and npm installed, run this in a terminal. npm downloads the built package and its dependencies; Git and a local build are not needed.
 
 ```bash
-npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.3.0/obd2-mcp-0.3.0.tgz -- obd2-mcp --demo --summary
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.4.0/obd2-mcp-0.4.0.tgz -- obd2-mcp --demo --summary
 ```
 
-The command uses the package attached to this repository's [v0.3.0 release](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.3.0). It prints simulated observations and exits. [See the output and what to check next](./docs/demo-results.md).
+The command uses the package attached to this repository's [v0.4.0 release](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.4.0). It prints simulated observations and exits. [See the output and what to check next](./docs/demo-results.md).
 
 **Example from the mock vehicle:** stored code `P0420`; freeze frame at 98 km/h and 2,210 rpm; current reading 0 km/h and 740 rpm. These are simulated observations, not a diagnosis. [See the captured results and their limits](./docs/demo-results.md#observed-output--実際に取得した結果).
 
@@ -32,7 +34,46 @@ Ask Claude *"why is my check-engine light on?"* and it reads the actual codes fr
 
 **No hardware? It still works.** A built-in mock vehicle (a warm idling sedan with a stored P0420, MIL on, and realistic live data) lets you try everything before buying an adapter.
 
+## Claude Desktop: install as an extension
+
+Each [GitHub release](https://github.com/shoka-jp/obd2-mcp/releases/latest) from v0.4.0 includes `obd2-mcp-<version>.mcpb`, a Claude Desktop extension. It needs no Git, build step or JSON editing:
+
+1. Download the `.mcpb` file from the release.
+2. Open it with Claude Desktop (double-click it, or install it from **Settings → Extensions**) and confirm the installation.
+3. Ask: *"Read my car's trouble codes and tell me what to check before I spend money."* The extension starts with the simulated vehicle.
+
+To use a real adapter, open the extension's settings and change **Adapter connection** to a value such as `serial:COM3`, `serial:/dev/ttyUSB0` or `tcp:192.168.0.10:35000`. Ask Claude to run `list_serial_ports` to find the value for a USB or Bluetooth adapter. The extension includes its dependencies and serial-port support for Windows, macOS and Linux. Release checks start it with the mock vehicle on Linux; Windows and macOS installs and real adapters have not been verified.
+
 ## Quick start (mock mode — no hardware)
+
+### Without Git or a build
+
+With Node.js 22 or 24 and npm installed, an MCP client can start the v0.4.0 release package directly. First run the demo command near the top of this page once: it downloads the package into npm's cache, so the client's first start does not wait for the download (about 40 seconds in a Windows test).
+
+**Claude Code:**
+
+```bash
+claude mcp add obd2 -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.4.0/obd2-mcp-0.4.0.tgz obd2-mcp
+```
+
+On native Windows, put `cmd /c` before `npx`.
+
+**Claude Desktop** (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "obd2": {
+      "command": "npx",
+      "args": ["-y", "--package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.4.0/obd2-mcp-0.4.0.tgz", "obd2-mcp"]
+    }
+  }
+}
+```
+
+On Windows, use `"command": "cmd"` and start `args` with `"/c", "npx"`. If Claude Desktop cannot find `npx`, use its full path (`which npx` on macOS/Linux, `where npx` on Windows). For a real adapter, add `"env": {"OBD2MCP_CONNECTION": "serial:COM3"}`; see [Connecting a real car](#connecting-a-real-car). The release URL always refers to v0.4.0; change it to upgrade.
+
+### From source
 
 Build from source using Git and Node.js/npm. Verify npm availability before using registry installation.
 
@@ -91,6 +132,8 @@ Set the connection via environment variable or CLI flag:
 | WiFi | `OBD2MCP_CONNECTION=tcp:192.168.0.10:35000` |
 | Mock (default) | `OBD2MCP_CONNECTION=mock` |
 
+**Find the serial port name.** Ask your MCP client to run `list_serial_ports`, or run `node dist/index.js --list-ports` in a terminal. Both list the ports the operating system reports, with the exact `serial:` value to use, without opening a port or contacting the vehicle. If you are unsure which entry is the adapter, unplug or unpair it and list again. A known USB-serial chip (FTDI, CH340, PL2303 or CP210x) is a hint, not proof that the port is an OBD-II adapter. Listing requires the optional `serialport` dependency; WiFi adapters are not listed.
+
 Serial baud rate defaults to 38400; override with `OBD2MCP_BAUD=115200` if your adapter needs it. Bluetooth adapters must first be paired at the OS level so they expose a serial port.
 
 A malformed connection, port number or baud rate stops startup with a message naming the setting. Write an IPv6 address in brackets, for example `tcp:[fe80::1]:35000`.
@@ -103,9 +146,21 @@ Claude Code example with a real adapter:
 claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- node "/absolute/path/to/obd2-mcp/dist/index.js"
 ```
 
+## Guided prompts
+
+Not sure what to ask? The server provides three ready-made prompts. Claude Desktop lists them in the attachment (+) menu under the server's name, and Claude Code offers them as slash commands such as `/mcp__obd2__check_engine_light`.
+
+| Prompt | What it does |
+|---|---|
+| `check_engine_light` | Reads the diagnostic report, explains each code in plain words, keeps the freeze frame separate from live readings, and lists inexpensive checks before a workshop visit. Optional: your symptoms and reply language. |
+| `workshop_handover` | Turns the diagnostic report into a short note for a mechanic, with unknowns and errors kept visible and the VIN and personal details left out. |
+| `connect_adapter` | Finds the connection value for a USB, Bluetooth or WiFi adapter with `list_serial_ports`, explains how to apply it, and checks the connection after a restart. |
+
+The prompts only instruct Claude; every vehicle access still goes through the read-only tools. They tell Claude not to clear codes or request the VIN, and to label mock data and missing values.
+
 ## One-call evidence report
 
-With the v0.3.0 server configured in your MCP client, ask: **"Run read_diagnostic_report and turn its observations, missing values and errors into a workshop handover note. Keep freeze-frame values separate from live readings."**
+With the server configured in your MCP client, ask: **"Run read_diagnostic_report and turn its observations, missing values and errors into a workshop handover note. Keep freeze-frame values separate from live readings."**
 
 `read_diagnostic_report` collects codes, freeze frame, live sensors and readiness in one response, with collection timestamps and structured JSON. It reuses the individual readers and preserves their null values and errors if part of the collection fails. Collection is sequential, so the readings can come from different moments.
 
@@ -135,6 +190,7 @@ Protocol references: [ELM327 datasheet, “Talking to the Vehicle”](https://el
 | `read_readiness` | Emissions monitor completion status (inspection readiness) |
 | `read_vin` | Vehicle Identification Number from the ECU |
 | `connection_status` | Adapter identity and port voltage if available. A connected adapter does not itself confirm communication with the vehicle. |
+| `list_serial_ports` | List this computer's serial ports and their `serial:` connection values to find a USB or Bluetooth adapter. Does not open a port; works in mock mode. |
 | `clear_dtcs` | Clear codes — **disabled for real adapters by default**; warns that freeze frame evidence is erased and readiness monitors reset |
 
 ## Pairs with automotive-ai-skills 🔧
@@ -165,6 +221,7 @@ cd obd2-mcp
 npm ci
 npm test        # builds + runs the stdio smoke test against the mock vehicle
 npm run test:package  # tests an isolated installation of the actual npm tarball
+npm run build:mcpb    # stages the Claude Desktop extension in build/mcpb (see docs/releasing.md)
 ```
 
 The mock vehicle answers at the ELM327 protocol level, so tests exercise the full parsing stack (including multi-frame ISO-TP VIN responses).

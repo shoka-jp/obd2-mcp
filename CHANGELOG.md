@@ -1,11 +1,29 @@
 # Changelog
 
-## [0.4.0] - Unreleased
+## [Unreleased]
+
+- Add an Android/iPhone phone-app source prototype with a fictional sample, read-only Wi-Fi and Bluetooth LE adapter flows, and a shareable workshop note. Native builds and physical devices require verification.
+
+## [0.4.0] - 2026-11-26
+
+### Easier to install and connect
+
+- Install in Claude Desktop with one file: each GitHub release now includes `obd2-mcp-<version>.mcpb`, a Claude Desktop extension whose settings select the adapter connection, mock scenario and baud rate. CI validates and packs it, starts it like Claude Desktop with default, cleared and changed settings, and attaches it to published releases.
+- Register the GitHub release package in Claude Code or Claude Desktop with `npx`, without Git or a local build. The README includes the Windows `cmd /c` form.
+- Find a USB or Bluetooth adapter's connection value with the read-only `list_serial_ports` tool or `--list-ports` command. They do not open a port, omit serial numbers and other device identifiers, and work in mock mode.
+- Add guided prompts — `check_engine_light`, `workshop_handover` and `connect_adapter` — shown in Claude Desktop's menu and as Claude Code slash commands. They accept optional symptoms and a reply language, and instruct Claude not to clear codes or request the VIN.
+
+### Safer and clearer behavior
 
 - Register every tool with a display title and MCP annotations: readers are read-only and `clear_dtcs` is destructive. The `read_vin` description now asks users to remove the VIN before sharing results publicly.
 - Time out a WiFi (TCP) adapter connection after 10 seconds instead of waiting for the operating system's TCP timeout, and keep the first connection error in later restart messages.
 - Stop startup with a message naming the setting for an invalid `OBD2MCP_BAUD`, TCP host or port, or an empty serial path, and accept bracketed IPv6 addresses such as `tcp:[fe80::1]:35000`.
-- Add an Android/iPhone phone-app source prototype with a fictional sample, read-only Wi-Fi and Bluetooth LE adapter flows, and a shareable workshop note. Native builds and physical devices require verification.
+- Treat blank `OBD2MCP_CONNECTION` and `OBD2MCP_MOCK_SCENARIO` values as unset, so a cleared setting falls back to the mock vehicle instead of stopping startup.
+- Report the package version from `package.json` in the MCP server and demo instead of a hard-coded value.
+
+### Release process
+
+- Publishing a GitHub release now attaches the npm tarball, the `.mcpb` extension and `SHA256SUMS` automatically after the package and bundle checks pass.
 
 ## [0.3.0] - 2026-11-09
 
