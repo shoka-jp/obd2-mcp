@@ -14,7 +14,7 @@
 
 An MCP server that lets AI assistants read your car's OBD-II data through cheap ELM327 adapters — trouble codes, live sensors, freeze frame, readiness monitors, and VIN.
 
-![Three steps: install and build from source, run the simulated demo, then connect an AI client. The demo needs no car and never clears codes.](docs/images/get-started-en.svg)
+![Three steps: install with the Claude Desktop extension or npx, try the simulated car with the check_engine_light prompt, then find your adapter with list_serial_ports and set the connection. It starts with mock data, reads only by default, and code clearing is off for real cars.](docs/images/get-started-en.svg)
 
 **Try it without an AI client or car:** with Node.js 22 or 24 and npm installed, run this in a terminal. npm downloads the built package and its dependencies; Git and a local build are not needed.
 

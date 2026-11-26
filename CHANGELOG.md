@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Redraw the README getting-started images (EN/JA) for the current path: install with the Claude Desktop extension or `npx`, try the mock car with a guided prompt, then connect an adapter.
 - Add a bilingual "Real setup report" issue form and a reported-setups page, so people can share adapter and vehicle results safely (no VIN, parked, read-only) and others can see which combinations have been tried.
 - Update the mock walkthrough with the no-Git demo command and the Claude Desktop extension and `npx` setup, and point to the `check_engine_light` prompt.
 
