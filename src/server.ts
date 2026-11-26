@@ -7,6 +7,7 @@ import { discoverSupportedPids } from "./supported-pids.js";
 import { listSerialPorts } from "./ports.js";
 import { registerPrompts } from "./prompts.js";
 import { VERSION } from "./version.js";
+import { SERVER_INSTRUCTIONS } from "./instructions.js";
 
 const MONITORS_B = ["misfire", "fuel_system", "components"] as const;
 const MONITORS_CD = [
@@ -31,7 +32,7 @@ const DESTRUCTIVE = { readOnlyHint: false, destructiveHint: true, idempotentHint
 const LOCAL_READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } as const;
 
 export function buildServer(elm: Elm327, mock: boolean): McpServer {
-  const server = new McpServer({ name: "obd2-mcp", version: VERSION });
+  const server = new McpServer({ name: "obd2-mcp", version: VERSION }, { instructions: SERVER_INSTRUCTIONS });
 
   const wrap = (data: Record<string, unknown>) => {
     const payload = {
