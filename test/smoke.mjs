@@ -2,6 +2,7 @@
 // with raw MCP JSON-RPC (newline-delimited). Verifies the full stack:
 // transport → ELM327 parsing → tool responses.
 import { spawn } from "node:child_process";
+import { readFileSync } from "node:fs";
 
 const child = spawn(process.execPath, ["dist/index.js"], {
   stdio: ["pipe", "pipe", "inherit"],
@@ -56,6 +57,8 @@ try {
     clientInfo: { name: "smoke", version: "0.0.0" },
   });
   assert(init.result?.serverInfo?.name === "obd2-mcp", "initialize returns server info");
+  const { version } = JSON.parse(readFileSync("package.json", "utf8"));
+  assert(init.result?.serverInfo?.version === version, `server reports package version ${version} (${init.result?.serverInfo?.version})`);
   notify("notifications/initialized", {});
 
   const tools = await request("tools/list", {});

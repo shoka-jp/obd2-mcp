@@ -9,10 +9,10 @@
 **車もAIクライアントも不要：** Node.js 22または24とnpmを用意し、ターミナルで次を実行してください。ビルド済みパッケージと依存ライブラリを取得するので、Gitの操作や手元でのビルド作業を省けます。
 
 ```bash
-npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.3.0/obd2-mcp-0.3.0.tgz -- obd2-mcp --demo --summary --lang ja
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.4.0/obd2-mcp-0.4.0.tgz -- obd2-mcp --demo --summary --lang ja
 ```
 
-このリポジトリの[v0.3.0リリース](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.3.0)に添付したパッケージを取得し、模擬データと確認手順を表示して終了します。[出力例と確認事項を見る](./docs/demo-results.md)。
+このリポジトリの[v0.4.0リリース](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.4.0)に添付したパッケージを取得し、模擬データと確認手順を表示して終了します。[出力例と確認事項を見る](./docs/demo-results.md)。
 
 **模擬車両の結果例：** 記録コード `P0420`、記録時は時速98 km・2,210 rpm、現在値は時速0 km・740 rpm。模擬データであり、故障診断ではありません。[実際の取得結果と限界を見る](./docs/demo-results.md#observed-output--実際に取得した結果)。
 
@@ -46,12 +46,12 @@ v0.4.0以降の各[GitHubリリース](https://github.com/shoka-jp/obd2-mcp/rele
 
 ### Gitもビルドも使わない方法
 
-Node.js 22または24とnpmがあれば、MCPクライアントからv0.3.0のリリースパッケージを直接起動できます。先にこのページ冒頭のデモコマンドを1回実行してください。パッケージがnpmのキャッシュに保存され、クライアントの初回起動でダウンロードを待たずに済みます（Windowsでの確認では約40秒かかりました）。
+Node.js 22または24とnpmがあれば、MCPクライアントからv0.4.0のリリースパッケージを直接起動できます。先にこのページ冒頭のデモコマンドを1回実行してください。パッケージがnpmのキャッシュに保存され、クライアントの初回起動でダウンロードを待たずに済みます（Windowsでの確認では約40秒かかりました）。
 
 **Claude Code:**
 
 ```bash
-claude mcp add obd2 -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.3.0/obd2-mcp-0.3.0.tgz obd2-mcp
+claude mcp add obd2 -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.4.0/obd2-mcp-0.4.0.tgz obd2-mcp
 ```
 
 Windows（WSLではない環境）では `npx` の前に `cmd /c` を付けます。
@@ -63,13 +63,13 @@ Windows（WSLではない環境）では `npx` の前に `cmd /c` を付けま�
   "mcpServers": {
     "obd2": {
       "command": "npx",
-      "args": ["-y", "--package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.3.0/obd2-mcp-0.3.0.tgz", "obd2-mcp"]
+      "args": ["-y", "--package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.4.0/obd2-mcp-0.4.0.tgz", "obd2-mcp"]
     }
   }
 }
 ```
 
-Windowsでは `"command": "cmd"` とし、`args` の先頭に `"/c", "npx"` を加えます。Claude Desktopが `npx` を見つけられない場合は、フルパス（macOS/Linuxは `which npx`、Windowsは `where npx` で確認）を指定してください。実車のアダプタを使う場合は `"env": {"OBD2MCP_CONNECTION": "serial:COM3"}` を追加します（[実車への接続](#実車への接続)を参照）。URLはv0.3.0を指しているため、更新するときはURLを変更してください。
+Windowsでは `"command": "cmd"` とし、`args` の先頭に `"/c", "npx"` を加えます。Claude Desktopが `npx` を見つけられない場合は、フルパス（macOS/Linuxは `which npx`、Windowsは `where npx` で確認）を指定してください。実車のアダプタを使う場合は `"env": {"OBD2MCP_CONNECTION": "serial:COM3"}` を追加します（[実車への接続](#実車への接続)を参照）。URLはv0.4.0を指しているため、更新するときはURLを変更してください。
 
 ### ソースからビルドする方法
 
@@ -132,7 +132,7 @@ claude mcp add obd2-lean --env OBD2MCP_CONNECTION=mock --env OBD2MCP_MOCK_SCENAR
 
 ## 整備相談レポート
 
-v0.3.0のMCPサーバーをクライアントに設定すると、**「read_diagnostic_reportを実行し、観測値・未取得項目・エラーを整備相談用のメモにまとめて。フリーズフレームと現在値は分けて」**と依頼できます。
+MCPサーバーをクライアントに設定すると、**「read_diagnostic_reportを実行し、観測値・未取得項目・エラーを整備相談用のメモにまとめて。フリーズフレームと現在値は分けて」**と依頼できます。
 
 故障コード・フリーズフレーム・ライブセンサー・レディネスを1回の呼び出しで取得し、取得時刻付きのJSONにまとめます。既存の読み取り処理を利用し、一部が取得できなくても、ほかの結果と未取得項目・エラーを残します。順番に読み取るため、同一瞬間の値とは限りません。
 
@@ -219,6 +219,7 @@ cd obd2-mcp
 npm ci
 npm test        # ビルド+モック車両に対するstdioスモークテスト
 npm run test:package  # 配布用tarballを別環境へインストールして検証
+npm run build:mcpb    # Claude Desktop拡張機能を build/mcpb に準備（docs/releasing.md 参照）
 ```
 
 モック車両はELM327プロトコルレベルで応答するため、テストはパース系全体(マルチフレームのVIN応答含む)を通ります。

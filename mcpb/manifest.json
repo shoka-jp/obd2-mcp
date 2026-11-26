@@ -42,6 +42,7 @@
     { "name": "read_vin", "description": "Read the Vehicle Identification Number." },
     { "name": "clear_dtcs", "description": "Clear trouble codes (destructive; disabled for real vehicles by default)." }
   ],
+  "prompts_generated": true,
   "keywords": ["obd2", "obd-ii", "elm327", "car", "vehicle", "diagnostics", "dtc", "automotive"],
   "license": "MIT",
   "compatibility": {

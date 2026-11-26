@@ -16,24 +16,25 @@ The package check starts from a temporary source copy without `dist`, runs `npm 
 
 CI checks Node.js 22 and 24 on Linux. These checks use simulated vehicle data, skip dependency install scripts, and do not validate serial adapters, Bluetooth pairing, or real vehicles.
 
-## GitHub release package / GitHubでのパッケージ配布
+## GitHub release / GitHubでのリリース
 
-A GitHub release can distribute the built npm tarball while npm registry publication is pending. From a clean, reviewed commit whose Node.js 22/24 CI passed:
+A GitHub release distributes the npm tarball and the Claude Desktop extension while npm registry publication is pending. The `Release packages` workflow (`.github/workflows/release-packages.yml`) builds both on every pull request and push to `main`:
 
-1. Run the verification commands above, then `npm pack --json`.
-2. Inspect the file list and test that exact tarball from a separate directory with `npm exec --yes --package=/absolute/path/to/obd2-mcp-0.3.0.tgz -- obd2-mcp --demo --summary`. Also check `--lang ja`.
-3. Calculate `sha256sum obd2-mcp-0.3.0.tgz > SHA256SUMS`. Create the version tag at the reviewed commit and attach both files to its GitHub release.
-4. Download the published asset again, compare its checksum, and run the README command from a fresh directory. Confirm both language summaries return simulated data and exit successfully.
+- **npm tarball:** runs `npm run test:package`, packs `obd2-mcp-<version>.tgz`, and runs the README demo command against that exact file from an empty directory.
+- **Claude Desktop extension:** stages `obd2-mcp-<version>.mcpb` with `npm run build:mcpb`, validates and packs it with the pinned `@anthropic-ai/mcpb` CLI, checks that it still contains serialport binaries for Windows, macOS and Linux, and starts it the way Claude Desktop does with default, cleared and changed settings (`scripts/check-mcpb.mjs`). Its tool and prompt lists must match the server; its version comes from `package.json` and its manifest from `mcpb/manifest.json`.
 
-GitHubのリリースには、ビルド済みの `.tgz` と `SHA256SUMS` を添付できます。Node.js 22/24のCIが成功したコミットから作成し、配布するファイルそのものを別ディレクトリから実行します。公開後は再ダウンロードしてハッシュを照合し、READMEの英日コマンドも確認してください。GitHubの配布URLを使う手順は、npmレジストリでの公開状況に依存しません。
+Both files are available as workflow artifacts for manual testing.
 
-## Claude Desktop extension / Claude Desktop拡張機能
+To release:
 
-The `Claude Desktop extension` workflow builds `obd2-mcp-<version>.mcpb` on every pull request and push to `main`, validates its manifest with the pinned `@anthropic-ai/mcpb` CLI, and starts the packed bundle the way Claude Desktop does (`scripts/check-mcpb.mjs`). The bundle is available as a workflow artifact for manual testing. When a GitHub release is published, the workflow attaches the bundle and its SHA-256 file, but only if the bundle version matches the release tag.
+1. Merge a reviewed commit to `main` whose `package.json` version, `CHANGELOG.md` entry and README release URLs all name the new version, and whose CI and `Release packages` checks passed.
+2. Create a GitHub release with a new tag `v<version>` on that commit and publish it.
+3. The workflow attaches `obd2-mcp-<version>.tgz`, `obd2-mcp-<version>.mcpb` and `SHA256SUMS`. It refuses to attach anything if the file versions do not match the tag.
+4. Download the published assets, compare them with `SHA256SUMS`, and run the README demo command from a fresh directory in English and Japanese. Install the `.mcpb` in Claude Desktop on at least one desktop platform and confirm the mock vehicle, `list_serial_ports` and a guided prompt respond.
 
-To build it locally: `npm ci`, `npm run build:mcpb`, then `npx @anthropic-ai/mcpb pack build/mcpb obd2-mcp-<version>.mcpb`. The manifest lives in `mcpb/manifest.json`; its version is taken from `package.json`, and its tool list must match the server's tools. Before announcing a release, install the attached `.mcpb` in Claude Desktop on at least one desktop platform and confirm the mock vehicle and `list_serial_ports` respond.
+To build locally instead: `npm ci`, `npm pack`, `npm run build:mcpb`, then `npx @anthropic-ai/mcpb pack build/mcpb obd2-mcp-<version>.mcpb`.
 
-`Claude Desktop extension` ワークフローは、PRと `main` へのpushごとに `.mcpb` を作成し、マニフェストを検証したうえで、Claude Desktopと同じ方法で起動を確認します。リリースを公開すると、バージョンがタグと一致する場合に限り、`.mcpb` とSHA-256ファイルをリリースへ添付します。公開前に、少なくとも1つのOSのClaude Desktopへ実際にインストールし、模擬車両と `list_serial_ports` が応答することを確認してください。
+GitHubリリースでは、npmパッケージ（`.tgz`）とClaude Desktop拡張機能（`.mcpb`）を配布します。`Release packages` ワークフローがPRと `main` へのpushごとに両方を作成し、利用者と同じ方法で起動を確認します。バージョン・CHANGELOG・READMEのURLを更新したコミットを `main` にマージし、そのコミットに `v<バージョン>` のタグを付けたリリースを公開すると、`.tgz`・`.mcpb`・`SHA256SUMS` が自動で添付されます。ファイルのバージョンがタグと一致しない場合は添付しません。公開後は再ダウンロードしてハッシュを照合し、READMEの英日コマンドを確認したうえで、少なくとも1つのOSのClaude Desktopに `.mcpb` を入れて、模擬車両・`list_serial_ports`・ガイド付きプロンプトが応答することを確認してください。
 
 ## npm registry publishing checklist for an authorized maintainer
 
