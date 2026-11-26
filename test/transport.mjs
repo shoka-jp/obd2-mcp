@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
 import net from "node:net";
 import test, { mock } from "node:test";
-import { TcpTransport } from "../dist/transport.js";
+import { SerialTransport, TcpTransport, serialOpenError } from "../dist/transport.js";
 
 /** A socket that never connects, standing in for an unreachable WiFi adapter. */
 function silentSocket() {
@@ -54,4 +54,42 @@ test("a connected tcp adapter is not affected by the connect timeout", async () 
     await transport.close();
     await new Promise(resolve => listener.close(resolve));
   }
+});
+
+/** A fake serialport module whose constructor fails like the real one does. */
+function failingSerialPort(message) {
+  return async () => ({
+    SerialPort: class {
+      constructor(_options, callback) {
+        queueMicrotask(() => callback(new Error(message)));
+      }
+      setEncoding() {}
+      on() {}
+    },
+  });
+}
+
+test("serial open errors keep the original text and add a next step", async () => {
+  const cases = [
+    ["Error: Permission denied, cannot open /dev/ttyUSB0", /dialout/],
+    ["Opening COM3: Access denied", /Another program may be using the port/],
+    ["Error: Resource busy, cannot open /dev/ttyUSB0", /Another program may be using the port/],
+    ["Error: No such file or directory, cannot open /dev/tty.nope", /--list-ports/],
+  ];
+  for (const [message, hint] of cases) {
+    const transport = new SerialTransport("/dev/ttyUSB0", 38400, failingSerialPort(message));
+    await assert.rejects(transport.open(), error => {
+      assert.match(error.message, /^Could not open serial:\/dev\/ttyUSB0: /);
+      assert.ok(error.message.includes(message), "original error text is kept");
+      assert.match(error.message, hint);
+      assert.match(error.message, /docs\/troubleshooting\.md/);
+      return true;
+    });
+  }
+  assert.match(serialOpenError("COM9", new Error("File not found")).message, /--list-ports/);
+});
+
+test("a missing serialport package is still reported clearly", async () => {
+  const transport = new SerialTransport("COM3", 38400, async () => { throw new Error("Cannot find package 'serialport'"); });
+  await assert.rejects(transport.open(), /"serialport" package is not installed/);
 });
