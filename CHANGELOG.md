@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- Update the mock walkthrough with the no-Git demo command and the Claude Desktop extension and `npx` setup, and point to the `check_engine_light` prompt.
+
 ## [0.4.0] - 2026-11-26
 
 ### Easier to install, connect and start

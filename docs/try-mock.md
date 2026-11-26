@@ -4,8 +4,14 @@ This walkthrough uses simulated data, not a real vehicle. AI wording varies; the
 
 ## Run the standalone demo
 
-Use Git, Node.js 22 or 24, and npm. No AI client, car, or adapter is required.
-From a source checkout, install the dependencies and run either summary:
+No AI client, car, or adapter is required. With Node.js 22 or 24 and npm, run the release package directly, without Git:
+
+```bash
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.4.0/obd2-mcp-0.4.0.tgz -- obd2-mcp --demo --summary
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.4.0/obd2-mcp-0.4.0.tgz -- obd2-mcp --demo --summary --lang ja
+```
+
+Or, from a source checkout (Git required):
 
 ```bash
 git clone https://github.com/shoka-jp/obd2-mcp.git
@@ -20,10 +26,21 @@ summary. Both build the project and use simulated data. See the [captured mock
 output](./demo-results.md) for an example. A successful run is not a diagnosis
 and does not prove that a real vehicle or adapter is compatible.
 
-## Optional: connect Claude Code
+## Optional: connect an MCP client
 
-To use an MCP client after the standalone demo, install Claude Code and run the
-following from the same checkout:
+Every option starts with the simulated vehicle.
+
+- **Claude Desktop:** download `obd2-mcp-0.4.0.mcpb` from the [v0.4.0 release](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.4.0) and open it with Claude Desktop. No terminal is needed.
+- **Claude Code, without Git:** after running the demo above once (so npm has the package cached), register the same package:
+
+  ```bash
+  claude mcp add obd2 --env OBD2MCP_CONNECTION=mock -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.4.0/obd2-mcp-0.4.0.tgz obd2-mcp
+  ```
+
+  On native Windows, put `cmd /c` before `npx`.
+- **Claude Code, from the source checkout:** continue below.
+
+From the same checkout:
 
 ```bash
 npm run build
@@ -45,6 +62,8 @@ If a server named obd2 is already registered, inspect its configuration before c
 
 ## Three prompts
 
+Or use the server's guided prompt `check_engine_light` (in Claude Code: `/mcp__obd2__check_engine_light`), which runs a similar sequence.
+
 1. "Use connection_status and read_dtcs on the mock vehicle. Show the tool results separately from your interpretation."
 2. "Read the freeze frame and live data. Which observations could help investigate the stored code, and which information is still missing?"
 3. "Summarize the observations, possible explanations, and what would need verification on a real vehicle. Do not clear any codes."
@@ -61,7 +80,13 @@ Check Node.js availability and that the client can start the MCP server. For a r
 
 ### AIクライアントなしで試す
 
-Git、Node.js 22または24、npmを用意します。AIクライアント・車・アダプターは不要です。ターミナルで次を実行してください。
+AIクライアント・車・アダプターは不要です。Node.js 22または24とnpmがあれば、Gitを使わずにリリースパッケージを直接実行できます。
+
+```bash
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.4.0/obd2-mcp-0.4.0.tgz -- obd2-mcp --demo --summary --lang ja
+```
+
+ソースから実行する場合（Gitが必要）：
 
 ```bash
 git clone https://github.com/shoka-jp/obd2-mcp.git
@@ -73,9 +98,21 @@ npm run demo:ja
 
 `npm run demo` は英語、`npm run demo:ja` は日本語の要約を表示します。どちらもビルド後に模擬データを使用します。[模擬出力の例](./demo-results.md)も参照できます。実行できても実車の故障診断や、車両・アダプターとの互換性を証明するものではありません。
 
-### 次の選択肢：Claude Codeにつなぐ
+### 次の選択肢：MCPクライアントにつなぐ
 
-スタンドアロンのデモ後にMCPクライアントを使う場合は、Claude Codeを用意し、同じフォルダーで次を実行します。最後に表示されるパスは、使用するパソコンやフォルダーによって異なります。
+どの方法も最初は模擬車両で動きます。
+
+- **Claude Desktop：** [v0.4.0リリース](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.4.0)から `obd2-mcp-0.4.0.mcpb` をダウンロードし、Claude Desktopで開きます。ターミナルは不要です。
+- **Claude Code（Git不要）：** 上のデモを一度実行してパッケージをキャッシュしてから、同じパッケージを登録します。
+
+  ```bash
+  claude mcp add obd2 --env OBD2MCP_CONNECTION=mock -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.4.0/obd2-mcp-0.4.0.tgz obd2-mcp
+  ```
+
+  Windows（WSLではない環境）では `npx` の前に `cmd /c` を付けます。
+- **Claude Code（ソースから）：** 以下に進みます。
+
+ソースから使う場合は、Claude Codeを用意し、同じフォルダーで次を実行します。最後に表示されるパスは、使用するパソコンやフォルダーによって異なります。
 
 ```bash
 npm run build
@@ -90,7 +127,7 @@ claude mcp add obd2 --env OBD2MCP_CONNECTION=mock -- node "/absolute/path/to/obd
 
 同名の登録がある場合は既存設定を確認し、モック接続であることを確認してから進んでください。Claude Desktopを使う場合は[設定例](../README.ja.md)を参照してください。
 
-次の順番で質問します。
+次の順番で質問します。サーバーのガイド付きプロンプト `check_engine_light`（Claude Codeでは `/mcp__obd2__check_engine_light`）でも、同様の流れで確認できます。
 
 1. 「モック車両に対してconnection_statusとread_dtcsを実行し、ツールの出力と解釈を分けて表示して」
 2. 「フリーズフレームとライブデータを読み、原因を調べる材料と、まだ不足している情報を整理して」
@@ -105,3 +142,4 @@ claude mcp add obd2 --env OBD2MCP_CONNECTION=mock -- node "/absolute/path/to/obd
 - Explore [automotive-ai-skills](https://github.com/shoka-jp/automotive-ai-skills) for structured investigation workflows.
 - [Follow shoka](https://github.com/shoka-jp) or [support the projects](https://github.com/sponsors/shoka-jp).
 - Share what worked and where you got stuck through an issue. 試せた環境や詰まった手順をIssueで教えてください。
+- Tried a real adapter? Use the [real setup report](https://github.com/shoka-jp/obd2-mcp/issues/new?template=hardware-report.yml). 実機で試した結果は[動作報告](https://github.com/shoka-jp/obd2-mcp/issues/new?template=hardware-report.yml)から送れます。
