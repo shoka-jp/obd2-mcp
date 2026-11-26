@@ -1,7 +1,7 @@
 // Start an unpacked Claude Desktop extension the way Claude Desktop does and
 // check its tools. Usage: node scripts/check-mcpb.mjs <unpacked bundle directory>
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
@@ -13,6 +13,15 @@ const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url),
 assert.equal(manifest.version, pkg.version, 'manifest version must match package.json');
 assert(existsSync(join(dir, manifest.server.entry_point)), 'entry point is missing from the bundle');
 assert(existsSync(join(dir, manifest.icon)), 'icon is missing from the bundle');
+
+// Packing applies default ignore rules, so check the packed result still has
+// serialport's prebuilt binaries for the other desktop platforms.
+const prebuildDir = join(dir, 'node_modules/@serialport/bindings-cpp/prebuilds');
+const prebuilds = existsSync(prebuildDir) ? readdirSync(prebuildDir) : [];
+for (const platform of ['win32-x64', 'darwin-x64+arm64', 'linux-x64']) {
+  const files = prebuilds.includes(platform) ? readdirSync(join(prebuildDir, platform)) : [];
+  assert(files.some(file => file.endsWith('.node')), `packed bundle has no serialport binary for ${platform}`);
+}
 
 // Substitute ${__dirname} and each setting's default, as the host does.
 const substitute = (value, overrides = {}) => value
