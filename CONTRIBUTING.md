@@ -53,9 +53,10 @@ The maintainer uses Claude to help maintain this project. So you know what to ex
 - They are merged automatically only when CI passes **and** they do not touch vehicle communication, code clearing, CI or release configuration, or dependencies. Anything else gets `autopilot: needs review` and waits for the maintainer.
 - Pull requests from contributors are never merged automatically. The maintainer decides. Claude may help review them or resolve a merge conflict, keeping your commits and credit.
 - Issues labeled `good first issue` or `help wanted` are left for people.
+- Dependabot opens weekly update pull requests (`dependencies` label) for npm packages and GitHub Actions, at least 7 days after a release. They change dependencies, so they always wait for the maintainer.
 - Replies on your issues and pull requests come from the maintainer's account. AI-drafted replies are approved by the maintainer before posting.
 
-メンテナーはClaudeを使って保守を行っています。この方法で作成したPRには `autopilot` ラベルが付き、AIを使ったことを明記します。CIが成功し、かつ車両通信・コード消去・CI/リリース設定・依存関係に触れない変更だけを自動でマージします。それ以外は `autopilot: needs review` を付けてメンテナーの判断を待ちます。コントリビューターのPRを自動でマージすることはなく、判断はメンテナーが行います。レビューや衝突の解消をClaudeが手伝う場合も、あなたのコミットとクレジットは残します。`good first issue` と `help wanted` のIssueは人のために残しておきます。IssueやPRへの返信はメンテナーのアカウントから行い、AIが下書きした返信はメンテナーが確認してから投稿します。
+メンテナーはClaudeを使って保守を行っています。この方法で作成したPRには `autopilot` ラベルが付き、AIを使ったことを明記します。CIが成功し、かつ車両通信・コード消去・CI/リリース設定・依存関係に触れない変更だけを自動でマージします。それ以外は `autopilot: needs review` を付けてメンテナーの判断を待ちます。コントリビューターのPRを自動でマージすることはなく、判断はメンテナーが行います。レビューや衝突の解消をClaudeが手伝う場合も、あなたのコミットとクレジットは残します。`good first issue` と `help wanted` のIssueは人のために残しておきます。Dependabotは、npmパッケージとGitHub Actionsの更新PR（`dependencies` ラベル）を、新しいバージョンの公開から7日以上たってから週1回作成します。依存関係の変更なので、必ずメンテナーの判断を待ちます。IssueやPRへの返信はメンテナーのアカウントから行い、AIが下書きした返信はメンテナーが確認してから投稿します。
 
 ## Share feedback or edit in your browser
 
