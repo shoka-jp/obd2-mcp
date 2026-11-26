@@ -61,6 +61,16 @@ try {
   const tools = await request("tools/list", {});
   const names = tools.result.tools.map(t => t.name).sort();
   assert(names.length === 9 && names.includes("read_diagnostic_report") && names.includes("read_supported_pids"), `9 tools registered (${names.join(", ")})`);
+  const byName = Object.fromEntries(tools.result.tools.map(t => [t.name, t]));
+  assert(tools.result.tools.every(t => typeof t.title === "string" && t.title.length > 0), "every tool has a display title");
+  assert(
+    names.filter(n => n !== "clear_dtcs").every(n => byName[n].annotations?.readOnlyHint === true && byName[n].annotations?.destructiveHint === false),
+    "every reader is annotated read-only"
+  );
+  assert(
+    byName.clear_dtcs.annotations?.destructiveHint === true && byName.clear_dtcs.annotations?.readOnlyHint === false,
+    "clear_dtcs is annotated destructive"
+  );
 
   const dtcs = toolJson(await request("tools/call", { name: "read_dtcs", arguments: {} }));
   assert(dtcs.stored_dtcs?.includes("P0420"), "read_dtcs finds stored P0420");
