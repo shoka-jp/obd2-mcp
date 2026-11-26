@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Add the `evap` mock scenario (`P0456` evaporative emission system small leak with MIL on and matching freeze frame) (thanks @playlikeboy).
 - Add focused tests for the Mode 01 live-data conversion formulas in `src/pids.ts`, with known byte fixtures and a round-trip check for every PID (thanks @playlikeboy).
 - Add a "Choose how to start" table to both READMEs that points to the demo, the Claude Desktop extension, `npx` registration, real-adapter setup and building from source.
 - Add a next step to common serial-port open errors (permission denied, port in use, wrong port name) while keeping the original error text.
@@ -20,7 +21,6 @@
 
 ### Safer and clearer behavior
 
-- Add the `evap` mock scenario (`P0456` evaporative emission system small leak with MIL on and matching freeze frame).
 - Register every tool with a display title and MCP annotations: readers are read-only and `clear_dtcs` is destructive. The `read_vin` description now asks users to remove the VIN before sharing results publicly.
 - Time out a WiFi (TCP) adapter connection after 10 seconds instead of waiting for the operating system's TCP timeout, and keep the first connection error in later restart messages.
 - Stop startup with a message naming the setting for an invalid `OBD2MCP_BAUD`, TCP host or port, or an empty serial path, and accept bracketed IPv6 addresses such as `tcp:[fe80::1]:35000`.

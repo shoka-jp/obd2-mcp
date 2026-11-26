@@ -60,7 +60,7 @@
     "mock_scenario": {
       "type": "string",
       "title": "Mock scenario",
-      "description": "Used only with mock: catalyst (P0420, default), healthy, misfire (P0301) or lean (P0171). Synthetic examples, not diagnoses.",
+      "description": "Used only with mock: catalyst (P0420, default), healthy, misfire (P0301), lean (P0171) or evap (P0456). Synthetic examples, not diagnoses.",
       "default": "catalyst",
       "required": false
     },
