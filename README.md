@@ -120,7 +120,7 @@ Then ask: *"Read my car's trouble codes and tell me what to check before I spend
 
 ### Try another mock scenario
 
-Set `OBD2MCP_MOCK_SCENARIO` in your MCP client configuration while using `OBD2MCP_CONNECTION=mock`. Available values are `catalyst` (default, P0420), `healthy` (no codes), `misfire` (P0301), `lean` (P0171 with elevated bank 1 fuel trims), and `evap` (P0456 evaporative emission system small leak). These are synthetic teaching examples, not diagnoses or verified vehicle profiles. An unknown scenario stops startup instead of falling back silently. The setting is ignored for real connections.
+Set `OBD2MCP_MOCK_SCENARIO` in your MCP client configuration while using `OBD2MCP_CONNECTION=mock`. Available values are `catalyst` (default, P0420), `healthy` (no codes), `misfire` (P0301), `lean` (P0171 with elevated bank 1 fuel trims), `evap` (P0456 evaporative emission system small leak), and `cleared` (codes cleared recently: nothing stored and the light off, but a permanent P0420 and three incomplete monitors; try it with the `used_car_check` prompt). These are synthetic teaching examples, not diagnoses or verified vehicle profiles. An unknown scenario stops startup instead of falling back silently. The setting is ignored for real connections.
 
 For example, register a separate Claude Code mock server:
 
@@ -162,12 +162,13 @@ claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- node "/absolute/path
 
 ## Guided prompts
 
-Not sure what to ask? The server provides three ready-made prompts. Claude Desktop lists them in the attachment (+) menu under the server's name, and Claude Code offers them as slash commands such as `/mcp__obd2__check_engine_light`.
+Not sure what to ask? The server provides four ready-made prompts. Claude Desktop lists them in the attachment (+) menu under the server's name, and Claude Code offers them as slash commands such as `/mcp__obd2__check_engine_light`.
 
 | Prompt | What it does |
 |---|---|
 | `check_engine_light` | Reads the diagnostic report, explains each code in plain words, keeps the freeze frame separate from live readings, and lists inexpensive checks before a workshop visit. Optional: your symptoms and reply language. |
 | `workshop_handover` | Turns the diagnostic report into a short note for a mechanic, with unknowns and errors kept visible and the VIN and personal details left out. |
+| `used_car_check` | For a used car you are considering: with the seller's permission, reads codes, permanent codes (`read_permanent_dtcs`) and readiness monitors, points out signs that codes were cleared recently as questions rather than proof, suggests reading again after the test drive, and lists questions for the seller and a pre-purchase inspection. Optional: what the seller says and reply language. [Walkthrough](docs/used-car-check.md) |
 | `connect_adapter` | Finds the connection value for a USB, Bluetooth or WiFi adapter with `list_serial_ports`, explains how to apply it, and checks the connection after a restart. |
 
 The server also sends usage instructions when a client connects, so Claude knows to label mock data, check supported sensors first and leave codes uncleared even without a prompt. The prompts only instruct Claude; every vehicle access still goes through the read-only tools. They tell Claude not to clear codes or request the VIN, and to label mock data and missing values.

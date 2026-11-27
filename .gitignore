@@ -6,3 +6,5 @@ Thumbs.db
 .env
 build/
 *.mcpb
+__pycache__/
+*.pyc

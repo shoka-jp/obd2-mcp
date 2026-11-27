@@ -120,4 +120,43 @@ export function registerPrompts(server: McpServer): void {
         ].join("\n")
       )
   );
+
+  server.registerPrompt(
+    "used_car_check",
+    {
+      title: "Check a used car before buying",
+      description: "With the seller's permission, read codes, permanent codes and readiness monitors, point out signs that codes were cleared recently, and list questions for the seller and a pre-purchase inspection.",
+      argsSchema: {
+        notes: optionalText("What the listing or seller says, e.g. 'no warning lights, battery replaced last week'."),
+        language: languageArg,
+      },
+    },
+    ({ notes, language }) =>
+      message(
+        [
+          "Help me check a used car I am thinking of buying, using the obd2 tools.",
+          "",
+          notes?.trim()
+            ? `What the listing or seller says (their words, not verified by the vehicle):\n"""\n${notes.trim()}\n"""`
+            : "I have not shared what the seller says. Ask only if it would change what to check.",
+          "",
+          compose(
+            [
+              "Before reading anything, confirm that the seller has agreed to the scan and that the car is parked with the ignition on (engine idling outdoors is fine). Readings are only taken while parked.",
+              "Call read_diagnostic_report with no arguments, then read_permanent_dtcs.",
+              "Call read_supported_pids. If it lists distance_with_mil or run_time, read them with read_live_data: distance_with_mil is the distance driven with the warning light on, and run_time is how long the engine has been running since it was started.",
+              "Report stored and pending codes, the MIL state, permanent codes and readiness monitors. Keep the freeze frame separate from live readings. Monitors reported as not_supported do not apply to this car and are not a problem.",
+              "Look for signs that codes were cleared recently: no stored codes while permanent codes remain, or several readiness monitors incomplete. Interpret them carefully. A battery replacement or disconnect, or a recent repair, also clears stored codes and resets monitors, so incomplete monitors alone are not suspicious; some cars normally leave one monitor, often EVAP, incomplete. A permanent code, however, survives a battery disconnect and a scan-tool clear: it means the car detected that fault and has not yet confirmed it is fixed, either because it was not repaired or because it was repaired recently and the car has not yet completed the driving needed to confirm it. Ask for repair records for that system (for P0420, the catalyst). Present all of this as questions for the seller, not as proof of concealment. A null permanent-code list means the car did not answer or does not support it (common before about 2010), not that there are none.",
+              "Suggest reading again after the test drive, once parked: call read_dtcs, read_permanent_dtcs and read_readiness and compare. A pending code that appears, or monitors that complete, add evidence; one drive may not complete every monitor.",
+              "Reply with a short summary first, readable on site, then questions to ask the seller, then what a professional pre-purchase inspection should check. Say clearly that a scan without codes is not a clean bill of health, because many mechanical faults never set a code.",
+            ],
+            language,
+            [
+              "Only read data with the seller's permission. Never clear codes on a car you do not own, and do not suggest it.",
+              "Do not estimate the car's value or tell the user whether to buy it; give them the evidence and questions to decide.",
+            ]
+          ),
+        ].join("\n")
+      )
+  );
 }
