@@ -4,6 +4,7 @@
 
 ### Changed
 
+- List each release in the official MCP Registry (`io.github.shoka-jp/obd2-mcp`) so MCP clients and directories can find it. A new release-workflow job fills in `server.json` with the release's `.mcpb` URL and SHA-256 and publishes it with GitHub OIDC, without stored secrets; it can also be run manually for an existing release.
 - When `find_adapter` sees no port that looks like an adapter, its `next_step` now also explains that a Bluetooth LE-only adapter (often sold for iPhone) never appears as a port on a computer and cannot be used. The `connect_adapter` prompt description now matches its connect-by-asking flow.
 
 ### Documentation

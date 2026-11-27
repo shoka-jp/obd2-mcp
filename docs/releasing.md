@@ -30,11 +30,12 @@ To release:
 1. Merge a reviewed commit to `main` whose `package.json` version, `CHANGELOG.md` entry and README release URLs all name the new version, and whose CI and `Release packages` checks passed.
 2. Create a GitHub release with a new tag `v<version>` on that commit and publish it.
 3. The workflow attaches `obd2-mcp-<version>.tgz`, `obd2-mcp-<version>.mcpb` and `SHA256SUMS`. It refuses to attach anything if the file versions do not match the tag.
-4. Download the published assets, compare them with `SHA256SUMS`, and run the README demo command from a fresh directory in English and Japanese. Install the `.mcpb` in Claude Desktop on at least one desktop platform and confirm the mock vehicle, `list_serial_ports` and a guided prompt respond.
+4. After the packages are attached, the workflow lists the release's `.mcpb` in the [official MCP Registry](https://registry.modelcontextprotocol.io) as `io.github.shoka-jp/obd2-mcp`. It fills in `server.json` with the version, download URL and SHA-256, and signs in with GitHub OIDC, so no secret is needed. To list an already published release, run the `Release packages` workflow manually with `registry_tag` set (for example `v0.6.0`). The repository's `server.json` describes the latest release.
+5. Download the published assets, compare them with `SHA256SUMS`, and run the README demo command from a fresh directory in English and Japanese. Install the `.mcpb` in Claude Desktop on at least one desktop platform and confirm the mock vehicle, `list_serial_ports` and a guided prompt respond.
 
 To build locally instead: `npm ci`, `npm pack`, `npm run build:mcpb`, then `npx @anthropic-ai/mcpb pack build/mcpb obd2-mcp-<version>.mcpb`.
 
-GitHubリリースでは、npmパッケージ（`.tgz`）とClaude Desktop拡張機能（`.mcpb`）を配布します。`Release packages` ワークフローがPRと `main` へのpushごとに両方を作成し、利用者と同じ方法で起動を確認します。バージョン・CHANGELOG・READMEのURLを更新したコミットを `main` にマージし、そのコミットに `v<バージョン>` のタグを付けたリリースを公開すると、`.tgz`・`.mcpb`・`SHA256SUMS` が自動で添付されます。ファイルのバージョンがタグと一致しない場合は添付しません。公開後は再ダウンロードしてハッシュを照合し、READMEの英日コマンドを確認したうえで、少なくとも1つのOSのClaude Desktopに `.mcpb` を入れて、模擬車両・`list_serial_ports`・ガイド付きプロンプトが応答することを確認してください。
+GitHubリリースでは、npmパッケージ（`.tgz`）とClaude Desktop拡張機能（`.mcpb`）を配布します。`Release packages` ワークフローがPRと `main` へのpushごとに両方を作成し、利用者と同じ方法で起動を確認します。バージョン・CHANGELOG・READMEのURLを更新したコミットを `main` にマージし、そのコミットに `v<バージョン>` のタグを付けたリリースを公開すると、`.tgz`・`.mcpb`・`SHA256SUMS` が自動で添付されます。ファイルのバージョンがタグと一致しない場合は添付しません。添付後は、`.mcpb` を[公式MCPレジストリ](https://registry.modelcontextprotocol.io)に `io.github.shoka-jp/obd2-mcp` として自動で登録します（GitHub OIDCを使うため秘密情報は不要）。公開済みのリリースを登録するときは、`Release packages` ワークフローを `registry_tag`（例：`v0.6.0`）を指定して手動実行します。公開後は再ダウンロードしてハッシュを照合し、READMEの英日コマンドを確認したうえで、少なくとも1つのOSのClaude Desktopに `.mcpb` を入れて、模擬車両・`list_serial_ports`・ガイド付きプロンプトが応答することを確認してください。
 
 ## npm registry publishing checklist for an authorized maintainer
 
