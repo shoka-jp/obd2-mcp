@@ -22,6 +22,16 @@ interface MockState {
   live: Record<string, number>;
   /** freeze frame values by PID name */
   freeze: Record<string, number>;
+  /** Control modules answering mode 09; empty lists mean the module does not support that PID. */
+  modules: MockModule[];
+}
+
+interface MockModule {
+  /** 11-bit CAN response header, e.g. 7E8 for the engine. */
+  header: string;
+  name: string;
+  calibrationIds: string[];
+  cvns: string[];
 }
 
 function defaultState(): MockState {
@@ -70,6 +80,10 @@ function defaultState(): MockState {
       rpm: 2210,
       vehicle_speed: 98,
     },
+    modules: [
+      { header: "7E8", name: "ECM-EngineControl", calibrationIds: ["MOCK-ECM-A540"], cvns: ["4E1F2A3C"] },
+      { header: "7E9", name: "TCM-TransmissionCtl", calibrationIds: ["MOCK-TCM-A120"], cvns: [] },
+    ],
   };
 }
 
@@ -120,6 +134,8 @@ function scenarioState(scenario: MockScenario): MockState {
     for (const pid of ["maf", "stft_b2", "ltft_b2", "oil_temp", "ambient_temp"]) {
       delete state.live[pid];
     }
+    // Only the engine answers, and only with its name.
+    state.modules = [{ header: "7E8", name: "ECM-EngineControl", calibrationIds: [], cvns: [] }];
   } else if (scenario === "evap") {
     state.storedDtcs = ["P0456"];
     state.permanentDtcs = ["P0456"];
@@ -133,6 +149,10 @@ const join = (bytes: number[]) => bytes.map(hex).join(" ");
 
 export class MockTransport implements Transport {
   private state: MockState;
+  /** ATH1: show CAN headers and ISO-TP frame bytes, as a real ELM327 does. */
+  private headers = false;
+  /** The protocol is found on the first OBD request after ATZ (ATDPN answers A0 until then). */
+  private protocolFound = false;
 
   constructor(private scenario: MockScenario = "catalyst") {
     if (!MOCK_SCENARIOS.includes(scenario)) throw new Error(`Unknown mock scenario: ${scenario}. Choose: ${MOCK_SCENARIOS.join(", ")}`);
@@ -157,11 +177,55 @@ export class MockTransport implements Transport {
 
   private respond(cmd: string): string {
     // AT commands
-    if (cmd === "ATZ") return "ELM327 v1.5 (obd2-mcp mock)\r";
+    if (cmd === "ATZ") {
+      this.headers = false;
+      this.protocolFound = false;
+      return "ELM327 v1.5 (obd2-mcp mock)\r";
+    }
+    if (cmd === "ATH1" || cmd === "ATH0") {
+      this.headers = cmd === "ATH1";
+      return "OK\r";
+    }
+    if (cmd === "ATDPN") return this.protocolFound ? "A6\r" : "A0\r";
     if (cmd === "ATI") return "ELM327 v1.5 (obd2-mcp mock)\r";
     if (cmd === "ATRV") return "14.2V\r";
     if (cmd.startsWith("AT")) return "OK\r";
+    this.protocolFound = true;
 
+    // Mode 09 module information: each module answers for itself.
+    if (["0900", "0904", "0906", "090A"].includes(cmd)) return this.moduleInfo(parseInt(cmd.slice(2), 16));
+    const answer = this.answer(cmd);
+    if (!this.headers || answer === "NO DATA\r" || answer === "?\r") return answer;
+    // With headers on, the engine module answers as a single frame or ISO-TP frames.
+    const payload = headerlessPayload(answer);
+    return lines(interleave([isoTpFrames(payload).map(f => `${this.state.modules[0].header} ${join(f)}`)]));
+  }
+
+  private moduleInfo(pid: number): string {
+    const answers: Array<{ header: string; payload: number[] }> = [];
+    for (const [index, module] of this.state.modules.entries()) {
+      const supported = new Set([0x0a, ...(index === 0 ? [0x02] : []), ...(module.calibrationIds.length ? [0x04] : []), ...(module.cvns.length ? [0x06] : [])]);
+      let payload: number[] | null = null;
+      if (pid === 0x00) {
+        const bitmap = [0, 0, 0, 0];
+        for (const p of supported) bitmap[Math.floor((p - 1) / 8)] |= 0x80 >> ((p - 1) % 8);
+        payload = [0x49, 0x00, ...bitmap];
+      } else if (pid === 0x0a) {
+        payload = [0x49, 0x0a, 0x01, ...padded(module.name.replace("-", "\0-").slice(0, 20), 20)];
+      } else if (pid === 0x04 && supported.has(0x04)) {
+        payload = [0x49, 0x04, module.calibrationIds.length, ...module.calibrationIds.flatMap(id => padded(id, 16))];
+      } else if (pid === 0x06 && supported.has(0x06)) {
+        payload = [0x49, 0x06, module.cvns.length, ...module.cvns.flatMap(c => c.match(/../g)!.map(b => parseInt(b, 16)))];
+      }
+      if (payload) answers.push({ header: module.header, payload });
+    }
+    if (answers.length === 0) return "NO DATA\r";
+    if (this.headers) return lines(interleave(answers.map(a => isoTpFrames(a.payload).map(f => `${a.header} ${join(f)}`))));
+    // Without headers several modules' answers cannot be told apart, as on a real adapter.
+    return answers.map(a => headerlessFrames(a.payload)).join("");
+  }
+
+  private answer(cmd: string): string {
     // Mode 03: stored DTCs (CAN style: count byte + pairs)
     if (cmd === "03") return this.dtcResponse(0x43, this.state.storedDtcs);
     // Mode 07: pending DTCs
@@ -209,14 +273,7 @@ export class MockTransport implements Transport {
     // Mode 09 PID 02: VIN (ISO-TP multi-frame)
     if (cmd === "0902") {
       const vinBytes = [...Buffer.from(this.state.vin, "ascii")];
-      const payload = [0x49, 0x02, 0x01, ...vinBytes];
-      const total = payload.length;
-      let out = total.toString(16).toUpperCase().padStart(3, "0") + "\r";
-      for (let frame = 0; frame * 7 < payload.length; frame++) {
-        const chunk = payload.slice(frame * 7, frame * 7 + 7);
-        out += `${frame.toString(16).toUpperCase()}: ${join(chunk)}\r`;
-      }
-      return out;
+      return headerlessFrames([0x49, 0x02, 0x01, ...vinBytes]);
     }
     // Mode 02: freeze frame, frame 00
     if (cmd.startsWith("02") && cmd.endsWith("00") && cmd.length === 6) {
@@ -263,4 +320,48 @@ export class MockTransport implements Transport {
 /** Exported for tests. */
 export function mockPidNames(): string[] {
   return [...PID_BY_NAME.keys()];
+}
+
+/** An answer in the ELM327's headerless format: one line, or a length line and "0:", "1:" frame lines. */
+function headerlessFrames(payload: number[]): string {
+  if (payload.length <= 7) return `${join(payload)}\r`;
+  let out = payload.length.toString(16).toUpperCase().padStart(3, "0") + "\r";
+  for (let frame = 0; frame * 7 < payload.length; frame++) {
+    out += `${frame.toString(16).toUpperCase()}: ${join(payload.slice(frame * 7, frame * 7 + 7))}\r`;
+  }
+  return out;
+}
+
+/** The bytes of a headerless single-line or multi-frame answer. */
+function headerlessPayload(answer: string): number[] {
+  const rows = answer.split("\r").filter(Boolean);
+  const data = rows.length > 1 ? rows.slice(1).map(r => r.replace(/^[0-9A-F]+:\s*/, "")) : rows;
+  return data.join(" ").trim().split(/\s+/).map(b => parseInt(b, 16));
+}
+
+/** ISO-TP frames (8 data bytes each, padded with 00) as shown with headers on. */
+function isoTpFrames(payload: number[]): number[][] {
+  const pad = (f: number[]) => [...f, ...Array(8 - f.length).fill(0)];
+  if (payload.length <= 7) return [pad([payload.length, ...payload])];
+  const frames = [[0x10 | (payload.length >> 8), payload.length & 0xff, ...payload.slice(0, 6)]];
+  for (let i = 6, seq = 1; i < payload.length; i += 7, seq = (seq + 1) & 0x0f) {
+    frames.push(pad([0x20 | seq, ...payload.slice(i, i + 7)]));
+  }
+  return frames;
+}
+
+/** Several modules' frames in round-robin order, as their answers overlap on the bus. */
+function interleave(groups: string[][]): string[] {
+  const out: string[] = [];
+  for (let i = 0; groups.some(g => i < g.length); i++) {
+    for (const g of groups) if (i < g.length) out.push(g[i]);
+  }
+  return out;
+}
+
+const lines = (rows: string[]) => rows.map(r => `${r}\r`).join("");
+
+function padded(text: string, size: number): number[] {
+  const bytes = [...Buffer.from(text, "ascii")].slice(0, size);
+  return [...bytes, ...Array(size - bytes.length).fill(0)];
 }

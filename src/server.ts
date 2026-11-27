@@ -9,6 +9,17 @@ import { listSerialPorts } from "./ports.js";
 import { registerPrompts } from "./prompts.js";
 import { registerResources, KEPT_REPORTS, type SessionRecord } from "./resources.js";
 import { compareReports, parseSavedReport, MAX_SAVED_REPORT_CHARS } from "./compare.js";
+import {
+  CAN_PROTOCOLS,
+  calibrationIds,
+  calibrationVerificationNumbers,
+  ecuName,
+  isNegative,
+  protocolName,
+  protocolNumber,
+  reassembleByHeader,
+  supportedInfoPids,
+} from "./mode09.js";
 import { VERSION } from "./version.js";
 import { SERVER_INSTRUCTIONS } from "./instructions.js";
 import { errorHint } from "./hints.js";
@@ -616,6 +627,107 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
         const vin = String.fromCharCode(...bytes.slice(1));
         if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) throw new Error("Invalid or incomplete VIN response");
         return wrap({ vin });
+      } catch (err) {
+        return fail(err);
+      }
+    }
+  );
+
+  server.registerTool(
+    "read_ecu_info",
+    {
+      title: "Read control module information",
+      description: "List the control modules (ECUs) that answer OBD-II requests, with each module's name, calibration IDs (the software version) and calibration verification numbers (a checksum of that software), from mode 09 PIDs 0A, 04 and 06. Read-only; does not read the VIN. Useful when a workshop asks for software versions, for example to check whether a software update or recall applies. Modules are told apart by their CAN address (7E8 is usually the engine), so this works on CAN vehicles (most cars from 2008 on); older protocols are reported as not supported. Do not conclude that a module was modified or tuned from these numbers: only the manufacturer's reference values can show that.",
+      inputSchema: {},
+      annotations: READ_ONLY,
+    },
+    async () => {
+      try {
+        const result = await session.elm.withHeaders(async send => {
+          let protocol = protocolNumber(await send("ATDPN"));
+          if (!protocol) {
+            // The adapter finds the vehicle's protocol on the first request.
+            try {
+              await send("0100");
+            } catch (err) {
+              if (!(err instanceof NoDataError)) throw err;
+            }
+            protocol = protocolNumber(await send("ATDPN"));
+          }
+          if (!protocol) {
+            return { supported: false, modules: [], note: "The adapter has not found the vehicle's protocol, so module information could not be read. Check that the ignition is on, then try read_dtcs." };
+          }
+          const can = CAN_PROTOCOLS[protocol];
+          if (!can) {
+            return { supported: false, protocol: protocolName(protocol), modules: [], note: "Module information is read only on CAN vehicles (most cars from 2008 on). This vehicle uses an older protocol, so it is reported as not supported rather than guessed." };
+          }
+          let support: Map<string, number[] | Error>;
+          try {
+            support = reassembleByHeader(await send("0900"), can.headerHexDigits);
+          } catch (err) {
+            if (err instanceof NoDataError) {
+              return { supported: false, protocol: can.name, modules: [], note: "No module answered the request for supported vehicle information (mode 09 PID 00)." };
+            }
+            throw err;
+          }
+          type Module = { address: string; supports: Set<number>; info: Record<string, unknown>; not_supported: string[]; errors: Record<string, string> };
+          const modules = new Map<string, Module>();
+          for (const [address, payload] of [...support].sort(([a], [b]) => a.localeCompare(b))) {
+            const module: Module = { address, supports: new Set(), info: {}, not_supported: [], errors: {} };
+            if (payload instanceof Error) module.errors.supported_information = payload.message;
+            else if (!isNegative(payload)) {
+              try {
+                module.supports = supportedInfoPids(payload);
+              } catch (err) {
+                module.errors.supported_information = err instanceof Error ? err.message : String(err);
+              }
+            }
+            modules.set(address, module);
+          }
+          const fields = [
+            { pid: 0x0a, cmd: "090A", field: "name", parse: ecuName },
+            { pid: 0x04, cmd: "0904", field: "calibration_ids", parse: calibrationIds },
+            { pid: 0x06, cmd: "0906", field: "calibration_verification_numbers", parse: calibrationVerificationNumbers },
+          ] as const;
+          for (const { pid, cmd, field, parse } of fields) {
+            const asked = [...modules.values()].filter(m => m.supports.has(pid));
+            for (const m of modules.values()) if (!m.supports.has(pid)) m.not_supported.push(field);
+            if (asked.length === 0) continue;
+            let answers: Map<string, number[] | Error>;
+            try {
+              answers = reassembleByHeader(await send(cmd), can.headerHexDigits);
+            } catch (err) {
+              const message = err instanceof NoDataError ? "advertised this information but did not answer" : (err instanceof Error ? err.message : String(err));
+              for (const m of asked) m.errors[field] = message;
+              continue;
+            }
+            for (const m of asked) {
+              const payload = answers.get(m.address);
+              if (!payload) m.errors[field] = "advertised this information but did not answer";
+              else if (payload instanceof Error) m.errors[field] = payload.message;
+              else if (isNegative(payload)) m.not_supported.push(field);
+              else {
+                try {
+                  m.info[field] = parse(payload);
+                } catch (err) {
+                  m.errors[field] = err instanceof Error ? err.message : String(err);
+                }
+              }
+            }
+          }
+          return {
+            supported: true,
+            protocol: can.name,
+            modules: [...modules.values()].map(m => ({
+              address: m.address,
+              ...m.info,
+              ...(m.not_supported.length ? { not_supported: m.not_supported } : {}),
+              ...(Object.keys(m.errors).length ? { errors: m.errors } : {}),
+            })),
+            note: "Calibration IDs name the software version in each module; a workshop can check them against the manufacturer's software updates. Calibration verification numbers are checksums of that software: only the manufacturer's reference values can tell whether it was changed, so do not conclude from them that a module was modified or tuned. Fields a module did not advertise are listed as not_supported.",
+          };
+        });
+        return wrap(result);
       } catch (err) {
         return fail(err);
       }
