@@ -41,6 +41,25 @@ test('a missing optional serialport package gives an actionable error', async ()
   await assert.rejects(listSerialPorts(async () => { throw new Error('Cannot find package'); }), { message: SERIALPORT_MISSING });
 });
 
+test('a missing udevadm on Linux keeps the original error and explains how to specify a port directly', async () => {
+  const failing = async () => ({
+    SerialPort: { list: async () => { throw new Error('spawn udevadm ENOENT'); } },
+  });
+  await assert.rejects(listSerialPorts(failing), error => {
+    assert.ok(error.message.includes('spawn udevadm ENOENT'), 'original error text is kept');
+    assert.match(error.message, /udevadm/);
+    assert.match(error.message, /\/dev\/ttyUSB\*/);
+    assert.match(error.message, /serial:<path>/);
+    assert.match(error.message, /docs\/troubleshooting\.md/);
+    return true;
+  });
+
+  const other = async () => ({
+    SerialPort: { list: async () => { throw new Error('unexpected listing failure'); } },
+  });
+  await assert.rejects(listSerialPorts(other), { message: 'unexpected listing failure' });
+});
+
 test('the text listing explains how to use a port and what to do when none are found', async () => {
   const listed = formatPortList(await listSerialPorts(fake([{ path: 'COM3', vendorId: '1a86', friendlyName: 'USB-SERIAL CH340 (COM3)' }])));
   assert.match(listed, /Serial ports found: 1/);
