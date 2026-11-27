@@ -270,7 +270,15 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
         const incomplete = (b[3] & (1 << i)) !== 0;
         monitors[name] = !available ? "not_supported" : incomplete ? "incomplete" : "complete";
       });
-      return wrap({ mil_on: (b[0] & 0x80) !== 0, readiness_monitors: monitors });
+      const states = Object.entries(monitors);
+      const supported = states.filter(([, state]) => state !== "not_supported");
+      return wrap({
+        mil_on: (b[0] & 0x80) !== 0,
+        readiness_monitors: monitors,
+        supported_count: supported.length,
+        complete_count: supported.filter(([, state]) => state === "complete").length,
+        incomplete_monitors: supported.filter(([, state]) => state === "incomplete").map(([name]) => name),
+      });
     } catch (err) {
       return fail(err);
     }
@@ -280,7 +288,7 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
     "read_readiness",
     {
       title: "Read readiness monitors",
-      description: "Read readiness monitors (emissions self-tests): which monitors this vehicle supports and whether each has completed. Useful when preparing for an emissions inspection; this result alone does not determine whether the vehicle will pass.",
+      description: "Read readiness monitors (emissions self-tests): which monitors this vehicle supports and whether each has completed, with supported_count, complete_count and the incomplete_monitors list. Monitors reported as not_supported do not apply to the vehicle. Clearing codes or disconnecting the battery resets monitors; they complete again after enough driving, and some vehicles normally leave one (often EVAP) incomplete. Useful when preparing for an emissions inspection or checking a used car; this result alone does not determine whether the vehicle will pass.",
       inputSchema: {},
       annotations: READ_ONLY,
     },

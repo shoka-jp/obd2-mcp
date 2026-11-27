@@ -203,7 +203,7 @@ claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- node "/absolute/path
 | `read_permanent_dtcs` | 消去しても残る故障コード（Mode 0A）。修理が確認されるまで残るため、最近コードを消したかどうかの手がかりになります（中古車の確認など）。非対応の車（2010年頃より前に多い）では `null` で、「コードなし」の確認ではありません。 |
 | `read_freeze_frame` | フリーズフレームを記録させたDTCと、その瞬間のエンジン状態 |
 | `read_live_data` | ライブセンサー:回転数、水温、燃料補正、MAF、O2電圧など(23 PID) |
-| `read_readiness` | レディネスモニタの完了状態(検査に通る状態かの判定材料) |
+| `read_readiness` | レディネスモニタの完了状態(検査に通る状態かの判定材料)。対応数・完了数と未完了の一覧も返します。コード消去やバッテリーの取り外しでリセットされます。 |
 | `read_vin` | ECUから車台番号を読み取り |
 | `connection_status` | アダプター情報と取得できた場合のポート電圧。アダプターへの接続だけでは車両との通信は確認できません。 |
 | `list_serial_ports` | このPCのシリアルポートと `serial:` の設定値を一覧表示し、USB・Bluetoothアダプタの接続先を探す。ポートは開かず、モックモードでも使えます |
