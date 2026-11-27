@@ -97,7 +97,7 @@ export function registerPrompts(server: McpServer): void {
     "connect_adapter",
     {
       title: "Set up a real OBD-II adapter",
-      description: "Find the connection value for a USB, Bluetooth or WiFi ELM327 adapter, explain how to apply it, and check the connection afterwards.",
+      description: "Connect a real USB, Bluetooth or WiFi ELM327 adapter step by step without asking for a port name: find it, connect after asking, check that it answers, and explain how to keep the setting.",
       argsSchema: { adapter: optionalText("Adapter type or model if known, e.g. 'USB', 'Bluetooth', 'WiFi' or the product name."), language: languageArg },
     },
     ({ adapter, language }) =>
@@ -109,13 +109,53 @@ export function registerPrompts(server: McpServer): void {
           compose(
             [
               "Call connection_status to see the current connection. If it starts with mock, the simulated vehicle is in use.",
-              "For a USB or Bluetooth adapter, call list_serial_ports. Point out likely candidates (for example a known USB-serial chip or a Bluetooth serial port), and suggest unplugging or unpairing the adapter and listing again if it is unclear. A Bluetooth adapter must be paired in the operating system first.",
-              "For a WiFi adapter, explain that the computer must join the adapter's WiFi network and that the value is usually tcp:192.168.0.10:35000; check the adapter's manual.",
-              "Explain how to apply the value: in the Claude Desktop extension settings, set Adapter connection; in other clients, set the environment variable OBD2MCP_CONNECTION (for example claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- ...), then restart the client or server.",
-              "After the restart, call connection_status, then read_supported_pids, and explain the results. An adapter reply alone does not prove vehicle communication.",
+              "Assume the user is not technical: do not ask for a port name, and explain each step in plain words.",
+              "For a USB or Bluetooth adapter, call find_adapter. A Bluetooth adapter must be paired in the operating system first, and the adapter must be plugged into the car with the ignition on. If it finds an adapter, ask the user, then call use_adapter with that connection value (and baud if reported). If it finds none, follow its next_step; list_serial_ports shows every port if needed.",
+              "For a WiFi adapter, ask the user to join the adapter's WiFi network first (often named OBDII; the internet may drop while connected), then call use_adapter with tcp:192.168.0.10:35000, or the address in the adapter's manual.",
+              "After use_adapter succeeds, call read_supported_pids and explain the results. An adapter reply alone does not prove vehicle communication.",
+              "Explain that this connection lasts until the extension or client restarts. To keep it, set Adapter connection in the Claude Desktop extension settings to the same value; in other clients, set OBD2MCP_CONNECTION (for example claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- ...).",
             ],
             language,
             ["Ask the user to work with the vehicle safely parked, ignition on, and the engine off or idling outdoors."]
+          ),
+        ].join("\n")
+      )
+  );
+
+  server.registerPrompt(
+    "used_car_check",
+    {
+      title: "Check a used car before buying",
+      description: "With the seller's permission, read codes, permanent codes and readiness monitors, point out signs that codes were cleared recently, and list questions for the seller and a pre-purchase inspection.",
+      argsSchema: {
+        notes: optionalText("What the listing or seller says, e.g. 'no warning lights, battery replaced last week'."),
+        language: languageArg,
+      },
+    },
+    ({ notes, language }) =>
+      message(
+        [
+          "Help me check a used car I am thinking of buying, using the obd2 tools.",
+          "",
+          notes?.trim()
+            ? `What the listing or seller says (their words, not verified by the vehicle):\n"""\n${notes.trim()}\n"""`
+            : "I have not shared what the seller says. Ask only if it would change what to check.",
+          "",
+          compose(
+            [
+              "Before reading anything, confirm that the seller has agreed to the scan and that the car is parked with the ignition on (engine idling outdoors is fine). Readings are only taken while parked.",
+              "Call read_diagnostic_report with no arguments, then read_permanent_dtcs.",
+              "Call read_supported_pids. Read whichever of warmups_since_clear, distance_since_clear, distance_with_mil and run_time it lists, with one read_live_data call. warmups_since_clear and distance_since_clear count engine warm-ups and kilometres since trouble codes were last cleared (by a scan tool, and on many cars also by a battery disconnect); distance_with_mil is the distance driven with the warning light on; run_time is how long the engine has been running since it was started.",
+              "Report stored and pending codes, the MIL state, permanent codes and readiness monitors. Keep the freeze frame separate from live readings. Monitors reported as not_supported do not apply to this car and are not a problem.",
+              "Look for signs that codes were cleared recently: few warm-ups or little distance since codes were cleared (the most direct clue, if supported), no stored codes while permanent codes remain, or several readiness monitors incomplete. Interpret them carefully. A battery replacement or disconnect, or a recent repair, also clears stored codes and resets monitors, so incomplete monitors alone are not suspicious; some cars normally leave one monitor, often EVAP, incomplete. A permanent code, however, survives a battery disconnect and a scan-tool clear: it means the car detected that fault and has not yet confirmed it is fixed, either because it was not repaired or because it was repaired recently and the car has not yet completed the driving needed to confirm it. Ask for repair records for that system (for P0420, the catalyst). Present all of this as questions for the seller, not as proof of concealment. A null permanent-code list means the car did not answer or does not support it (common before about 2010), not that there are none.",
+              "Suggest reading again after the test drive, once parked: call read_dtcs, read_permanent_dtcs and read_readiness and compare. A pending code that appears, or monitors that complete, add evidence; one drive may not complete every monitor.",
+              "Reply with a short summary first, readable on site, then questions to ask the seller, then what a professional pre-purchase inspection should check. Say clearly that a scan without codes is not a clean bill of health, because many mechanical faults never set a code.",
+            ],
+            language,
+            [
+              "Only read data with the seller's permission. Never clear codes on a car you do not own, and do not suggest it.",
+              "Do not estimate the car's value or tell the user whether to buy it; give them the evidence and questions to decide.",
+            ]
           ),
         ].join("\n")
       )

@@ -20,10 +20,10 @@ const text = result => {
   return result.messages[0].content.text;
 };
 
-test('three guided prompts are listed with titles and optional arguments', async () => {
+test('four guided prompts are listed with titles and optional arguments', async () => {
   await withClient(async client => {
     const { prompts } = await client.listPrompts();
-    assert.deepEqual(prompts.map(p => p.name).sort(), ['check_engine_light', 'connect_adapter', 'workshop_handover']);
+    assert.deepEqual(prompts.map(p => p.name).sort(), ['check_engine_light', 'connect_adapter', 'used_car_check', 'workshop_handover']);
     for (const prompt of prompts) {
       assert.ok(prompt.title && prompt.description, prompt.name);
       assert.ok(prompt.arguments.every(arg => arg.required !== true), `${prompt.name} arguments are optional`);
@@ -46,7 +46,7 @@ test('check_engine_light uses the report, keeps evidence separate and never clea
 
 test('prompts work without arguments', async () => {
   await withClient(async client => {
-    for (const name of ['check_engine_light', 'workshop_handover', 'connect_adapter']) {
+    for (const name of ['check_engine_light', 'workshop_handover', 'connect_adapter', 'used_car_check']) {
       const body = text(await client.getPrompt({ name, arguments: {} }));
       assert.match(body, /Reply in the language of this conversation\./, name);
       assert.doesNotMatch(body, /undefined/, name);
@@ -61,7 +61,29 @@ test('workshop_handover excludes identifying data and connect_adapter finds the 
     assert.match(handover, /unavailable, unknown or failed/);
     const connect = text(await client.getPrompt({ name: 'connect_adapter', arguments: { adapter: 'USB' } }));
     assert.match(connect, /My adapter: USB/);
-    assert.ok(connect.indexOf('list_serial_ports') < connect.indexOf('read_supported_pids'));
+    assert.ok(connect.indexOf('find_adapter') < connect.indexOf('use_adapter'), 'find before switching');
+    assert.ok(connect.indexOf('use_adapter') < connect.indexOf('read_supported_pids'), 'switch before reading');
+    assert.match(connect, /do not ask for a port name/);
     assert.match(connect, /OBD2MCP_CONNECTION/);
+  });
+});
+
+test('used_car_check asks for permission, reads permanent codes and treats clearing signs as questions', async () => {
+  await withClient(async client => {
+    const body = text(await client.getPrompt({ name: 'used_car_check', arguments: { notes: 'Battery replaced last week', language: '日本語' } }));
+    assert.ok(body.indexOf("seller has agreed") < body.indexOf('read_diagnostic_report'), 'permission comes before any read');
+    assert.ok(body.indexOf('read_diagnostic_report') < body.indexOf('read_permanent_dtcs'));
+    assert.ok(body.indexOf('read_permanent_dtcs') < body.indexOf('read_supported_pids'), 'supported sensors are checked before reading distance_with_mil');
+    assert.match(body, /survives a battery disconnect/);
+    assert.match(body, /repaired recently/);
+    assert.match(body, /after the test drive, once parked/);
+    assert.match(body, /not_supported do not apply/);
+    assert.ok(body.indexOf('short summary first') > 0, 'summary comes first for on-site reading');
+    assert.match(body, /"""\nBattery replaced last week\n"""/);
+    assert.match(body, /not as proof/);
+    assert.match(body, /not a clean bill of health/);
+    assert.match(body, /Never clear codes on a car you do not own/);
+    assert.match(body, /Do not call clear_dtcs/);
+    assert.match(body, /Write your reply in 日本語\./);
   });
 });

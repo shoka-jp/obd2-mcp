@@ -59,16 +59,22 @@ try {
   assert(init.result?.serverInfo?.name === "obd2-mcp", "initialize returns server info");
   const { version } = JSON.parse(readFileSync("package.json", "utf8"));
   assert(init.result?.serverInfo?.version === version, `server reports package version ${version} (${init.result?.serverInfo?.version})`);
+  const instructions = init.result?.instructions ?? "";
+  assert(/read_diagnostic_report/.test(instructions) && /Do not call clear_dtcs unless the user explicitly asks/.test(instructions) && /simulated/.test(instructions), "initialize returns usage instructions with the clearing and mock-data rules");
   notify("notifications/initialized", {});
 
   const tools = await request("tools/list", {});
   const names = tools.result.tools.map(t => t.name).sort();
-  assert(names.length === 10 && names.includes("read_diagnostic_report") && names.includes("read_supported_pids") && names.includes("list_serial_ports"), `10 tools registered (${names.join(", ")})`);
+  assert(names.length === 13 && names.includes("find_adapter") && names.includes("use_adapter") && names.includes("read_permanent_dtcs") && names.includes("read_diagnostic_report") && names.includes("read_supported_pids") && names.includes("list_serial_ports"), `13 tools registered (${names.join(", ")})`);
   const byName = Object.fromEntries(tools.result.tools.map(t => [t.name, t]));
   assert(tools.result.tools.every(t => typeof t.title === "string" && t.title.length > 0), "every tool has a display title");
   assert(
-    names.filter(n => n !== "clear_dtcs").every(n => byName[n].annotations?.readOnlyHint === true && byName[n].annotations?.destructiveHint === false),
+    names.filter(n => !["clear_dtcs", "find_adapter", "use_adapter"].includes(n)).every(n => byName[n].annotations?.readOnlyHint === true && byName[n].annotations?.destructiveHint === false),
     "every reader is annotated read-only"
+  );
+  assert(
+    ["find_adapter", "use_adapter"].every(n => byName[n].annotations?.readOnlyHint === false && byName[n].annotations?.destructiveHint === false),
+    "find_adapter and use_adapter contact the adapter but are not destructive"
   );
   assert(
     byName.clear_dtcs.annotations?.destructiveHint === true && byName.clear_dtcs.annotations?.readOnlyHint === false,
@@ -80,6 +86,9 @@ try {
   assert(dtcs.mil_on === true && dtcs.dtc_count === 1, "MIL on with count 1");
   assert(dtcs.pending_dtcs?.length === 0, "no pending DTCs");
   assert(dtcs.simulated === true, "mock responses are labeled simulated");
+
+  const permanent = toolJson(await request("tools/call", { name: "read_permanent_dtcs", arguments: {} }));
+  assert(permanent.permanent_dtcs?.length === 1 && permanent.permanent_dtcs[0] === "P0420", "read_permanent_dtcs finds permanent P0420");
 
   const ff = toolJson(await request("tools/call", { name: "read_freeze_frame", arguments: {} }));
   assert(ff.freeze_frame?.dtc === "P0420", "freeze frame DTC is P0420");
@@ -111,6 +120,8 @@ try {
 
   const after = toolJson(await request("tools/call", { name: "read_dtcs", arguments: {} }));
   assert(after.stored_dtcs?.length === 0 && after.mil_on === false, "DTCs gone and MIL off after clear");
+  const permanentAfter = toolJson(await request("tools/call", { name: "read_permanent_dtcs", arguments: {} }));
+  assert(permanentAfter.permanent_dtcs?.[0] === "P0420", "permanent P0420 survives clearing, as on a real ECU");
 
   console.log("\nPASS: all smoke tests passed");
   child.kill();

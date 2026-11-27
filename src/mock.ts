@@ -11,6 +11,8 @@ import { PID_BY_CODE, PID_BY_NAME } from "./pids.js";
 interface MockState {
   storedDtcs: string[];
   pendingDtcs: string[];
+  /** Mode 0A permanent DTCs: survive a scan-tool clear until the ECU confirms the repair. */
+  permanentDtcs: string[];
   milOn: boolean;
   vin: string;
   freezeDtc: string | null;
@@ -26,6 +28,7 @@ function defaultState(): MockState {
   return {
     storedDtcs: ["P0420"],
     pendingDtcs: [],
+    permanentDtcs: ["P0420"],
     milOn: true,
     vin: "1HGFC2F59GA000042",
     freezeDtc: "P0420",
@@ -48,11 +51,15 @@ function defaultState(): MockState {
       o2_b1s1_voltage: 0.45,
       o2_b1s2_voltage: 0.66,
       fuel_level: 62,
+      warmups_since_clear: 18,
+      distance_since_clear: 350,
       baro: 100,
       catalyst_temp_b1s1: 421,
       module_voltage: 14.32,
       ambient_temp: 26,
       oil_temp: 96,
+      run_time: 640,
+      distance_with_mil: 128,
     },
     freeze: {
       engine_load: 34.5,
@@ -66,28 +73,57 @@ function defaultState(): MockState {
   };
 }
 
-export const MOCK_SCENARIOS = ["catalyst", "healthy", "misfire", "lean"] as const;
+export const MOCK_SCENARIOS = ["catalyst", "healthy", "misfire", "lean", "evap", "cleared", "partial"] as const;
 export type MockScenario = (typeof MOCK_SCENARIOS)[number];
 
 function scenarioState(scenario: MockScenario): MockState {
   const state = defaultState();
   if (scenario === "healthy") {
     state.storedDtcs = [];
+    state.permanentDtcs = [];
     state.milOn = false;
     state.freezeDtc = null;
     state.readinessIncomplete = 0;
+    state.live.distance_with_mil = 0;
   } else if (scenario === "misfire") {
     state.storedDtcs = ["P0301"];
+    state.permanentDtcs = ["P0301"];
     state.freezeDtc = "P0301";
     state.live.rpm = 690;
     state.freeze.rpm = 1850;
   } else if (scenario === "lean") {
     state.storedDtcs = ["P0171"];
+    state.permanentDtcs = ["P0171"];
     state.freezeDtc = "P0171";
     state.live.stft_b1 = 18;
     state.live.ltft_b1 = 15;
     state.freeze.stft_b1 = 19;
     state.freeze.ltft_b1 = 16;
+  } else if (scenario === "cleared") {
+    // Codes were cleared shortly before (for example before a sale): nothing
+    // stored and the MIL off, but the permanent P0420 remains and several
+    // monitors have not re-run yet.
+    state.storedDtcs = [];
+    state.milOn = false;
+    state.freezeDtc = null;
+    state.readinessIncomplete = 0x25; // catalyst, evaporative system and O2 sensor incomplete
+    state.live.distance_with_mil = 0;
+    state.live.warmups_since_clear = 1;
+    state.live.distance_since_clear = 12;
+    state.live.run_time = 410;
+  } else if (scenario === "partial") {
+    state.storedDtcs = ["P0128"];
+    state.permanentDtcs = ["P0128"];
+    state.milOn = true;
+    state.live.coolant_temp = 72;
+    state.freezeDtc = null;
+    for (const pid of ["maf", "stft_b2", "ltft_b2", "oil_temp", "ambient_temp"]) {
+      delete state.live[pid];
+    }
+  } else if (scenario === "evap") {
+    state.storedDtcs = ["P0456"];
+    state.permanentDtcs = ["P0456"];
+    state.freezeDtc = "P0456";
   }
   return state;
 }
@@ -132,7 +168,10 @@ export class MockTransport implements Transport {
     if (cmd === "07") {
       return this.dtcResponse(0x47, this.state.pendingDtcs);
     }
-    // Mode 04: clear
+    // Mode 0A: permanent DTCs
+    if (cmd === "0A") return this.dtcResponse(0x4a, this.state.permanentDtcs);
+    // Mode 04: clear. Permanent DTCs deliberately stay, as on a real ECU:
+    // they clear only after the monitor confirms the repair.
     if (cmd === "04") {
       this.state.storedDtcs = [];
       this.state.pendingDtcs = [];
@@ -140,6 +179,11 @@ export class MockTransport implements Transport {
       this.state.freezeDtc = null;
       this.state.readinessIncomplete = 0xe5;
       this.state.continuousIncomplete = 0x70;
+      for (const pid of ["distance_with_mil", "warmups_since_clear", "distance_since_clear"]) {
+        if (pid in this.state.live) {
+          this.state.live[pid] = 0;
+        }
+      }
       return "44\r";
     }
     // Mode 01 support bitmaps: advertise exactly the implemented mock commands.

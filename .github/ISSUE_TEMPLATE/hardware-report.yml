@@ -1,0 +1,113 @@
+name: "Real setup report / 実機での動作報告"
+description: "Report how obd2-mcp worked with your adapter and vehicle / アダプタと車での結果を報告"
+labels: ["hardware report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you! Reports from real setups are how this project learns which adapters and vehicles work. Partial results and failures are just as useful as successes.
+        **This issue will be public.** Never include the VIN, licence plate, names, contact details, credentials or private network addresses, including in screenshots and logs.
+        **Safety:** test with the vehicle safely parked, the ignition on, and the engine off or idling outdoors. Use read-only tools; do not clear codes for a report.
+        Useful checks: ask Claude to connect to the adapter (it uses `find_adapter` and `use_adapter`), then `connection_status`, `read_supported_pids`, `read_diagnostic_report` (or `read_dtcs`) and `read_permanent_dtcs`.
+
+        実機での結果を教えてください。一部だけ動いた・動かなかったという報告も同じくらい役立ちます。**Issueは公開されます。** 車台番号、ナンバー、氏名・連絡先、認証情報、非公開ネットワークアドレスは、画像やログからも取り除いてください。**安全のため**、安全な場所に停車し、イグニッションON・エンジン停止または屋外でのアイドリング状態で、読み取り専用のツールだけを使ってください。報告のためにコードを消去しないでください。確認の目安：Claudeにアダプタへの接続を頼み（`find_adapter`・`use_adapter` を使います）、続けて `connection_status`、`read_supported_pids`、`read_diagnostic_report`（または `read_dtcs`）、`read_permanent_dtcs` を試します。
+  - type: dropdown
+    id: result
+    attributes:
+      label: "Result / 結果"
+      options:
+        - "Worked: codes and live data were read / 動いた：コードとライブデータを取得できた"
+        - "Partly worked: adapter connected, some readings failed / 一部動いた：アダプタには接続できたが一部取得できない"
+        - "Adapter connected, vehicle did not respond / アダプタには接続できたが車両が応答しない"
+        - "Could not connect to the adapter / アダプタに接続できない"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: "obd2-mcp version / バージョン"
+      description: "`obd2-mcp --version`, or the release you installed. / リリース名でも構いません。"
+      placeholder: "0.6.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: "How you ran it / 使い方"
+      options:
+        - "Claude Desktop extension (.mcpb)"
+        - "npx / npm exec with the release package"
+        - "Built from source / ソースからビルド"
+        - "Other / その他"
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: "Operating system / OS"
+      placeholder: "Windows 11 / macOS 15 / Ubuntu 24.04"
+    validations:
+      required: true
+  - type: dropdown
+    id: connection
+    attributes:
+      label: "Connection / 接続方法"
+      options:
+        - "USB (serial)"
+        - "Bluetooth classic (serial port) / 従来型Bluetooth（シリアル）"
+        - "WiFi (tcp:)"
+        - "Other / その他"
+    validations:
+      required: true
+  - type: dropdown
+    id: find-adapter
+    attributes:
+      label: "Connecting by asking Claude (v0.6.0+) / Claudeに頼んだ接続（v0.6.0以降）"
+      description: "Did `find_adapter` find the adapter and `use_adapter` connect? / `find_adapter` でアダプタが見つかり、`use_adapter` で接続できたか。"
+      options:
+        - "Found and connected / 見つかり、接続できた"
+        - "Found, but connecting failed / 見つかったが接続に失敗した"
+        - "Not found; I set the connection myself / 見つからず、自分で接続先を設定した"
+        - "Did not try / 試していない"
+    validations:
+      required: false
+  - type: input
+    id: adapter
+    attributes:
+      label: "Adapter / アダプタ"
+      description: "Brand and model, the ELM327 version from `connection_status`, and the USB chip if known. / 製品名・型番、`connection_status` のELM327バージョン、分かればUSBチップ。"
+      placeholder: "e.g. Vgate iCar Pro, ELM327 v2.3 / ELM327 v1.5 clone, CH340"
+    validations:
+      required: true
+  - type: input
+    id: vehicle
+    attributes:
+      label: "Vehicle (no VIN) / 車両（車台番号は不要）"
+      description: "Make, model, model year, fuel type and market. / メーカー、車種、年式、燃料、販売地域。"
+      placeholder: "e.g. Toyota Prius 2017, hybrid, Japan market"
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: "What worked and what did not / 動いたこと・動かなかったこと"
+      description: "For example: adapter identity, whether read_supported_pids was complete, which readings were missing. / アダプタ情報、対応PIDの確認結果、取得できなかった値など。"
+    validations:
+      required: true
+  - type: textarea
+    id: errors
+    attributes:
+      label: "Error messages (optional) / エラー（任意）"
+      description: "Paste the exact text after removing identifying details. / 個人を特定できる情報を除いて貼り付けてください。"
+      render: text
+    validations:
+      required: false
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: "Before submitting / 送信前の確認"
+      options:
+        - label: "I removed the VIN, licence plate, names, contact details, credentials and private network addresses. / 車台番号・ナンバー・氏名・連絡先・認証情報・非公開ネットワークアドレスを削除した。"
+          required: true
+        - label: "I tested with the vehicle safely parked and did not clear codes for this report. / 安全に停車した状態で試し、報告のためにコードを消去していない。"
+          required: true

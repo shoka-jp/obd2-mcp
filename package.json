@@ -1,6 +1,6 @@
 {
   "name": "obd2-mcp",
-  "version": "0.4.0",
+  "version": "0.6.1",
   "description": "MCP server that lets AI assistants read your car's OBD-II data through ELM327 adapters — trouble codes, live sensors, freeze frame, readiness monitors, VIN. Ships with a mock vehicle so you can try it without any hardware.",
   "type": "module",
   "bin": {
@@ -22,7 +22,7 @@
     "start": "node dist/index.js",
     "demo": "npm run build && node dist/index.js --demo --summary",
     "demo:ja": "npm run build && node dist/index.js --demo --summary --lang ja",
-    "test": "npm run build && node --test test/cli.mjs test/connection.mjs test/transport.mjs test/dtc.mjs test/safety.mjs test/scenarios.mjs test/demo.mjs test/diagnostic-report.mjs test/supported-pids.mjs test/ports.mjs test/prompts.mjs && node test/smoke.mjs",
+    "test": "npm run build && node --test test/adapter.mjs test/cli.mjs test/connection.mjs test/transport.mjs test/dtc.mjs test/hints.mjs test/permanent-dtcs.mjs test/pids.mjs test/safety.mjs test/scenarios.mjs test/demo.mjs test/diagnostic-report.mjs test/supported-pids.mjs test/ports.mjs test/prompts.mjs && node test/smoke.mjs",
     "test:package": "node test/package.mjs",
     "build:mcpb": "npm run build && node scripts/build-mcpb.mjs",
     "prepack": "npm run build"
@@ -50,18 +50,18 @@
   "homepage": "https://github.com/shoka-jp/obd2-mcp#readme",
   "bugs": "https://github.com/shoka-jp/obd2-mcp/issues",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
-    "zod": "^3.24.0"
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^4.6.7"
   },
   "optionalDependencies": {
-    "serialport": "^12.0.0"
+    "serialport": "^13.0.0"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "typescript": "^5.6.0"
+    "@types/node": "^22.20.5",
+    "typescript": "^7.0.2"
   },
   "funding": {
     "type": "github",

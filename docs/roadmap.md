@@ -8,7 +8,7 @@ The goal is to make a vehicle's recorded observations easier to understand and s
 
 | Where | What you can try |
 |---|---|
-| GitHub release **v0.4.0** | A no-car mock demo, four simulated scenarios and ten MCP tools, including `read_diagnostic_report` for workshop evidence, `read_supported_pids` for advertised live sensor support in the Mode 01 PID 01–60 range and `list_serial_ports` to find an adapter's port. Install it in Claude Desktop from the `.mcpb` file or register the release package with `npx`; three guided prompts help you start. [Try the demo](./try-mock.md). |
+| GitHub release **v0.6.1** | A no-car mock demo with seven simulated scenarios, thirteen MCP tools, four guided prompts and 25 live sensors. Connect a real adapter by asking (`find_adapter` and `use_adapter`, no port names or restart), with plain-language next steps on errors. It also includes `read_diagnostic_report` for workshop evidence, `read_supported_pids` for advertised live sensor support in the Mode 01 PID 01–60 range, `list_serial_ports` to find an adapter's port, and a used-car check: `read_permanent_dtcs` (Mode 0A), the `used_car_check` prompt (which also reads warm-ups and distance since codes were cleared), the `cleared` scenario and a [walkthrough](./used-car-check.md). An [adapter guide](./adapters.md) explains which adapters work on a computer. Install it in Claude Desktop from the `.mcpb` file or register the release package with `npx`; a [connection troubleshooting guide](./troubleshooting.md) covers real adapters. [Try the demo](./try-mock.md). |
 
 The report uses sequential reads and does not request VIN or clear codes; it is not a diagnosis. Mock tests do not establish compatibility with a real vehicle or adapter. See the [safety and scope notes](../README.md#safety-and-scope).
 
@@ -18,16 +18,17 @@ The report uses sequential reads and does not request VIN or clear codes; it is 
 
 - **Release verification:** follow the [release checklist](./releasing.md) for each package and document the verified install path.
 - **Clearer handover:** explore an easy-to-read, shareable report that preserves unavailable values, errors, timestamps and the difference between freeze-frame and live readings. Keep the structured MCP response usable.
-- **More useful simulations:** add focused mock scenarios, such as an EVAP-related example and partial or unavailable readings, with expected observations and limitations. Simulated outcomes must stay clearly labeled.
+- **More useful simulations:** an EVAP example (`evap`, P0456) has been available since v0.4.0, a recently cleared car (`cleared`) since v0.6.0, and a car with unsupported sensors and no freeze frame (`partial`) since v0.6.1. Next, base new scenarios on real-vehicle reports, with expected observations and limitations. Simulated outcomes must stay clearly labeled.
 
 ### 2. Reduce uncertainty when connecting a real adapter
 
 - **Supported PID discovery:** available since v0.3.0 for `0100`, `0120` and `0140`, with explicit unknown states and partial results. Next, collect reproducible real-adapter evidence before considering broader ranges or automatic sensor selection.
-- **Evidence from real setups:** document reproducible, privacy-reviewed reports by operating system, connection type, adapter and vehicle context. Mark only combinations actually tested; mock coverage is not hardware validation.
+- **Evidence from real setups:** document reproducible, privacy-reviewed reports by operating system, connection type, adapter and vehicle context. Reports come in through the [real setup report](https://github.com/shoka-jp/obd2-mcp/issues/new?template=hardware-report.yml) form and are listed in [reported setups](./compatibility.md). Mark only combinations actually tested; mock coverage is not hardware validation.
 - **Connection guidance:** improve troubleshooting for pairing, port selection, timeouts and reconnects based on reproducible reports. Preserve the existing advice to restart after a timeout or disconnect until recovery is implemented and tested.
 
 ### 3. Expand diagnostic evidence carefully
 
+- Permanent trouble codes (Mode 0A) are available since v0.6.0 as `read_permanent_dtcs`. Next, collect real-vehicle reports of how different cars answer it.
 - Investigate read-only Mode 09 calibration IDs and Mode 06 on-board monitoring results, including unsupported and multi-ECU responses.
 - Explore oxygen-sensor sampling for catalyst-related investigations only with clear sampling limits and without treating a pattern as proof of a failed component.
 

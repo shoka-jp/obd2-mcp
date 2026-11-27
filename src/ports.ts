@@ -47,6 +47,26 @@ export const SERIALPORT_MISSING =
   "Reinstall with build tools available, or use a WiFi adapter via tcp:HOST:PORT.";
 
 /**
+ * Add a next step when serial-port listing fails on Linux because `udevadm` is
+ * missing. The original error text is kept so users and maintainers can search
+ * for it, matching `serialOpenError` in `src/transport.ts`.
+ */
+export function serialListError(err: unknown): Error {
+  const error = err instanceof Error ? err : new Error(String(err));
+  const text = error.message;
+  const code = (error as NodeJS.ErrnoException).code;
+  if (/udevadm/i.test(text) && (/ENOENT/i.test(text) || code === "ENOENT")) {
+    return new Error(
+      `Could not list serial ports: ${text}. ` +
+        "Listing serial ports on Linux needs udevadm (part of udev/systemd), which is not available here. " +
+        "Check `ls /dev/ttyUSB* /dev/ttyACM* /dev/rfcomm*` and set `serial:<path>` directly. " +
+        "See docs/troubleshooting.md."
+    );
+  }
+  return error;
+}
+
+/**
  * List serial ports reported by the operating system. Serial numbers and other
  * device identifiers are omitted so the result can be shared more safely.
  */
@@ -64,6 +84,8 @@ export async function listSerialPorts(load: () => Promise<SerialPortModule> = lo
   let raw: RawPortInfo[];
   try {
     raw = await Promise.race([mod.SerialPort.list(), timeout]);
+  } catch (err) {
+    throw serialListError(err);
   } finally {
     clearTimeout(timer);
   }

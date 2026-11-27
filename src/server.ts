@@ -7,6 +7,11 @@ import { discoverSupportedPids } from "./supported-pids.js";
 import { listSerialPorts } from "./ports.js";
 import { registerPrompts } from "./prompts.js";
 import { VERSION } from "./version.js";
+import { SERVER_INSTRUCTIONS } from "./instructions.js";
+import { errorHint } from "./hints.js";
+import { findAdapters, type FindAdapterResult } from "./discover.js";
+import { parseConnection, sessionConnectionError } from "./connection.js";
+import type { Transport } from "./transport.js";
 
 const MONITORS_B = ["misfire", "fuel_system", "components"] as const;
 const MONITORS_CD = [
@@ -30,22 +35,41 @@ const DESTRUCTIVE = { readOnlyHint: false, destructiveHint: true, idempotentHint
 /** Reads only local operating-system information, never the adapter or vehicle. */
 const LOCAL_READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } as const;
 
-export function buildServer(elm: Elm327, mock: boolean): McpServer {
-  const server = new McpServer({ name: "obd2-mcp", version: VERSION });
+/** Replaceable pieces, so tests can run adapter discovery and switching without hardware. */
+export interface ServerDeps {
+  findAdapters?: () => Promise<FindAdapterResult>;
+  connect?: (connection: string, baud?: number) => { transport: Transport; mock: boolean };
+}
+
+/** Switching for use_adapter: the same parsing and validation as the OBD2MCP_CONNECTION setting. */
+function defaultConnect(connection: string, baud?: number) {
+  const env = { ...process.env, ...(baud !== undefined ? { OBD2MCP_BAUD: String(baud) } : {}) };
+  return parseConnection(["--connection", connection], env);
+}
+
+export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): McpServer {
+  // The active connection. use_adapter can replace it during a session, so
+  // every tool reads it here instead of capturing the original values.
+  const session = { elm, mock };
+  const server = new McpServer({ name: "obd2-mcp", version: VERSION }, { instructions: SERVER_INSTRUCTIONS });
 
   const wrap = (data: Record<string, unknown>) => {
     const payload = {
       ...data,
-      source: elm.describe(),
-      ...(mock ? { simulated: true, note: data.note ?? "Mock vehicle data — no real car is connected." } : {}),
+      source: session.elm.describe(),
+      ...(session.mock ? { simulated: true, note: data.note ?? "Mock vehicle data — no real car is connected." } : {}),
     };
     return { content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }] };
   };
 
-  const fail = (err: unknown) => ({
-    content: [{ type: "text" as const, text: JSON.stringify({ error: String(err instanceof Error ? err.message : err) }) }],
-    isError: true,
-  });
+  const fail = (err: unknown) => {
+    const error = String(err instanceof Error ? err.message : err);
+    const hint = errorHint(error);
+    return {
+      content: [{ type: "text" as const, text: JSON.stringify({ error, ...(hint ? { hint } : {}) }) }],
+      isError: true,
+    };
+  };
 
   server.registerTool(
     "connection_status",
@@ -57,8 +81,8 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
     },
     async () => {
       try {
-        const identity = await elm.at("ATI");
-        const voltage = await elm.at("ATRV");
+        const identity = await session.elm.at("ATI");
+        const voltage = await session.elm.at("ATRV");
         if (!identity || /^(\?|ERROR|NO DATA|STOPPED|UNABLE TO CONNECT)$/i.test(identity)) {
           throw new Error(`Invalid adapter identity: ${identity || "(empty)"}`);
         }
@@ -91,7 +115,7 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
         const payload = {
           ports,
           count: ports.length,
-          current_connection: elm.describe(),
+          current_connection: session.elm.describe(),
           note:
             ports.length === 0
               ? "No serial ports found. Plug in a USB adapter or pair a Bluetooth adapter in the operating system first. WiFi adapters use tcp:<host>:<port>."
@@ -104,21 +128,96 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
     }
   );
 
+  server.registerTool(
+    "find_adapter",
+    {
+      title: "Find my OBD-II adapter",
+      description:
+        "Find a USB or Bluetooth ELM327 adapter automatically, so the user does not need to know a port name. Only ports that look like an adapter (a known USB-serial chip, or a Bluetooth serial port) are opened, briefly, to send the adapter's identification command (ATZ); nothing is sent to the vehicle. Takes a few seconds per port. A Bluetooth adapter must be paired in the operating system first, and the adapter must be plugged into the car with the ignition on. WiFi adapters are not found this way: after the user joins the adapter's WiFi network, use use_adapter with tcp:192.168.0.10:35000 (or the address in its manual). If an adapter is found, ask the user before calling use_adapter with its connection value.",
+      inputSchema: {},
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+    },
+    async () => {
+      try {
+        const result = await (deps.findAdapters ?? (() => findAdapters()))();
+        const first = result.found[0];
+        const next_step = first
+          ? `Found ${result.found.length} adapter(s). Ask the user, then call use_adapter with connection ${first.connection}${first.baud && first.baud !== 38400 ? ` and baud ${first.baud}` : ""}.`
+          : result.checked.length > 0
+            ? "No adapter answered. Check that it is plugged into the car, the ignition is ON, and (for Bluetooth) that it is paired and nearby; then try again."
+            : "No port looks like an OBD-II adapter. Plug in the USB adapter, or pair the Bluetooth adapter in the operating system settings, then try again. WiFi adapters use tcp:<host>:<port>. A Bluetooth LE-only adapter (often sold for iPhone) never appears as a port on a computer and cannot be used; see docs/adapters.md.";
+        const payload = { ...result, current_connection: session.elm.describe(), next_step };
+        return { content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }] };
+      } catch (err) {
+        return fail(err);
+      }
+    }
+  );
+
+  server.registerTool(
+    "use_adapter",
+    {
+      title: "Connect to my adapter",
+      description:
+        "Switch this session to a real adapter, or back to mock, without editing settings or restarting. Use the connection value from find_adapter (serial:...) or a WiFi address (tcp:192.168.0.10:35000). The adapter is checked first; if it does not answer, the current connection is kept. Only the adapter is contacted, not the vehicle. The change lasts until the server restarts; to keep it, the user sets Adapter connection in the Claude Desktop extension settings (or OBD2MCP_CONNECTION). Clearing codes on a real vehicle stays disabled. Ask the user before switching.",
+      inputSchema: {
+        connection: z.string().min(1).max(300).describe("serial:<port>, tcp:<host>:<port>, or mock"),
+        baud: z.number().int().positive().max(4000000).optional().describe("Serial baud rate, only if find_adapter reported one other than 38400"),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+    },
+    async ({ connection, baud }) => {
+      const spec = connection.trim();
+      const notAllowed = sessionConnectionError(spec);
+      if (notAllowed) return fail(new Error(`Not switched: ${notAllowed}. The previous connection is still in use.`));
+      let next: { transport: Transport; mock: boolean };
+      try {
+        next = (deps.connect ?? defaultConnect)(spec, baud);
+      } catch (err) {
+        return fail(err);
+      }
+      const candidate = new Elm327(next.transport);
+      let identity: string;
+      try {
+        identity = await candidate.init();
+      } catch (err) {
+        await candidate.close().catch(() => undefined);
+        const error = String(err instanceof Error ? err.message : err);
+        const hint = errorHint(error);
+        const payload = { error, ...(hint ? { hint } : {}), connected: false, current_connection: session.elm.describe(), note: "The previous connection is still in use." };
+        return { content: [{ type: "text" as const, text: JSON.stringify(payload) }], isError: true };
+      }
+      const previous = session.elm;
+      session.elm = candidate;
+      session.mock = next.mock;
+      await previous.close().catch(() => undefined);
+      return wrap({
+        connected: true,
+        connection: candidate.describe(),
+        adapter: identity || null,
+        vehicle_communication: "not_checked",
+        note: next.mock
+          ? "Switched back to the simulated vehicle."
+          : `This session now reads the real adapter until the server restarts. To keep it, set Adapter connection to ${spec}${baud ? ` and Baud rate to ${baud}` : ""} in the extension settings. Read-only by default: clearing codes stays disabled.`,
+      });
+    }
+  );
+
   const readDtcs = async () => {
     try {
-      const status = await elm.obd("0101", "4101");
+      const status = await session.elm.obd("0101", "4101");
       requireBytes(status, 4, "0101");
       const milOn = (status[0] & 0x80) !== 0;
       const count = status[0] & 0x7f;
       let stored: string[] | null = null;
       let pending: string[] | null = null;
       try {
-        stored = parseDtcPayload(await elm.obd("03", "43"));
+        stored = parseDtcPayload(await session.elm.obd("03", "43"));
       } catch (e) {
         if (!(e instanceof NoDataError)) throw e;
       }
       try {
-        pending = parseDtcPayload(await elm.obd("07", "47"));
+        pending = parseDtcPayload(await session.elm.obd("07", "47"));
       } catch (e) {
         if (!(e instanceof NoDataError)) throw e;
       }
@@ -143,6 +242,37 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
   );
 
   server.registerTool(
+    "read_permanent_dtcs",
+    {
+      title: "Read permanent trouble codes",
+      description:
+        "Read permanent DTCs (Mode 0A): codes the engine computer keeps after codes are cleared with a scan tool or the battery is disconnected, until its own monitor confirms the fault is gone. Useful to check whether codes were cleared recently, for example before buying a used car. Many vehicles built before about 2010 do not support it: permanent_dtcs is null when the vehicle gives no answer or reports the request unsupported, which is not a confirmed empty list. Read-only; it never clears anything.",
+      inputSchema: {},
+      annotations: READ_ONLY,
+    },
+    async () => {
+      try {
+        let permanent: string[] | null = null;
+        let note: string | undefined;
+        try {
+          permanent = parseDtcPayload(await session.elm.obd("0A", "4A"));
+        } catch (e) {
+          if (e instanceof NoDataError) {
+            note = "No answer to Mode 0A: the vehicle may not support permanent codes (common before about 2010), or the ignition is off. This is not a confirmed empty list.";
+          } else if (e instanceof Error && /Unexpected response to "0A": 7F\s?0A/i.test(e.message)) {
+            note = "The vehicle reported Mode 0A (permanent codes) as unsupported. This is not a confirmed empty list.";
+          } else {
+            throw e;
+          }
+        }
+        return wrap({ permanent_dtcs: permanent, ...(note ? { note } : {}) });
+      } catch (err) {
+        return fail(err);
+      }
+    }
+  );
+
+  server.registerTool(
     "read_supported_pids",
     {
       title: "Discover supported live sensors",
@@ -151,7 +281,7 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
       annotations: READ_ONLY,
     },
     async () => {
-      const result = await discoverSupportedPids(elm);
+      const result = await discoverSupportedPids(session.elm);
       return { ...wrap(result), ...(!result.complete ? { isError: true } : {}) };
     }
   );
@@ -166,7 +296,7 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
         continue;
       }
       try {
-        const bytes = await elm.obd(`01${def.pid}`, `41${def.pid}`);
+        const bytes = await session.elm.obd(`01${def.pid}`, `41${def.pid}`);
         requireBytes(bytes, def.bytes, `01${def.pid}`);
         values[name] = { value: round(def.parse(bytes)), unit: def.unit };
       } catch (err) {
@@ -189,7 +319,7 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
 
   const readFreezeFrame = async () => {
     try {
-      const dtcBytes = await elm.obd("020200", "420200");
+      const dtcBytes = await session.elm.obd("020200", "420200");
       requireBytes(dtcBytes, 2, "020200");
       const dtc = dtcBytes.length >= 2 ? decodeDtcPair(dtcBytes[0], dtcBytes[1]) : null;
       if (!dtc) return wrap({ freeze_frame: null, note: "No freeze frame stored." });
@@ -197,7 +327,7 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
       for (const name of FREEZE_PIDS) {
         const def = PID_BY_NAME.get(name)!;
         try {
-          const bytes = await elm.obd(`02${def.pid}00`, `42${def.pid}00`);
+          const bytes = await session.elm.obd(`02${def.pid}00`, `42${def.pid}00`);
           requireBytes(bytes, def.bytes, `02${def.pid}00`);
           conditions[name] = { value: round(def.parse(bytes)), unit: def.unit };
         } catch (err) {
@@ -224,7 +354,7 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
 
   const readReadiness = async () => {
     try {
-      const b = await elm.obd("0101", "4101");
+      const b = await session.elm.obd("0101", "4101");
       requireBytes(b, 4, "0101");
       if ((b[1] & 0x08) !== 0) throw new Error("Compression-ignition readiness monitors are not yet supported");
       const monitors: Record<string, string> = {};
@@ -238,7 +368,15 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
         const incomplete = (b[3] & (1 << i)) !== 0;
         monitors[name] = !available ? "not_supported" : incomplete ? "incomplete" : "complete";
       });
-      return wrap({ mil_on: (b[0] & 0x80) !== 0, readiness_monitors: monitors });
+      const states = Object.entries(monitors);
+      const supported = states.filter(([, state]) => state !== "not_supported");
+      return wrap({
+        mil_on: (b[0] & 0x80) !== 0,
+        readiness_monitors: monitors,
+        supported_count: supported.length,
+        complete_count: supported.filter(([, state]) => state === "complete").length,
+        incomplete_monitors: supported.filter(([, state]) => state === "incomplete").map(([name]) => name),
+      });
     } catch (err) {
       return fail(err);
     }
@@ -248,7 +386,7 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
     "read_readiness",
     {
       title: "Read readiness monitors",
-      description: "Read readiness monitors (emissions self-tests): which monitors this vehicle supports and whether each has completed. Useful when preparing for an emissions inspection; this result alone does not determine whether the vehicle will pass.",
+      description: "Read readiness monitors (emissions self-tests): which monitors this vehicle supports and whether each has completed, with supported_count, complete_count and the incomplete_monitors list. Monitors reported as not_supported do not apply to the vehicle. Clearing codes or disconnecting the battery resets monitors; they complete again after enough driving, and some vehicles normally leave one (often EVAP) incomplete. Useful when preparing for an emissions inspection or checking a used car; this result alone does not determine whether the vehicle will pass.",
       inputSchema: {},
       annotations: READ_ONLY,
     },
@@ -292,7 +430,7 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
         schema_version: 1,
         started_at: startedAt,
         completed_at: new Date().toISOString(),
-        simulated: mock,
+        simulated: session.mock,
         sections,
         notes: [
           "Collection times describe this read session. Freeze-frame values were recorded earlier by the vehicle; live values are read sequentially.",
@@ -316,7 +454,7 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
     },
     async () => {
       try {
-        const bytes = await elm.obd("0902", "4902");
+        const bytes = await session.elm.obd("0902", "4902");
         requireBytes(bytes, 18, "0902");
         // Accept the supported CAN-formatted VIN response only. Dropping bytes or
         // taking the last 17 characters can turn a mixed response into a false VIN.
@@ -344,10 +482,10 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
           "Not cleared. Set confirm=true only after the user explicitly confirms — clearing erases freeze frame evidence and resets readiness monitors."
         );
       }
-      if (!mock && process.env.OBD2MCP_ENABLE_CLEAR !== "1") {
+      if (!session.mock && process.env.OBD2MCP_ENABLE_CLEAR !== "1") {
         return fail("Clearing real vehicle codes is disabled. Enable OBD2MCP_ENABLE_CLEAR=1 only after reviewing the risks and obtaining explicit user consent.");
       }
-      if (!mock) {
+      if (!session.mock) {
         try {
           const response = await server.server.elicitInput({
             mode: "form",
@@ -364,7 +502,7 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
         }
       }
       try {
-        await elm.obd("04", "44");
+        await session.elm.obd("04", "44");
         return wrap({ cleared: true, note: "DTCs cleared, MIL reset. Readiness monitors will read incomplete until drive cycles complete." });
       } catch (err) {
         return fail(err);
