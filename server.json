@@ -3,7 +3,7 @@
   "name": "io.github.shoka-jp/obd2-mcp",
   "title": "OBD-II Car Diagnostics (ELM327)",
   "description": "Let AI read your car's OBD-II codes and live data via an ELM327 adapter. Mock car included.",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "repository": {
     "url": "https://github.com/shoka-jp/obd2-mcp",
     "source": "github"
@@ -11,8 +11,8 @@
   "packages": [
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/shoka-jp/obd2-mcp/releases/download/v0.6.2/obd2-mcp-0.6.2.mcpb",
-      "fileSha256": "380b35f019305c28bafb204a5b9979df1c9ab425699f9a297219a434003ed429",
+      "identifier": "https://github.com/shoka-jp/obd2-mcp/releases/download/v0.7.0/obd2-mcp-0.7.0.mcpb",
+      "fileSha256": "2d6c622b5c620c5e16300afe7b127ad17470a0a0f82f34bdd04f29f83afccbc3",
       "transport": {
         "type": "stdio"
       }
