@@ -51,9 +51,26 @@ test('cleared: no stored codes, but the permanent code and incomplete monitors r
     const monitors = (await call(client, 'read_readiness')).readiness_monitors;
     for (const name of ['catalyst', 'evaporative_system', 'oxygen_sensor']) assert.equal(monitors[name], 'incomplete', name);
     assert.equal(monitors.misfire, 'complete');
+    const readiness = await call(client, 'read_readiness');
+    assert.deepEqual(readiness.incomplete_monitors, ['catalyst', 'evaporative_system', 'oxygen_sensor']);
+    assert.equal(readiness.supported_count, 8);
+    assert.equal(readiness.complete_count, 5);
     const live = await call(client, 'read_live_data', { pids: ['distance_with_mil'] });
     assert.equal(live.live_data.distance_with_mil.value, 0);
   } finally { await client.close(); await server.close(); }
+});
+
+test('readiness summary counts only supported monitors', async () => {
+  for (const [scenario, incomplete] of [['healthy', []], ['catalyst', ['evaporative_system']]]) {
+    const { client, server } = await createClient(scenario);
+    try {
+      const readiness = await call(client, 'read_readiness');
+      assert.deepEqual(readiness.incomplete_monitors, incomplete, scenario);
+      assert.equal(readiness.supported_count, 8, scenario);
+      assert.equal(readiness.complete_count, 8 - incomplete.length, scenario);
+      assert.ok(!readiness.incomplete_monitors.includes('heated_catalyst'), 'not_supported monitors are never listed as incomplete');
+    } finally { await client.close(); await server.close(); }
+  }
 });
 
 test('clearing one mock session resets readiness but not other sessions', async () => {
