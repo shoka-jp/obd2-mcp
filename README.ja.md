@@ -40,7 +40,7 @@ Claudeに「エンジン警告灯が点いたのはなぜ?」と聞くと、**�
 | Claude Desktopで使う | [`.mcpb` 拡張機能をインストール](#claude-desktop拡張機能としてインストール) | Claude Desktop |
 | Claude Codeなど他のMCPクライアントで使う | [`npx` でリリースパッケージを登録](#gitもビルドも使わない方法) | Node.js 22または24 |
 | 中古車を買う前に確認する | [`used_car_check` プロンプトと使い方](./docs/used-car-check.md#日本語)。まず `--demo --summary --lang ja --scenario cleared` で試せます | ELM327アダプタと売り手の了承 |
-| 自分の車のデータを読む | [ELM327アダプタを接続](#実車への接続)、困ったら[トラブルシューティング](./docs/troubleshooting.md#日本語) | USB・Bluetooth（シリアル）・WiFiのELM327アダプタ |
+| 自分の車のデータを読む | アダプタを挿してClaudeに「つないで」と頼む（[仕組み](#実車への接続)）。困ったら[トラブルシューティング](./docs/troubleshooting.md#日本語) | USB・Bluetooth（シリアル）・WiFiのELM327アダプタ |
 | コードを変更する・開発に参加する | [ソースからビルド](#ソースからビルドする方法)と[貢献ガイド](./CONTRIBUTING.md) | GitとNode.js |
 
 どの方法も最初は模擬車両で動くので、車につなぐ前に設定を確認できます。MCPクライアントでは、`check_engine_light` などの[ガイド付きプロンプト](#ガイド付きプロンプト)から始めると簡単です。

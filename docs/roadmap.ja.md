@@ -8,7 +8,7 @@
 
 | 入手先 | 試せること |
 |---|---|
-| GitHubリリース **v0.6.0** | 車がなくても使えるデモ、6種類の模擬シナリオ、11のMCPツール、4つのガイド付きプロンプト、23のライブセンサー。整備相談用の `read_diagnostic_report`、Mode 01のPID 01〜60の範囲でライブセンサーの対応通知を確認する `read_supported_pids`、アダプタのポートを探す `list_serial_ports` に加え、中古車の確認に使える `read_permanent_dtcs`（Mode 0A）、`used_car_check` プロンプト、`cleared` シナリオ、[使い方](./used-car-check.md#日本語)を含みます。Claude Desktopには `.mcpb` ファイルから導入でき、`npx` でリリースパッケージを登録することもできます。実アダプタ向けの[接続トラブルシューティング](./troubleshooting.md#日本語)もあります。[デモを試す](./try-mock.md#日本語) |
+| GitHubリリース **v0.6.0** | 車がなくても使えるデモ、6種類の模擬シナリオ、13のMCPツール、4つのガイド付きプロンプト、23のライブセンサー。実車のアダプタには頼むだけで接続でき（`find_adapter` と `use_adapter`。ポート名の入力や再起動は不要）、エラー時には平易な次の一手を示します。整備相談用の `read_diagnostic_report`、Mode 01のPID 01〜60の範囲でライブセンサーの対応通知を確認する `read_supported_pids`、アダプタのポートを探す `list_serial_ports` に加え、中古車の確認に使える `read_permanent_dtcs`（Mode 0A）、`used_car_check` プロンプト、`cleared` シナリオ、[使い方](./used-car-check.md#日本語)を含みます。Claude Desktopには `.mcpb` ファイルから導入でき、`npx` でリリースパッケージを登録することもできます。実アダプタ向けの[接続トラブルシューティング](./troubleshooting.md#日本語)もあります。[デモを試す](./try-mock.md#日本語) |
 
 レポートは順番に読み取り、VIN取得やコード消去は行いません。故障の確定診断ではありません。モックでの検証は、実車やアダプターとの互換性を示すものではありません。[安全設計とスコープ](../README.ja.md#安全設計とスコープ)もご確認ください。
 

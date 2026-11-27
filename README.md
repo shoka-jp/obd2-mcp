@@ -40,7 +40,7 @@ Ask Claude *"why is my check-engine light on?"* and it reads the actual codes fr
 | Use it in Claude Desktop | [Install the `.mcpb` extension](#claude-desktop-install-as-an-extension) | Claude Desktop |
 | Use it in Claude Code or another MCP client | [Register the release package with `npx`](#without-git-or-a-build) | Node.js 22 or 24 |
 | Check a used car before buying | The [`used_car_check` prompt and walkthrough](./docs/used-car-check.md); try it first with `--demo --summary --scenario cleared` | An ELM327 adapter and the seller's permission |
-| Read your own car | [Connect an ELM327 adapter](#connecting-a-real-car), then [troubleshooting](./docs/troubleshooting.md) if needed | A USB, Bluetooth (serial) or WiFi ELM327 adapter |
+| Read your own car | Plug in the adapter and ask Claude to connect ([how it works](#connecting-a-real-car)), then [troubleshooting](./docs/troubleshooting.md) if needed | A USB, Bluetooth (serial) or WiFi ELM327 adapter |
 | Change the code or contribute | [Build from source](#from-source) and the [contribution guide](./CONTRIBUTING.md) | Git and Node.js |
 
 Every path starts with the simulated vehicle, so you can check the setup before connecting a car. In your MCP client, the [guided prompts](#guided-prompts) such as `check_engine_light` are an easy first question.
