@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add the `compare_diagnostic_reports` tool to see what changed between two diagnostic reports, for example before and after a test drive, a repair or some days of driving. It reports new and gone stored and pending codes, the warning light, the freeze frame code, readiness monitors that completed or were reset, and live values side by side, with neutral observations: for example, warm-ups or distance since codes were cleared going down means codes were cleared in between. By default it compares the two most recent reports of the session; a session keeps the last 10, and each `read_diagnostic_report` result now carries a `session_report_number`. A report saved from `obd2://report/latest` in an earlier session can be passed as `earlier_report_json`; only well-formed values (codes, known sensor and monitor names, numbers, timestamps) are read from it. Sections that failed are reported as unknown, never as a change. It works on reports already collected and never contacts the adapter or the vehicle. The `used_car_check` prompt uses it after the test drive.
+
 ## [0.7.0] - 2026-11-27
 
 More of MCP: watch how sensors change while parked, check readiness before an emissions inspection, see whether SAE or the manufacturer defines each trouble code, and attach guides and the latest report as MCP resources.

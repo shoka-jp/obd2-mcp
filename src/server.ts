@@ -7,7 +7,8 @@ import { PIDS, PID_BY_NAME, DEFAULT_PIDS, FREEZE_PIDS } from "./pids.js";
 import { discoverSupportedPids } from "./supported-pids.js";
 import { listSerialPorts } from "./ports.js";
 import { registerPrompts } from "./prompts.js";
-import { registerResources, type SessionRecord } from "./resources.js";
+import { registerResources, KEPT_REPORTS, type SessionRecord } from "./resources.js";
+import { compareReports, parseSavedReport, MAX_SAVED_REPORT_CHARS } from "./compare.js";
 import { VERSION } from "./version.js";
 import { SERVER_INSTRUCTIONS } from "./instructions.js";
 import { errorHint } from "./hints.js";
@@ -61,7 +62,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
   // every tool reads it here instead of capturing the original values.
   const session = { elm, mock };
   // Remembered for the MCP resources (latest report, codes read this session); never sent anywhere.
-  const record: SessionRecord = { latestReport: null, seenCodes: new Set() };
+  const record: SessionRecord = { latestReport: null, reports: [], seenCodes: new Set() };
   const remember = (codes: Array<string | null | undefined>) => { for (const code of codes) if (code) record.seenCodes.add(code); };
   const server = new McpServer({ name: "obd2-mcp", version: VERSION }, { instructions: SERVER_INSTRUCTIONS });
 
@@ -495,7 +496,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
     "read_diagnostic_report",
     {
       title: "Collect diagnostic evidence report",
-      description: `Collect stored/pending codes, freeze frame, live data and readiness into one timestamped evidence record for a workshop discussion. Optionally select live sensor names with pids; omit or pass an empty list for the defaults. Available names: ${PIDS.map(p => p.name).join(", ")}. Readings are collected sequentially. Preserve each section's errors and unknown values when summarizing. VIN is not requested and codes are not cleared. The result contains observations, not a diagnosis.`,
+      description: `Collect stored/pending codes, freeze frame, live data and readiness into one timestamped evidence record for a workshop discussion. Optionally select live sensor names with pids; omit or pass an empty list for the defaults. Available names: ${PIDS.map(p => p.name).join(", ")}. Readings are collected sequentially. Preserve each section's errors and unknown values when summarizing. VIN is not requested and codes are not cleared. The result contains observations, not a diagnosis. Each report gets a session_report_number; collect another later (for example after a test drive or a repair) and call compare_diagnostic_reports to see what changed.`,
       inputSchema: { pids: z.array(z.string()).optional().describe("Live PID names to read; omit or pass an empty list for the default set") },
       annotations: READ_ONLY,
     },
@@ -524,8 +525,10 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
           data,
         };
       }
+      const number = (record.reports.at(-1)?.number ?? 0) + 1;
       const report = {
         schema_version: 1,
+        session_report_number: number,
         started_at: startedAt,
         completed_at: new Date().toISOString(),
         simulated: session.mock,
@@ -536,10 +539,59 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
         ],
       };
       record.latestReport = report;
+      record.reports.push({ number, report });
+      if (record.reports.length > KEPT_REPORTS) record.reports.shift();
       return {
         content: [{ type: "text" as const, text: JSON.stringify(report, null, 2) }],
         structuredContent: report,
       };
+    }
+  );
+
+  server.registerTool(
+    "compare_diagnostic_reports",
+    {
+      title: "Compare two diagnostic reports",
+      description: `Compare two read_diagnostic_report results to see what changed: before and after a test drive, a repair, or some days of driving. Reports new and gone stored and pending codes, the warning light, the freeze frame code, readiness monitors that completed or were reset, and live values side by side, with neutral observations (for example signs that codes were cleared in between). Does not contact the adapter or the vehicle. By default compares the two most recent reports of this session; earlier and later select session_report_number values (the last ${KEPT_REPORTS} are kept). To compare with a report saved in an earlier session, pass its JSON (from obd2://report/latest or a read_diagnostic_report result) as earlier_report_json; the later report is then the latest of this session unless later is given. Sections that failed are reported as unknown, never as a change. Not a diagnosis.`,
+      inputSchema: {
+        earlier: z.number().int().min(1).optional().describe("session_report_number of the earlier report; default: the one before the later report"),
+        later: z.number().int().min(1).optional().describe("session_report_number of the later report; default: the most recent"),
+        earlier_report_json: z.string().min(2).max(MAX_SAVED_REPORT_CHARS).optional().describe("A report saved in an earlier session, as JSON; use instead of earlier"),
+      },
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ earlier, later, earlier_report_json }) => {
+      const kept = record.reports.map(r => r.number);
+      const available = kept.length ? `Reports kept in this session: ${kept.join(", ")}.` : "No report has been collected in this session yet.";
+      const find = (n: number) => record.reports.find(r => r.number === n);
+      if (earlier_report_json !== undefined && earlier !== undefined) {
+        return fail(new Error("Pass either earlier or earlier_report_json, not both."));
+      }
+      const laterEntry = later !== undefined ? find(later) : record.reports.at(-1);
+      if (!laterEntry) {
+        return fail(new Error(later !== undefined
+          ? `Report ${later} is not available. ${available}`
+          : "No report has been collected in this session yet. Call read_diagnostic_report first."));
+      }
+      let earlierInput: { report: Record<string, unknown>; number?: number };
+      if (earlier_report_json !== undefined) {
+        const saved = parseSavedReport(earlier_report_json);
+        if ("error" in saved) return fail(new Error(saved.error));
+        earlierInput = { report: saved.report };
+      } else {
+        const earlierEntry = earlier !== undefined
+          ? find(earlier)
+          : [...record.reports].reverse().find(r => r.number < laterEntry.number);
+        if (!earlierEntry) {
+          return fail(new Error(earlier !== undefined
+            ? `Report ${earlier} is not available. ${available}`
+            : `Only one report to compare. Collect another with read_diagnostic_report (for example after a test drive), or pass a saved report as earlier_report_json. ${available}`));
+        }
+        if (earlierEntry.number === laterEntry.number) return fail(new Error("earlier and later are the same report."));
+        earlierInput = earlierEntry;
+      }
+      const result = compareReports(earlierInput, laterEntry);
+      return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
     }
   );
 

@@ -13,8 +13,13 @@ import { describeDtc } from "./dtc-info.js";
 /** What the server remembers during this session, for the report and code resources. */
 export interface SessionRecord {
   latestReport: Record<string, unknown> | null;
+  /** The most recent reports with their session numbers, for compare_diagnostic_reports. */
+  reports: Array<{ number: number; report: Record<string, unknown> }>;
   seenCodes: Set<string>;
 }
+
+/** How many reports a session keeps for comparison. */
+export const KEPT_REPORTS = 10;
 
 const GUIDES = [
   {
