@@ -2,6 +2,8 @@
 
 **[実際の出力を見る・AIクライアントなしでデモを実行する](./docs/demo-results.md)**
 
+**スマホアプリの試作：** [Android・iPhone向けのソースと開発状況](https://github.com/shoka-jp/obd2-mcp/blob/main/mobile/README.md#日本語)。ストア配布や実機・実車検証はまだです。
+
 **開発に参加する：** [初めての方向けIssue](https://github.com/shoka-jp/obd2-mcp/issues?q=is%3Aissue%20is%3Aopen%20label%3A%22good%20first%20issue%22)から選べます。[貢献ガイド](./CONTRIBUTING.md)もご覧ください。ドキュメント修正・テスト・質問を日本語でも歓迎します。[感想・質問を送る](https://github.com/shoka-jp/obd2-mcp/issues/new?template=first-experience.yml)（GitHub上で公開されます）。
 
 ![3ステップ：Claude Desktop拡張またはnpxでインストール、check_engine_lightプロンプトで模擬車両を試す、アダプタを挿してイグニッションをONにし、Claudeに接続を頼む。最初は模擬データで、既定は読み取りのみ、実車のコード消去は無効です。](docs/images/get-started-ja.svg)

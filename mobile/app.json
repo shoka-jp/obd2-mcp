@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "車のチェック",
+    "slug": "obd2-phone",
+    "scheme": "obd2phone",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "jp.shokajp.obd2phone",
+      "infoPlist": {
+        "NSLocalNetworkUsageDescription": "Wi-Fi診断機に接続して、車の記録を読み取るために使用します。"
+      }
+    },
+    "android": {
+      "package": "jp.shokajp.obd2phone",
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#10243b",
+        "foregroundImage": "./assets/icon.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/icon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      ["react-native-ble-plx", {
+        "neverForLocation": true,
+        "bluetoothAlwaysPermission": "Bluetooth LE診断機を探して、車の記録を読み取るために使用します。"
+      }],
+      "./plugins/withLegacyBlePermissions"
+    ]
+  }
+}

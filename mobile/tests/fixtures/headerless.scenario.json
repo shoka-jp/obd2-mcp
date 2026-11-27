@@ -1,0 +1,22 @@
+{
+  "schema_version": "obd2.sim_scenario.v1",
+  "scenario_id": "headerless",
+  "synthetic": true,
+  "description": "A fictional ELM327 session with CAN headers disabled.",
+  "adapter_profile": "elm327_like_tcp",
+  "defaults": { "at_response": "OK\r\r>", "obd_response": "NO DATA\r\r>" },
+  "warnings": [],
+  "commands": [
+    { "request": "ATZ", "response_chunks": ["ELM327 v1.5\r\r>"], "echo": true },
+    { "request": "ATI", "response_chunks": ["ELM327 v1.5\r\r>"] },
+    { "request": "0101", "response_chunks": ["41 01 81 07 65 04\r\r>"] },
+    { "request": "03", "response_chunks": ["43 01 03 00\r\r>"] },
+    { "request": "07", "response_chunks": ["47 00\r\r>"] },
+    { "request": "010C", "response_chunks": ["41 0C 1A F8\r\r>"] },
+    { "request": "0105", "response_chunks": ["41 05 7B\r\r>"] },
+    { "request": "020200", "response_chunks": ["42 02 00 03 00\r\r>"] },
+    { "request": "020C00", "response_chunks": ["42 0C 00 1B 58\r\r>"] },
+    { "request": "020500", "response_chunks": ["42 05 00 78\r\r>"] }
+  ],
+  "expected_scan_summary": { "stored_codes": ["P0300"], "pending_codes": [], "mil_reported_on": true }
+}

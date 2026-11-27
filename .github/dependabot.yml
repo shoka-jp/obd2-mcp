@@ -33,6 +33,24 @@ updates:
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
 
+  # The phone prototype pins one Expo SDK; its packages must be upgraded
+  # together with `npx expo install --fix`, so no version-update PRs are
+  # opened here. Security updates for mobile/ still arrive as pull requests
+  # with the same labels and review rule.
+  - package-ecosystem: npm
+    directory: /mobile
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 0
+    labels:
+      - dependencies
+      - "autopilot: needs review"
+    commit-message:
+      prefix: "chore(mobile-deps)"
+
   - package-ecosystem: github-actions
     directory: /
     schedule:

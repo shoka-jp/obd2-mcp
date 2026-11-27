@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add an Android/iPhone phone-app source prototype with a fictional sample, read-only Wi-Fi and Bluetooth LE adapter flows, and a shareable workshop note. Native builds and physical devices require verification.
+
 ### Fixed
 
 - Turn a missing `udevadm` error (`spawn udevadm ENOENT`) during serial port listing on Linux (such as in minimal containers or WSL) into an actionable message that keeps the original error text and explains how to check `/dev/ttyUSB*` and set `serial:<path>` directly. Thanks @techkayacodes.
