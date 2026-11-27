@@ -53,6 +53,7 @@ test("--help prints usage without starting the server", () => {
     assert.match(result.stdout, /--list-ports/);
     assert.match(result.stdout, /serial:<port>/);
     assert.match(result.stdout, /catalyst, healthy, misfire, lean/);
+    assert.match(result.stdout, /--demo \[--scenario <name>\]/);
     assert.doesNotMatch(result.stderr, /obd2-mcp ready/);
   }
 });

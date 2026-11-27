@@ -12,7 +12,7 @@ With Node.js 22 or 24 and npm, run the release package directly. Git and a build
 npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.5.0/obd2-mcp-0.5.0.tgz -- obd2-mcp --demo --summary
 ```
 
-The demo explicitly selects mock mode, reads four tools, and displays a short summary. It never calls `clear_dtcs`. Add `--lang ja` for the Japanese summary, or remove `--summary` for the complete JSON responses. From a source checkout, `npm run demo` and `npm run demo:ja` do the same after building.
+The demo explicitly selects mock mode, calls six read-only tools, and displays a short summary. It never calls `clear_dtcs`. Add `--lang ja` for the Japanese summary, `--scenario cleared` (or another [mock scenario](../README.md#try-another-mock-scenario)) for a different simulated car, or remove `--summary` for the complete JSON responses. From a source checkout, `npm run demo` and `npm run demo:ja` do the same after building.
 
 Node.js 22または24とnpmがあれば、Gitやビルドなしでリリースパッケージを直接実行できます。日本語で表示するには次を実行します。
 
@@ -20,7 +20,7 @@ Node.js 22または24とnpmがあれば、Gitやビルドなしでリリース�
 npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.5.0/obd2-mcp-0.5.0.tgz -- obd2-mcp --demo --summary --lang ja
 ```
 
-デモはモックを明示指定して4つの読み取りツールを呼び、要約と次の確認手順を表示します。コード消去は行いません。`--summary` を外すとすべてのJSON応答を確認できます。ソースから実行する場合は、ビルド後に `npm run demo`・`npm run demo:ja` で同じ結果を確認できます。
+デモはモックを明示指定して6つの読み取りツールを呼び、要約と次の確認手順を表示します。コード消去は行いません。`--scenario cleared` などで別の模擬シナリオを選べます。`--summary` を外すとすべてのJSON応答を確認できます。ソースから実行する場合は、ビルド後に `npm run demo`・`npm run demo:ja` で同じ結果を確認できます。
 
 The summary explains the example P0420 code and suggests preserving the data for a technician; it cannot identify a failed part. Its code description can be checked against [Ford's OBD system operation summary](https://www.fordservicecontent.com/Ford_Content/catalog/motorcraft/OBD_Operation_Summary_to_Gasoline_MY_2024_2025.pdf). The Japanese summary is available with `--lang ja`.
 

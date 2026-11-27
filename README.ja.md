@@ -128,7 +128,9 @@ MCPクライアントの設定で `OBD2MCP_CONNECTION=mock` と合わせて `OBD
 claude mcp add obd2-lean --env OBD2MCP_CONNECTION=mock --env OBD2MCP_MOCK_SCENARIO=lean -- node "/absolute/path/to/obd2-mcp/dist/index.js"
 ```
 
-設定変更後はサーバーを再起動してください。モックの状態はサーバーごとに独立しています。モックの消去はレディネスをリセットしますが、実車には影響しません。
+設定変更後はサーバーを再起動してください。モックの状態はサーバーごとに独立しています。モックの消去はレディネスをリセットします（消去しても残るコードは実車と同じく残ります）。実車には影響しません。
+
+MCPクライアントなしでシナリオを確認するには、デモのコマンドに `--scenario` を付けます。例：`obd2-mcp --demo --summary --lang ja --scenario cleared`
 
 ## ガイド付きプロンプト
 

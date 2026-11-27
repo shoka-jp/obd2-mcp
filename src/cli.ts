@@ -1,7 +1,7 @@
 import { MOCK_SCENARIOS } from "./mock.js";
 import { VERSION } from "./version.js";
 
-const VALUE_OPTIONS = new Set(["--connection", "--lang"]);
+const VALUE_OPTIONS = new Set(["--connection", "--lang", "--scenario"]);
 const FLAGS = new Set(["--demo", "--summary", "--list-ports", "--help", "-h", "--version", "-v"]);
 
 /**
@@ -36,7 +36,8 @@ export function helpText(): string {
 
 Usage:
   obd2-mcp [--connection <spec>]              Start the MCP server on stdio (MCP clients run this)
-  obd2-mcp --demo [--summary [--lang en|ja]]  Run the simulated vehicle demo and exit
+  obd2-mcp --demo [--scenario <name>] [--summary [--lang en|ja]]
+                                              Run the simulated vehicle demo and exit
   obd2-mcp --list-ports                       List serial ports with their connection values
   obd2-mcp --help | --version
 
@@ -47,7 +48,8 @@ Connection <spec> (or OBD2MCP_CONNECTION):
 
 Environment:
   OBD2MCP_CONNECTION     Connection used when --connection is not given
-  OBD2MCP_MOCK_SCENARIO  Mock scenario: ${MOCK_SCENARIOS.join(", ")} (default ${MOCK_SCENARIOS[0]})
+  OBD2MCP_MOCK_SCENARIO  Mock scenario: ${MOCK_SCENARIOS.join(", ")} (default ${MOCK_SCENARIOS[0]});
+                         --scenario selects one for --demo
   OBD2MCP_BAUD           Serial baud rate (default 38400)
 
 Results are observations, not a diagnosis. Clearing codes on a real vehicle is disabled by default.

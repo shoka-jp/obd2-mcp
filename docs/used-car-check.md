@@ -22,7 +22,7 @@ This project has not yet verified a real vehicle or adapter combination. The exa
 
 ### Try it first without a car
 
-In the Claude Desktop extension settings, keep **Adapter connection** as `mock` and set **Mock scenario** to `cleared`. In other clients, set `OBD2MCP_MOCK_SCENARIO=cleared`. Then run the **used_car_check** prompt. The simulated car looks like this:
+In the Claude Desktop extension settings, keep **Adapter connection** as `mock` and set **Mock scenario** to `cleared`. In other clients, set `OBD2MCP_MOCK_SCENARIO=cleared`. Then run the **used_car_check** prompt. Without an AI client, `obd2-mcp --demo --summary --scenario cleared` prints the same readings. The simulated car looks like this:
 
 | Reading | Simulated value | What it suggests |
 |---|---|---|
@@ -57,7 +57,7 @@ Useful questions for this result: when were the codes cleared or the battery rep
 
 ### まず車なしで試す
 
-Claude Desktopの拡張機能の設定で **Adapter connection** を `mock` のままにし、**Mock scenario** を `cleared` にします。ほかのクライアントでは `OBD2MCP_MOCK_SCENARIO=cleared` を設定します。そのうえで **used_car_check** を実行すると、模擬車両は次のように見えます。
+Claude Desktopの拡張機能の設定で **Adapter connection** を `mock` のままにし、**Mock scenario** を `cleared` にします。ほかのクライアントでは `OBD2MCP_MOCK_SCENARIO=cleared` を設定します。そのうえで **used_car_check** を実行すると、模擬車両は次のように見えます。AIクライアントがなくても、`obd2-mcp --demo --summary --lang ja --scenario cleared` で同じ読み取り結果を表示できます。
 
 | 読み取り項目 | 模擬データの値 | 読み取れること |
 |---|---|---|
