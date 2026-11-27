@@ -207,7 +207,7 @@ Protocol references: [ELM327 datasheet, “Talking to the Vehicle”](https://el
 | `read_dtcs` | Stored + pending trouble codes, MIL state, DTC count. A code list is `null` when the adapter returns no data; this is not a confirmed empty list. |
 | `read_permanent_dtcs` | Permanent trouble codes (Mode 0A) that stay after codes are cleared until the car confirms the repair: a clue that codes were cleared recently, for example before buying a used car. `null` when the vehicle does not support it (common before about 2010); this is not a confirmed empty list. |
 | `read_freeze_frame` | The DTC that set the freeze frame and the engine conditions at that moment |
-| `read_live_data` | Live sensors: RPM, coolant temp, fuel trims, MAF, O2 voltages, and more (23 PIDs) |
+| `read_live_data` | Live sensors: RPM, coolant temp, fuel trims, MAF, O2 voltages, and more (25 PIDs) |
 | `read_readiness` | Emissions monitor completion status (inspection readiness), with counts and the list of incomplete monitors. Clearing codes or disconnecting the battery resets them. |
 | `read_vin` | Vehicle Identification Number from the ECU |
 | `connection_status` | Adapter identity and port voltage if available. A connected adapter does not itself confirm communication with the vehicle. |

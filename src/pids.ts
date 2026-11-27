@@ -38,6 +38,8 @@ export const PIDS: PidDef[] = [
   { pid: "1F", name: "run_time", desc: "Run time since engine start", bytes: 2, unit: "s", parse: word, encode: v => wordEnc(Math.round(v)) },
   { pid: "21", name: "distance_with_mil", desc: "Distance travelled with MIL on", bytes: 2, unit: "km", parse: word, encode: v => wordEnc(Math.round(v)) },
   { pid: "2F", name: "fuel_level", desc: "Fuel tank level", bytes: 1, unit: "%", parse: b => pct(b[0]), encode: pctEnc },
+  { pid: "30", name: "warmups_since_clear", desc: "Warm-ups since codes cleared", bytes: 1, unit: "count", parse: b => b[0], encode: v => [Math.round(v)] },
+  { pid: "31", name: "distance_since_clear", desc: "Distance travelled since codes cleared", bytes: 2, unit: "km", parse: word, encode: v => wordEnc(Math.round(v)) },
   { pid: "33", name: "baro", desc: "Barometric pressure", bytes: 1, unit: "kPa", parse: b => b[0], encode: v => [Math.round(v)] },
   { pid: "3C", name: "catalyst_temp_b1s1", desc: "Catalyst temperature bank 1 sensor 1", bytes: 2, unit: "degC", parse: b => word(b) / 10 - 40, encode: v => wordEnc(Math.round((v + 40) * 10)) },
   { pid: "42", name: "module_voltage", desc: "Control module voltage", bytes: 2, unit: "V", parse: b => word(b) / 1000, encode: v => wordEnc(Math.round(v * 1000)) },

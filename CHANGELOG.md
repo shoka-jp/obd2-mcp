@@ -4,6 +4,7 @@
 
 - Add the `partial` mock scenario (`P0128` with coolant at 72 °C, five unsupported sensors reported as `not_advertised` / unavailable, and no freeze frame).
 - Reset `distance_with_mil` (PID `21`) to `0` when the mock vehicle clears trouble codes via Mode `04` (only when supported).
+- Add Mode 01 PIDs `30` (`warmups_since_clear`) and `31` (`distance_since_clear`) with mock values, Mode `04` reset behavior, and unit tests.
 
 ### Changed
 
