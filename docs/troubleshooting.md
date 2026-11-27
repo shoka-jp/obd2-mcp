@@ -19,7 +19,7 @@ If listing fails because the optional `serialport` package is missing, reinstall
 ### Bluetooth adapters
 
 - Pair the adapter in the operating system first. Only classic Bluetooth adapters that provide a serial port (SPP) appear as a serial port.
-- Many low-cost "Bluetooth 4.0 / BLE" adapters do not create a serial port on a computer, so they cannot be used with `serial:`.
+- Many low-cost "Bluetooth 4.0 / BLE" adapters do not create a serial port on a computer, so they cannot be used with `serial:`. See [choosing an adapter](./adapters.md).
 - **Windows:** a paired SPP device can get two COM ports. In Bluetooth settings → More Bluetooth settings → COM Ports, use the one marked **Outgoing**.
 - **macOS:** if opening a `/dev/tty.*` path waits without a response, try the matching `/dev/cu.*` path.
 
@@ -67,7 +67,7 @@ Open a [real setup report](https://github.com/shoka-jp/obd2-mcp/issues/new?templ
 ### Bluetoothアダプタ
 
 - 先にOSでペアリングします。シリアルポート（SPP）を提供する従来型Bluetoothのアダプタだけが、シリアルポートとして表示されます。
-- 安価な「Bluetooth 4.0／BLE」アダプタの多くは、パソコンにシリアルポートを作らないため、`serial:` では使えません。
+- 安価な「Bluetooth 4.0／BLE」アダプタの多くは、パソコンにシリアルポートを作らないため、`serial:` では使えません。[アダプタの選び方](./adapters.md#日本語)も参照してください。
 - **Windows:** SPP機器には2つのCOMポートが割り当てられることがあります。Bluetoothの設定 →「その他のBluetooth設定（オプション）」→「COMポート」で、**発信**と表示されたポートを使います。
 - **macOS:** `/dev/tty.*` を開いたまま応答がない場合は、対応する `/dev/cu.*` を試してください。
 
