@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Add the `partial` mock scenario (`P0128` with coolant at 72 °C, five unsupported sensors reported as `not_advertised` / unavailable, and no freeze frame).
+- Reset `distance_with_mil` (PID `21`) to `0` when the mock vehicle clears trouble codes via Mode `04` (only when supported).
 
 ### Changed
 
