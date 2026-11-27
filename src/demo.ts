@@ -12,9 +12,8 @@ export async function runDemo(summary = false, lang: "en" | "ja" = "en", scenari
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   try {
     await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
-    const readings = new Map<string, unknown>();
-    for (const name of ["connection_status", "read_dtcs", "read_permanent_dtcs", "read_freeze_frame", "read_live_data", "read_readiness"]) {
-      const result = await client.callTool({ name, arguments: {} });
+    const callTool = async (name: string, args: Record<string, unknown> = {}): Promise<unknown> => {
+      const result = await client.callTool({ name, arguments: args });
       if (result.isError) throw new Error(`Demo tool ${name} failed`);
       const parts: unknown[] = Array.isArray(result.content) ? result.content : [];
       const item = parts.find((part): part is { type: "text"; text: string } =>
@@ -22,7 +21,11 @@ export async function runDemo(summary = false, lang: "en" | "ja" = "en", scenari
         "text" in part && typeof part.text === "string"
       );
       if (!item) throw new Error(`Demo tool ${name} returned no text`);
-      const data = JSON.parse(item.text);
+      return JSON.parse(item.text);
+    };
+    const readings = new Map<string, unknown>();
+    for (const name of ["connection_status", "read_dtcs", "read_permanent_dtcs", "read_freeze_frame", "read_live_data", "read_readiness"]) {
+      const data = await callTool(name);
       readings.set(name, data);
       if (!summary) console.log(JSON.stringify({ tool: name, data }, null, 2));
     }
@@ -35,6 +38,13 @@ export async function runDemo(summary = false, lang: "en" | "ja" = "en", scenari
       };
       const { incomplete_monitors: incomplete } = readings.get("read_readiness") as { incomplete_monitors: string[] };
       const clearedSigns = codes.stored_dtcs.length === 0 && (permanent?.length ?? 0) > 0;
+      // Warm-ups and distance since codes were cleared (PIDs 30/31), when the car reports them.
+      const { live_data: sinceClear } = await callTool("read_live_data", { pids: ["warmups_since_clear", "distance_since_clear"] }) as {
+        live_data: Record<string, { value?: number }>;
+      };
+      const warmups = sinceClear.warmups_since_clear?.value;
+      const distance = sinceClear.distance_since_clear?.value;
+      const hasSinceClear = typeof warmups === "number" && typeof distance === "number";
       const mentionsP0420 = codes.stored_dtcs.includes("P0420") || (permanent ?? []).includes("P0420");
       if (lang === "ja") {
         console.log("模擬デモ — 実車には接続せず、コードも消去していません");
@@ -44,6 +54,7 @@ export async function runDemo(summary = false, lang: "en" | "ja" = "en", scenari
         console.log(`消去しても残るコード: ${permanent === null ? "不明（応答なし）" : permanent.join(", ") || "なし"}`);
         console.log(`フリーズフレームのコード: ${frame?.dtc ?? "なし"}`);
         console.log(`未完了のレディネスモニター: ${incomplete.join(", ") || "なし"}`);
+        if (hasSinceClear) console.log(`前回のコード消去から: 暖機${warmups}回・${distance} km`);
         console.log(`現在のエンジン回転数: ${live.rpm.value} ${live.rpm.unit}`);
         console.log(`現在の冷却水温: ${live.coolant_temp.value} ${live.coolant_temp.unit}`);
         if (mentionsP0420) console.log("P0420の一般的な意味: バンク1の触媒システム効率が基準を下回ったことを示すコード。");
@@ -59,6 +70,7 @@ export async function runDemo(summary = false, lang: "en" | "ja" = "en", scenari
         console.log(`Permanent codes: ${permanent === null ? "unknown (no answer)" : permanent.join(", ") || "none"}`);
         console.log(`Freeze frame: ${frame?.dtc ?? "none"}`);
         console.log(`Incomplete readiness monitors: ${incomplete.join(", ") || "none"}`);
+        if (hasSinceClear) console.log(`Since codes were last cleared: ${warmups} warm-up${warmups === 1 ? "" : "s"}, ${distance} km`);
         console.log(`Current engine speed: ${live.rpm.value} ${live.rpm.unit}`);
         console.log(`Current coolant temperature: ${live.coolant_temp.value} ${live.coolant_temp.unit}`);
         if (mentionsP0420) console.log("P0420 generally indicates catalyst system efficiency below the threshold on bank 1.");
