@@ -65,7 +65,7 @@ try {
 
   const tools = await request("tools/list", {});
   const names = tools.result.tools.map(t => t.name).sort();
-  assert(names.length === 13 && names.includes("find_adapter") && names.includes("use_adapter") && names.includes("read_permanent_dtcs") && names.includes("read_diagnostic_report") && names.includes("read_supported_pids") && names.includes("list_serial_ports"), `13 tools registered (${names.join(", ")})`);
+  assert(names.length === 14 && names.includes("watch_live_data") && names.includes("find_adapter") && names.includes("use_adapter") && names.includes("read_permanent_dtcs") && names.includes("read_diagnostic_report") && names.includes("read_supported_pids") && names.includes("list_serial_ports"), `14 tools registered (${names.join(", ")})`);
   const byName = Object.fromEntries(tools.result.tools.map(t => [t.name, t]));
   assert(tools.result.tools.every(t => typeof t.title === "string" && t.title.length > 0), "every tool has a display title");
   assert(

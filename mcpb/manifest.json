@@ -38,6 +38,7 @@
     { "name": "read_dtcs", "description": "Read stored and pending trouble codes and the check-engine light state." },
     { "name": "read_permanent_dtcs", "description": "Read permanent trouble codes that remain after codes are cleared." },
     { "name": "read_supported_pids", "description": "Discover which live sensors the vehicle advertises." },
+    { "name": "watch_live_data", "description": "Watch up to four live sensors for up to 30 seconds while parked." },
     { "name": "read_live_data", "description": "Read live sensors such as RPM, coolant temperature and fuel trims." },
     { "name": "read_freeze_frame", "description": "Read the engine conditions recorded when a code was set." },
     { "name": "read_readiness", "description": "Read emissions readiness monitor status." },
