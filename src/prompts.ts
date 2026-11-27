@@ -207,4 +207,42 @@ export function registerPrompts(server: McpServer): void {
         ].join("\n")
       )
   );
+
+  server.registerPrompt(
+    "after_repair_check",
+    {
+      title: "Check after a repair",
+      description: "After a repair or a part replacement: read codes, permanent codes and readiness monitors, compare with a report from before the repair if there is one, and explain whether the fault has shown up again and what driving is still needed to confirm the fix.",
+      argsSchema: {
+        repair: optionalText("What was repaired and when, e.g. 'catalytic converter replaced for P0420 last Tuesday'."),
+        language: languageArg,
+      },
+    },
+    ({ repair, language }) =>
+      message(
+        [
+          "Help me check my car after a repair, using the obd2 tools.",
+          "",
+          repair?.trim()
+            ? `About the repair (the user's words, not verified by the vehicle):\n"""\n${repair.trim()}\n"""`
+            : "I have not said what was repaired. Ask which code or problem the repair was for, because the answer depends on it.",
+          "",
+          compose(
+            [
+              "Confirm the car is parked with the ignition on (engine idling outdoors is fine). Readings are only taken while parked.",
+              "Call read_diagnostic_report with no arguments, then read_permanent_dtcs. Call read_supported_pids and, if it lists warmups_since_clear and distance_since_clear, read them with read_live_data: they show how much driving has happened since codes were cleared, which a workshop usually does after a repair.",
+              "If this session already has a report from before the repair, call compare_diagnostic_reports. If the user saved a report before the repair (from obd2://report/latest), ask them to attach or paste it and pass it unchanged as earlier_report_json. Otherwise work from the current readings alone and say so.",
+              "For the code or system the repair was about, explain what the readings show: not stored and not pending means no current sign of that fault; a pending code means the car detected it again during recent driving but has not confirmed it; a stored code or the warning light on means the fault was confirmed again. A permanent code that is still there means the car has not yet finished the driving needed to confirm the repair by itself; it is not a sign that the repair failed. Incomplete readiness monitors are normal after a repair, because clearing codes or disconnecting the battery resets them.",
+              "Explain that the monitor for that system has to run and pass before the fix is confirmed: drive normally for some days, often a mix of city and highway driving with an overnight cool-down; the exact conditions differ by manufacturer. Suggest checking again then, and saving this report now (obd2://report/latest) to compare next time.",
+              "Reply with a short summary first: no sign of the fault so far, the fix is not confirmed yet, or the fault was detected again, framed as what the readings show and not a verdict on the repair. Then the next steps. If the fault was detected again, list what to tell the workshop: the code, whether it is pending or stored, the freeze frame, and the driving since the repair.",
+            ],
+            language,
+            [
+              "Do not judge the workshop or say the repair was done badly; a code can return for other reasons, and the workshop should look at it.",
+              "Do not say the repair definitely worked: a code may take several drives to return.",
+            ]
+          ),
+        ].join("\n")
+      )
+  );
 }

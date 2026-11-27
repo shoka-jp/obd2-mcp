@@ -20,10 +20,10 @@ const text = result => {
   return result.messages[0].content.text;
 };
 
-test('five guided prompts are listed with titles and optional arguments', async () => {
+test('six guided prompts are listed with titles and optional arguments', async () => {
   await withClient(async client => {
     const { prompts } = await client.listPrompts();
-    assert.deepEqual(prompts.map(p => p.name).sort(), ['check_engine_light', 'connect_adapter', 'inspection_check', 'used_car_check', 'workshop_handover']);
+    assert.deepEqual(prompts.map(p => p.name).sort(), ['after_repair_check', 'check_engine_light', 'connect_adapter', 'inspection_check', 'used_car_check', 'workshop_handover']);
     for (const prompt of prompts) {
       assert.ok(prompt.title && prompt.description, prompt.name);
       assert.ok(prompt.arguments.every(arg => arg.required !== true), `${prompt.name} arguments are optional`);
@@ -46,7 +46,7 @@ test('check_engine_light uses the report, keeps evidence separate and never clea
 
 test('prompts work without arguments', async () => {
   await withClient(async client => {
-    for (const name of ['check_engine_light', 'workshop_handover', 'connect_adapter', 'used_car_check', 'inspection_check']) {
+    for (const name of ['check_engine_light', 'workshop_handover', 'connect_adapter', 'used_car_check', 'inspection_check', 'after_repair_check']) {
       const body = text(await client.getPrompt({ name, arguments: {} }));
       assert.match(body, /Reply in the language of this conversation\./, name);
       assert.doesNotMatch(body, /undefined/, name);
@@ -101,5 +101,24 @@ test('inspection_check reads readiness and permanent codes, explains typical rul
     assert.match(body, /Do not promise that the car will pass/);
     assert.match(body, /Do not call clear_dtcs/);
     assert.match(body, /Write your reply in English\./);
+  });
+});
+
+test('after_repair_check compares with a report from before the repair and treats a permanent code as not yet confirmed', async () => {
+  await withClient(async client => {
+    const body = text(await client.getPrompt({ name: 'after_repair_check', arguments: { repair: 'Catalytic converter replaced for P0420 last Tuesday', language: '日本語' } }));
+    assert.ok(body.indexOf('parked') < body.indexOf('read_diagnostic_report'), 'parking comes before any read');
+    assert.ok(body.indexOf('read_diagnostic_report') < body.indexOf('compare_diagnostic_reports'), 'collect before comparing');
+    assert.match(body, /"""\nCatalytic converter replaced for P0420 last Tuesday\n"""/);
+    assert.match(body, /earlier_report_json/);
+    assert.match(body, /read_permanent_dtcs/);
+    assert.match(body, /not a sign that the repair failed/);
+    assert.match(body, /Incomplete readiness monitors are normal after a repair/);
+    assert.match(body, /Do not judge the workshop/);
+    assert.match(body, /Do not say the repair definitely worked/);
+    assert.match(body, /Do not call clear_dtcs/);
+    assert.match(body, /Write your reply in 日本語\./);
+    const bare = text(await client.getPrompt({ name: 'after_repair_check', arguments: {} }));
+    assert.match(bare, /Ask which code or problem the repair was for/);
   });
 });

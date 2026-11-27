@@ -36,7 +36,7 @@ test('static resources and templates are listed with titles', async t => {
     assert.ok(resource.description, resource.uri);
   }
   const { resourceTemplates } = await client.listResourceTemplates();
-  assert.deepEqual(resourceTemplates.map(r => r.uriTemplate).sort(), ['obd2://code/{code}', 'obd2://sensor/{name}']);
+  assert.deepEqual(resourceTemplates.map(r => r.uriTemplate).sort(), ['obd2://code/{code}', 'obd2://reports/{number}', 'obd2://sensor/{name}']);
 });
 
 test('guides are the bilingual Markdown documents', async t => {
@@ -115,4 +115,28 @@ test('prompt language arguments complete common languages', async t => {
   }
   const en = await client.complete({ ref: { type: 'ref/prompt', name: 'used_car_check' }, argument: { name: 'language', value: 'e' } });
   assert.deepEqual(en.completion.values, ['English', 'Español']);
+});
+
+test('session reports are listed, readable by number and completed', async t => {
+  const { client, commands, readJson } = await session(t);
+  assert.match((await readJson('obd2://reports/1')).note, /No diagnostic report has been collected/);
+  await client.callTool({ name: 'read_diagnostic_report', arguments: { pids: ['rpm'] } });
+  await client.callTool({ name: 'read_diagnostic_report', arguments: { pids: ['rpm'] } });
+  const { resources } = await client.listResources();
+  const listed = resources.filter(r => r.uri.startsWith('obd2://reports/'));
+  assert.deepEqual(listed.map(r => [r.uri, r.title]), [['obd2://reports/1', 'Diagnostic report 1'], ['obd2://reports/2', 'Diagnostic report 2']]);
+  assert.match(listed[0].description, /^Collected \d{4}-.* from the simulated vehicle\.$/);
+  const sent = commands.length;
+  const first = await readJson('obd2://reports/1');
+  assert.equal(first.session_report_number, 1);
+  assert.doesNotMatch(JSON.stringify(first), /"source"/);
+  assert.equal((await readJson('obd2://reports/2')).session_report_number, 2);
+  assert.match((await readJson('obd2://reports/7')).note, /Report 7 is not available\. Reports kept in this session: 1, 2\./);
+  assert.equal(commands.length, sent, 'reading a report never contacts the adapter');
+  const done = await client.complete({ ref: { type: 'ref/resource', uri: 'obd2://reports/{number}' }, argument: { name: 'number', value: '' } });
+  assert.deepEqual(done.completion.values, ['1', '2']);
+  // The report saved from a session resource is accepted for comparison later.
+  const saved = (await client.readResource({ uri: 'obd2://reports/1' })).contents[0].text;
+  const compared = await client.callTool({ name: 'compare_diagnostic_reports', arguments: { earlier_report_json: saved } });
+  assert.notEqual(compared.isError, true);
 });
