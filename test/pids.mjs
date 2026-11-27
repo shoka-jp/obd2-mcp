@@ -20,6 +20,8 @@ test('parse converts explicit Mode 01 byte fixtures accurately', () => {
     ['15', 'o2_b1s2_voltage', '5A FF', 0.45],
     ['1F', 'run_time', '02 80', 640],
     ['21', 'distance_with_mil', '00 80', 128],
+    ['30', 'warmups_since_clear', '12', 18],
+    ['31', 'distance_since_clear', '01 5E', 350],
   ];
 
   for (const [code, name, bytesHex, expected] of cases) {
@@ -54,6 +56,8 @@ test('every PID encode stays in 0-255 and round-trips within one resolution step
     '1F': { step: 1, values: [0, 640, 65535] },
     '21': { step: 1, values: [0, 128, 65535] },
     '2F': { step: 100 / 255, values: [0, 62, 100] },
+    '30': { step: 1, values: [0, 18, 255] },
+    '31': { step: 1, values: [0, 350, 65535] },
     '33': { step: 1, values: [0, 100, 255] },
     '3C': { step: 0.1, values: [-40, 0, 421, 1000] },
     '42': { step: 0.001, values: [0, 12.5, 14.32, 65.535] },

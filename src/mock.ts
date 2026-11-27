@@ -51,6 +51,8 @@ function defaultState(): MockState {
       o2_b1s1_voltage: 0.45,
       o2_b1s2_voltage: 0.66,
       fuel_level: 62,
+      warmups_since_clear: 18,
+      distance_since_clear: 350,
       baro: 100,
       catalyst_temp_b1s1: 421,
       module_voltage: 14.32,
@@ -106,6 +108,8 @@ function scenarioState(scenario: MockScenario): MockState {
     state.freezeDtc = null;
     state.readinessIncomplete = 0x25; // catalyst, evaporative system and O2 sensor incomplete
     state.live.distance_with_mil = 0;
+    state.live.warmups_since_clear = 1;
+    state.live.distance_since_clear = 12;
     state.live.run_time = 410;
   } else if (scenario === "evap") {
     state.storedDtcs = ["P0456"];
@@ -166,6 +170,11 @@ export class MockTransport implements Transport {
       this.state.freezeDtc = null;
       this.state.readinessIncomplete = 0xe5;
       this.state.continuousIncomplete = 0x70;
+      for (const pid of ["warmups_since_clear", "distance_since_clear"]) {
+        if (pid in this.state.live) {
+          this.state.live[pid] = 0;
+        }
+      }
       return "44\r";
     }
     // Mode 01 support bitmaps: advertise exactly the implemented mock commands.

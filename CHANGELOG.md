@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add Mode 01 PIDs `30` (`warmups_since_clear`) and `31` (`distance_since_clear`) with mock values, Mode `04` reset behavior, and unit tests.
+
 ### Documentation
 
 - Add [docs/adapters.md](docs/adapters.md) (EN/JA), a guide for choosing and plugging in an adapter: which connection types work on a computer (USB, classic Bluetooth, WiFi) and which do not (Bluetooth LE only), where the OBD-II port usually is, and unplugging it afterwards to protect the battery. It recommends no product. The README, troubleshooting guide and get-started image now point to it and describe connecting by asking Claude, and the `connect_adapter` row reflects the `find_adapter`/`use_adapter` flow.
