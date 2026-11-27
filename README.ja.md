@@ -45,6 +45,8 @@ Claudeに「エンジン警告灯が点いたのはなぜ?」と聞くと、**�
 
 どの方法も最初は模擬車両で動くので、車につなぐ前に設定を確認できます。MCPクライアントでは、`check_engine_light` などの[ガイド付きプロンプト](#ガイド付きプロンプト)から始めると簡単です。
 
+obd2-mcpは[公式MCPレジストリ](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.shoka-jp/obd2-mcp)に `io.github.shoka-jp/obd2-mcp` として掲載されており、レジストリを参照するMCPクライアントやディレクトリから各リリースを見つけられます。
+
 ## Claude Desktop：拡張機能としてインストール
 
 v0.4.0以降の各[GitHubリリース](https://github.com/shoka-jp/obd2-mcp/releases/latest)には、Claude Desktop用の拡張機能 `obd2-mcp-<バージョン>.mcpb` を添付します。Git・ビルド・JSONの編集は不要です。
