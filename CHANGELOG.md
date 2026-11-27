@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add the `partial` mock scenario (`P0128` with coolant at 72 °C, five unsupported sensors reported as `not_advertised` / unavailable, and no freeze frame).
+
 ### Documentation
 
 - Add [docs/adapters.md](docs/adapters.md) (EN/JA), a guide for choosing and plugging in an adapter: which connection types work on a computer (USB, classic Bluetooth, WiFi) and which do not (Bluetooth LE only), where the OBD-II port usually is, and unplugging it afterwards to protect the battery. It recommends no product. The README, troubleshooting guide and get-started image now point to it and describe connecting by asking Claude, and the `connect_adapter` row reflects the `find_adapter`/`use_adapter` flow.
