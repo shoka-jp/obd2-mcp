@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add the read-only `watch_live_data` tool: read up to four live sensors repeatedly for 5–30 seconds (every 1–5 seconds) while parked, to see how values change, for example coolant temperature while the engine warms up or idle rpm stability. It returns timestamped samples and min, max, first, last and failed reads per sensor; unsupported sensors stay `null`, unknown names are rejected before anything is sent, and a lost connection stops the watch and returns what was read. It sends only the Mode 01 requests that `read_live_data` already sends for those sensors.
+
 ## [0.6.2] - 2026-11-27
 
 Listing serial ports on Linux without `udevadm` now explains what to do instead of failing with a bare error, and the README mentions the official MCP Registry listing.

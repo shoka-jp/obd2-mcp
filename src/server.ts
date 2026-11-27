@@ -39,7 +39,14 @@ const LOCAL_READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotent
 export interface ServerDeps {
   findAdapters?: () => Promise<FindAdapterResult>;
   connect?: (connection: string, baud?: number) => { transport: Transport; mock: boolean };
+  /** Waiting between watch_live_data samples; tests replace it to run instantly. */
+  sleep?: (ms: number) => Promise<void>;
+  /** Clock for watch_live_data timestamps, in milliseconds. */
+  now?: () => number;
 }
+
+/** Limits for watch_live_data: a short look at how values change while parked, not a driving logger. */
+export const WATCH_LIMITS = { maxPids: 4, minSeconds: 5, maxSeconds: 30, minInterval: 1, maxInterval: 5 } as const;
 
 /** Switching for use_adapter: the same parsing and validation as the OBD2MCP_CONNECTION setting. */
 function defaultConnect(connection: string, baud?: number) {
@@ -315,6 +322,78 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
       annotations: READ_ONLY,
     },
     readLiveData
+  );
+
+  server.registerTool(
+    "watch_live_data",
+    {
+      title: "Watch live sensor data over time",
+      description: `Read up to ${WATCH_LIMITS.maxPids} live sensors repeatedly for ${WATCH_LIMITS.minSeconds}-${WATCH_LIMITS.maxSeconds} seconds while the vehicle is parked, to see how values change: for example coolant temperature while the engine warms up, idle rpm stability, or fuel trims. Returns timestamped samples and, per sensor, min, max, first, last and the number of failed reads. Use read_supported_pids first and pass only supported names. Available names: ${PIDS.map(p => p.name).join(", ")}. Read-only; it is not a driving logger.`,
+      inputSchema: {
+        pids: z.array(z.string()).min(1).max(WATCH_LIMITS.maxPids).describe(`1 to ${WATCH_LIMITS.maxPids} PID names to watch`),
+        seconds: z.number().int().min(WATCH_LIMITS.minSeconds).max(WATCH_LIMITS.maxSeconds).optional().describe(`How long to watch, ${WATCH_LIMITS.minSeconds}-${WATCH_LIMITS.maxSeconds} seconds (default 20)`),
+        interval_seconds: z.number().int().min(WATCH_LIMITS.minInterval).max(WATCH_LIMITS.maxInterval).optional().describe(`Seconds between samples, ${WATCH_LIMITS.minInterval}-${WATCH_LIMITS.maxInterval} (default 2)`),
+      },
+      annotations: READ_ONLY,
+    },
+    async ({ pids, seconds = 20, interval_seconds = 2 }) => {
+      const names = [...new Set(pids.map(p => p.toLowerCase().trim()))];
+      const unknown = names.filter(name => !PID_BY_NAME.has(name));
+      if (unknown.length > 0) {
+        return fail(new Error(`Unknown PID name: ${unknown.join(", ")}. Available: ${PIDS.map(p => p.name).join(", ")}`));
+      }
+      const sleep = deps.sleep ?? ((ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms)));
+      const now = deps.now ?? (() => Date.now());
+      const count = Math.floor(seconds / interval_seconds) + 1;
+      const started = now();
+      const samples: Array<{ t: number; values: Record<string, number | null> }> = [];
+      const errors: Record<string, number> = Object.fromEntries(names.map(name => [name, 0]));
+      let stopped: string | undefined;
+      for (let i = 0; i < count && !stopped; i++) {
+        const target = started + i * interval_seconds * 1000;
+        const wait = target - now();
+        if (wait > 0) await sleep(wait);
+        const values: Record<string, number | null> = {};
+        const t = round((now() - started) / 1000);
+        for (const name of names) {
+          const def = PID_BY_NAME.get(name)!;
+          try {
+            const bytes = await session.elm.obd(`01${def.pid}`, `41${def.pid}`);
+            requireBytes(bytes, def.bytes, `01${def.pid}`);
+            values[name] = round(def.parse(bytes));
+          } catch (err) {
+            values[name] = null;
+            errors[name]++;
+            // A lost connection will not recover by asking again; stop and return what was read.
+            if (!(err instanceof NoDataError) && !(err instanceof Error && /^(Incomplete|Ambiguous) response/.test(err.message))) {
+              stopped = String(err instanceof Error ? err.message : err);
+              break;
+            }
+          }
+        }
+        samples.push({ t, values });
+      }
+      const summary: Record<string, { unit: string; min: number | null; max: number | null; first: number | null; last: number | null; readings: number; failed: number }> = {};
+      for (const name of names) {
+        const series = samples.map(s => s.values[name]).filter((v): v is number => typeof v === "number");
+        summary[name] = {
+          unit: PID_BY_NAME.get(name)!.unit,
+          min: series.length ? Math.min(...series) : null,
+          max: series.length ? Math.max(...series) : null,
+          first: series.length ? series[0] : null,
+          last: series.length ? series[series.length - 1] : null,
+          readings: series.length,
+          failed: errors[name],
+        };
+      }
+      return wrap({
+        interval_seconds,
+        samples,
+        summary,
+        ...(stopped ? { stopped_early: stopped } : {}),
+        note: "Values are read one sensor at a time, so each sample spans a short moment. null means no data for that read. Read only while parked.",
+      });
+    }
   );
 
   const readFreezeFrame = async () => {
