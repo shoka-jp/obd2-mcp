@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-27
+
+More of MCP: watch how sensors change while parked, check readiness before an emissions inspection, see whether SAE or the manufacturer defines each trouble code, and attach guides and the latest report as MCP resources.
+
 ### Added
 
 - MCP resources a user can attach without a tool call: the adapter, troubleshooting and used-car guides (EN/JA, now bundled in the `.mcpb`), the live sensor catalogue (`obd2://sensors`), the mock scenarios (`obd2://scenarios`), and the latest diagnostic report from this session without the adapter's port or address (`obd2://report/latest`). Resource templates `obd2://code/{code}` (system and who defines the meaning; completes codes read this session) and `obd2://sensor/{name}` (completes sensor names). Prompts' `language` argument suggests common languages in clients that support completion. Resources never contact the adapter or the car.
