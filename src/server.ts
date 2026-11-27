@@ -8,6 +8,7 @@ import { listSerialPorts } from "./ports.js";
 import { registerPrompts } from "./prompts.js";
 import { VERSION } from "./version.js";
 import { SERVER_INSTRUCTIONS } from "./instructions.js";
+import { errorHint } from "./hints.js";
 
 const MONITORS_B = ["misfire", "fuel_system", "components"] as const;
 const MONITORS_CD = [
@@ -43,10 +44,14 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
     return { content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }] };
   };
 
-  const fail = (err: unknown) => ({
-    content: [{ type: "text" as const, text: JSON.stringify({ error: String(err instanceof Error ? err.message : err) }) }],
-    isError: true,
-  });
+  const fail = (err: unknown) => {
+    const error = String(err instanceof Error ? err.message : err);
+    const hint = errorHint(error);
+    return {
+      content: [{ type: "text" as const, text: JSON.stringify({ error, ...(hint ? { hint } : {}) }) }],
+      isError: true,
+    };
+  };
 
   server.registerTool(
     "connection_status",

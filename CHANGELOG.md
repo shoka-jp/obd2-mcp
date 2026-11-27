@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Tool errors from the adapter or vehicle now include a plain-language `hint` with a next step (for example "turn the ignition ON" for `UNABLE TO CONNECT`, joining the adapter's WiFi for a refused TCP connection, or unplugging and restarting after a timeout). The original error text is kept, and the server instructions ask the client to explain hints simply, one step at a time.
 - The demo accepts `--scenario <name>` (for example `--demo --summary --scenario cleared`) to show any mock scenario without an MCP client. The summary now also shows permanent codes and incomplete readiness monitors, and explains the "no stored codes but a permanent code" pattern as a reason to ask, not proof.
 - `read_readiness` (and the readiness section of `read_diagnostic_report`) now also returns `supported_count`, `complete_count` and `incomplete_monitors`, so "several monitors incomplete" is explicit and `not_supported` monitors are never counted. The vehicle requests are unchanged.
 - Add the `cleared` mock scenario: codes cleared recently, with no stored codes and the MIL off, but a permanent P0420 and incomplete catalyst, evaporative-system and oxygen-sensor monitors. Try `used_car_check` without a car.
