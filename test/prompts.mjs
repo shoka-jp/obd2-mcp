@@ -59,6 +59,9 @@ test('workshop_handover excludes identifying data and connect_adapter finds the 
     const handover = text(await client.getPrompt({ name: 'workshop_handover', arguments: {} }));
     assert.match(handover, /Leave out the VIN/);
     assert.match(handover, /unavailable, unknown or failed/);
+    assert.ok(handover.indexOf('read_diagnostic_report') < handover.indexOf('format_diagnostic_report'), 'collect, then format');
+    assert.match(handover, /give its text to the user unchanged/);
+    assert.match(handover, /do not edit the formatted report/);
     const connect = text(await client.getPrompt({ name: 'connect_adapter', arguments: { adapter: 'USB' } }));
     assert.match(connect, /My adapter: USB/);
     assert.ok(connect.indexOf('find_adapter') < connect.indexOf('use_adapter'), 'find before switching');

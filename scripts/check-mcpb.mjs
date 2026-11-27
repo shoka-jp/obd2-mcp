@@ -64,7 +64,7 @@ await withServer({}, async client => {
   assert.deepEqual(codes.stored_dtcs, ['P0420']);
   // The guides are bundled and readable as resources.
   const resources = (await client.listResources()).resources.map(r => r.uri);
-  assert.equal(resources.length, 6, resources.join(', '));
+  assert.equal(resources.length, 8, resources.join(', '));
   for (const uri of resources.filter(uri => uri.startsWith('obd2://guide/'))) {
     const [content] = (await client.readResource({ uri })).contents;
     assert.match(content.text, /## 日本語/, uri);
@@ -86,4 +86,4 @@ await withServer({ mock_scenario: 'healthy' }, async client => {
   assert.deepEqual(codes.stored_dtcs, []);
 });
 
-console.log(`PASS: ${manifest.name} ${manifest.version} bundle starts with default, cleared and changed settings; ${manifest.tools.length} tools, 6 prompts and 6 resources match`);
+console.log(`PASS: ${manifest.name} ${manifest.version} bundle starts with default, cleared and changed settings; ${manifest.tools.length} tools, 6 prompts and 8 resources match`);

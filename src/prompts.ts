@@ -88,10 +88,10 @@ export function registerPrompts(server: McpServer): void {
           "",
           compose(
             [
-              "Call read_diagnostic_report with no arguments.",
-              "Write the note with these sections: collection time and data source; driver-reported symptoms (quoted, marked as reported); stored, pending and permanent codes with MIL state; freeze frame; live readings; readiness monitors; values that were unavailable, unknown or failed, with the error text; questions for the workshop.",
+              "Call read_diagnostic_report with no arguments, then format_diagnostic_report (language ja if the reply is in Japanese, otherwise en) and give its text to the user unchanged as the report to hand over.",
+              "Then add a short covering note with these sections: collection time and data source; driver-reported symptoms (quoted, marked as reported); stored, pending and permanent codes with MIL state; freeze frame; live readings; readiness monitors; values that were unavailable, unknown or failed, with the error text; questions for the workshop.",
               "Keep freeze-frame values separate from live readings and keep the original units.",
-              "Keep it short enough to read at the counter. Do not add a diagnosis or repair recommendation.",
+              "Keep the covering note short enough to read at the counter. Do not add a diagnosis or repair recommendation, and do not edit the formatted report.",
             ],
             language,
             ["Leave out the VIN, names, contact details, licence plates and private network addresses. Adapter error text can contain device details; shorten it if it is not useful to the mechanic."]
