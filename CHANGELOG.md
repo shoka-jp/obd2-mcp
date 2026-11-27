@@ -2,11 +2,21 @@
 
 ## [Unreleased]
 
-- The demo accepts `--scenario <name>` (for example `--demo --summary --scenario cleared`) to show any mock scenario without an MCP client. The summary now also shows permanent codes and incomplete readiness monitors, and explains the "no stored codes but a permanent code" pattern as a reason to ask, not proof.
-- `read_readiness` (and the readiness section of `read_diagnostic_report`) now also returns `supported_count`, `complete_count` and `incomplete_monitors`, so "several monitors incomplete" is explicit and `not_supported` monitors are never counted. The vehicle requests are unchanged.
-- Add the `cleared` mock scenario: codes cleared recently, with no stored codes and the MIL off, but a permanent P0420 and incomplete catalyst, evaporative-system and oxygen-sensor monitors. Try `used_car_check` without a car.
-- Add the `used_car_check` guided prompt: with the seller's permission, read codes, permanent codes, readiness monitors and (if supported) the distance with the warning light on and engine run time. It presents signs of recently cleared codes as questions for the seller rather than proof, explains that a battery replacement resets monitors but not permanent codes, suggests reading again after the test drive, and lists what a pre-purchase inspection should check. It never clears codes and does not judge the price or whether to buy. A new walkthrough, [docs/used-car-check.md](docs/used-car-check.md) (EN/JA), covers the viewing, trying it with the `cleared` mock scenario, and what a remaining permanent code means after a repair.
+## [0.6.0] - 2026-11-27
+
+Check a used car before buying: tell whether trouble codes were cleared recently, without treating it as proof.
+
+### Used-car check
+
 - Add the read-only `read_permanent_dtcs` tool (Mode 0A): permanent trouble codes stay after a scan-tool clear until the car confirms the repair, which helps tell whether codes were cleared recently, for example before buying a used car. It returns `null` with a note when the vehicle gives no answer or rejects the request (common before about 2010), instead of failing or reporting an empty list. It is a separate tool, so `read_dtcs` and `read_diagnostic_report` send the same requests as before. The mock vehicle keeps its permanent code after `clear_dtcs`, as a real engine computer does, and the server instructions explain how to present the result.
+- Add the `used_car_check` guided prompt: with the seller's permission, read codes, permanent codes, readiness monitors and (if supported) the distance with the warning light on and engine run time. It presents signs of recently cleared codes as questions for the seller rather than proof, explains that a battery replacement resets monitors but not permanent codes, suggests reading again after the test drive, and lists what a pre-purchase inspection should check. It never clears codes and does not judge the price or whether to buy. A new walkthrough, [docs/used-car-check.md](docs/used-car-check.md) (EN/JA), covers the viewing, trying it with the `cleared` mock scenario, and what a remaining permanent code means after a repair.
+- Add the `cleared` mock scenario: codes cleared recently, with no stored codes and the MIL off, but a permanent P0420 and incomplete catalyst, evaporative-system and oxygen-sensor monitors. Try `used_car_check` without a car.
+- `read_readiness` (and the readiness section of `read_diagnostic_report`) now also returns `supported_count`, `complete_count` and `incomplete_monitors`, so "several monitors incomplete" is explicit and `not_supported` monitors are never counted. The vehicle requests are unchanged.
+- The demo accepts `--scenario <name>` (for example `--demo --summary --scenario cleared`) to show any mock scenario without an MCP client. The summary now also shows permanent codes and incomplete readiness monitors, and explains the "no stored codes but a permanent code" pattern as a reason to ask, not proof.
+
+### Documentation
+
+- Add a "Check a used car before buying" row to the README start table (EN/JA), and update the roadmap for the used-car check.
 
 ## [0.5.0] - 2026-11-27
 
