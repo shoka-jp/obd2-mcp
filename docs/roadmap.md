@@ -8,7 +8,7 @@ The goal is to make a vehicle's recorded observations easier to understand and s
 
 | Where | What you can try |
 |---|---|
-| GitHub release **v0.5.0** | A no-car mock demo, five simulated scenarios, ten MCP tools and 23 live sensors, including `read_diagnostic_report` for workshop evidence, `read_supported_pids` for advertised live sensor support in the Mode 01 PID 01–60 range and `list_serial_ports` to find an adapter's port. Install it in Claude Desktop from the `.mcpb` file or register the release package with `npx`; three guided prompts help you start, and a [connection troubleshooting guide](./troubleshooting.md) covers real adapters. [Try the demo](./try-mock.md). |
+| GitHub release **v0.6.0** | A no-car mock demo with six simulated scenarios, thirteen MCP tools, four guided prompts and 23 live sensors. Connect a real adapter by asking (`find_adapter` and `use_adapter`, no port names or restart), with plain-language next steps on errors. It also includes `read_diagnostic_report` for workshop evidence, `read_supported_pids` for advertised live sensor support in the Mode 01 PID 01–60 range, `list_serial_ports` to find an adapter's port, and a used-car check: `read_permanent_dtcs` (Mode 0A), the `used_car_check` prompt, the `cleared` scenario and a [walkthrough](./used-car-check.md). Install it in Claude Desktop from the `.mcpb` file or register the release package with `npx`; a [connection troubleshooting guide](./troubleshooting.md) covers real adapters. [Try the demo](./try-mock.md). |
 
 The report uses sequential reads and does not request VIN or clear codes; it is not a diagnosis. Mock tests do not establish compatibility with a real vehicle or adapter. See the [safety and scope notes](../README.md#safety-and-scope).
 
@@ -18,7 +18,7 @@ The report uses sequential reads and does not request VIN or clear codes; it is 
 
 - **Release verification:** follow the [release checklist](./releasing.md) for each package and document the verified install path.
 - **Clearer handover:** explore an easy-to-read, shareable report that preserves unavailable values, errors, timestamps and the difference between freeze-frame and live readings. Keep the structured MCP response usable.
-- **More useful simulations:** an EVAP example (`evap`, P0456) has been available since v0.4.0. Next, add focused scenarios with partial or unavailable readings, with expected observations and limitations. Simulated outcomes must stay clearly labeled.
+- **More useful simulations:** an EVAP example (`evap`, P0456) has been available since v0.4.0, and a recently cleared car (`cleared`) since v0.6.0. Next, add focused scenarios with partial or unavailable readings, with expected observations and limitations. Simulated outcomes must stay clearly labeled.
 
 ### 2. Reduce uncertainty when connecting a real adapter
 
@@ -28,6 +28,7 @@ The report uses sequential reads and does not request VIN or clear codes; it is 
 
 ### 3. Expand diagnostic evidence carefully
 
+- Permanent trouble codes (Mode 0A) are available since v0.6.0 as `read_permanent_dtcs`. Next, collect real-vehicle reports of how different cars answer it.
 - Investigate read-only Mode 09 calibration IDs and Mode 06 on-board monitoring results, including unsupported and multi-ECU responses.
 - Explore oxygen-sensor sampling for catalyst-related investigations only with clear sampling limits and without treating a pattern as proof of a failed component.
 

@@ -11,6 +11,11 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      registry_tag:
+        description: "List an already published release in the MCP Registry (for example v0.6.0); leave empty to only build"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -118,3 +123,49 @@ jobs:
           sha256sum "obd2-mcp-$version.tgz" "obd2-mcp-$version.mcpb" > SHA256SUMS
           cat SHA256SUMS
           gh release upload "$TAG" "obd2-mcp-$version.tgz" "obd2-mcp-$version.mcpb" SHA256SUMS --clobber --repo "$GITHUB_REPOSITORY"
+
+  publish-to-mcp-registry:
+    # List the release's .mcpb in the official MCP Registry
+    # (registry.modelcontextprotocol.io), so MCP clients and directories can
+    # find it. Authenticates with GitHub OIDC for the io.github.shoka-jp
+    # namespace; no secret is stored. Runs only after the packages are attached.
+    if: >-
+      always() &&
+      ((github.event_name == 'release' && !github.event.release.prerelease && needs.attach-to-release.result == 'success') ||
+       (github.event_name == 'workflow_dispatch' && inputs.registry_tag != ''))
+    needs: [attach-to-release]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Download the release's .mcpb
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || inputs.registry_tag }}
+        run: gh release download "$TAG" --pattern '*.mcpb' --repo "$GITHUB_REPOSITORY"
+      - name: Point server.json at this release's .mcpb
+        env:
+          TAG: ${{ github.event.release.tag_name || inputs.registry_tag }}
+        run: |
+          version="${TAG#v}"
+          file="obd2-mcp-$version.mcpb"
+          test -f "$file" || { echo "::error::$file not found"; exit 1; }
+          sha="$(sha256sum "$file" | cut -d' ' -f1)"
+          url="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$file"
+          jq --arg v "$version" --arg url "$url" --arg sha "$sha" \
+            '.version = $v | .packages[0].identifier = $url | .packages[0].fileSha256 = $sha' \
+            server.json > server.next.json
+          mv server.next.json server.json
+          cat server.json
+      - name: Install mcp-publisher
+        run: |
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+      - name: Publish to the MCP Registry
+        run: |
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish

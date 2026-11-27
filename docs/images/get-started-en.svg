@@ -21,7 +21,7 @@
 <circle cx="835" cy="150" r="20" fill="#31d5ae"/>
 <text x="835" y="156" text-anchor="middle" font-size="15" font-weight="700" fill="#0d1728">03</text>
 <text x="865" y="157" font-size="21" font-weight="700" fill="#ffffff">Connect your adapter</text>
-<text x="821" y="210" font-size="17" fill="#d8e6f4">Find it: list_serial_ports</text>
-<text x="821" y="242" font-size="17" fill="#d8e6f4">Set Adapter connection</text>
+<text x="821" y="210" font-size="17" fill="#d8e6f4">Plug in, ignition on</text>
+<text x="821" y="242" font-size="17" fill="#d8e6f4">Ask Claude to connect</text>
 <text x="48" y="345" font-size="16" fill="#9dc2c2">Starts with mock data  •  Read-only by default  •  Code clearing is off for real cars</text>
 </g></svg>

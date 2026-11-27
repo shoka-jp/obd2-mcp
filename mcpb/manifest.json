@@ -4,7 +4,7 @@
   "display_name": "OBD-II Car Diagnostics (ELM327)",
   "version": "0.0.0",
   "description": "Read trouble codes, freeze frame, live sensors and readiness monitors from your car through an ELM327 adapter. Starts with a mock vehicle, so no car is needed to try it.",
-  "long_description": "Lets Claude read OBD-II data from your own car through an inexpensive ELM327-compatible USB, Bluetooth (serial) or WiFi adapter: stored and pending trouble codes, the freeze frame, live sensors, readiness monitors and VIN. A diagnostic report tool collects the evidence for a workshop discussion.\n\nThe default connection is a simulated vehicle with a stored P0420, so you can try every tool without hardware. To use a real adapter, change **Adapter connection** in the extension settings. Ask Claude to run `list_serial_ports` to find the value for a USB or Bluetooth adapter.\n\nResults are observations, not a diagnosis. Clearing codes on a real vehicle is disabled. Real-vehicle and real-adapter compatibility has not yet been verified by the project; start with read-only checks while safely parked.",
+  "long_description": "Lets Claude read OBD-II data from your own car through an inexpensive ELM327-compatible USB, Bluetooth (serial) or WiFi adapter: stored and pending trouble codes, the freeze frame, live sensors, readiness monitors and VIN. A diagnostic report tool collects the evidence for a workshop discussion.\n\nThe default connection is a simulated vehicle with a stored P0420, so you can try every tool without hardware. To use a real adapter, plug it in, turn the ignition on and ask Claude to connect: it finds a USB or Bluetooth adapter with `find_adapter` and, after asking you, connects with `use_adapter` until Claude Desktop restarts. To keep the connection, set **Adapter connection** in the extension settings.\n\nResults are observations, not a diagnosis. Clearing codes on a real vehicle is disabled. Real-vehicle and real-adapter compatibility has not yet been verified by the project; start with read-only checks while safely parked.",
   "author": {
     "name": "Sho Kamakura",
     "url": "https://github.com/shoka-jp"
@@ -32,6 +32,8 @@
   },
   "tools": [
     { "name": "connection_status", "description": "Check the adapter identity and port voltage." },
+    { "name": "find_adapter", "description": "Find a USB or Bluetooth ELM327 adapter automatically." },
+    { "name": "use_adapter", "description": "Connect this session to the found adapter, without editing settings." },
     { "name": "list_serial_ports", "description": "Find the serial: connection value for a USB or Bluetooth adapter." },
     { "name": "read_dtcs", "description": "Read stored and pending trouble codes and the check-engine light state." },
     { "name": "read_permanent_dtcs", "description": "Read permanent trouble codes that remain after codes are cleared." },
@@ -54,14 +56,14 @@
     "connection": {
       "type": "string",
       "title": "Adapter connection",
-      "description": "mock for the simulated car (default). For a USB or paired Bluetooth adapter use serial:<port>, for example serial:COM3 or serial:/dev/ttyUSB0 (ask Claude to run list_serial_ports). For a WiFi adapter use tcp:<host>:<port>, commonly tcp:192.168.0.10:35000.",
+      "description": "mock for the simulated car (default). For a USB or paired Bluetooth adapter use serial:<port>, for example serial:COM3 or serial:/dev/ttyUSB0 (ask Claude to find your adapter). For a WiFi adapter use tcp:<host>:<port>, commonly tcp:192.168.0.10:35000.",
       "default": "mock",
       "required": false
     },
     "mock_scenario": {
       "type": "string",
       "title": "Mock scenario",
-      "description": "Used only with mock: catalyst (P0420, default), healthy, misfire (P0301), lean (P0171), evap (P0456) or cleared (codes cleared recently: no stored codes, but a permanent P0420 and incomplete monitors). Synthetic examples, not diagnoses.",
+      "description": "Used only with mock: catalyst (P0420, default), healthy, misfire (P0301), lean (P0171), evap (P0456), cleared (codes cleared recently: no stored codes, but a permanent P0420 and incomplete monitors) or partial (P0128 with unsupported sensors and no freeze frame). Synthetic examples, not diagnoses.",
       "default": "catalyst",
       "required": false
     },

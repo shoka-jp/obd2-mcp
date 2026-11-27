@@ -16,19 +16,26 @@ This project has not yet verified a real vehicle or adapter combination. The exa
 1. **Ask the seller for permission** to plug in an OBD-II adapter and read data. Only read; never clear codes on a car you do not own.
 2. With the car **parked**, plug the ELM327 adapter into the OBD-II port, usually under the dashboard on the driver's side. Turn the ignition on, or let the engine idle outdoors.
 3. In Claude Desktop, choose **used_car_check** from the obd2-mcp prompts in the attachment (+) menu. Optionally add what the seller said (for example "no warning lights, battery replaced last week") and your reply language.
-4. Claude asks you to confirm permission and then reads the diagnostic report, the permanent codes, and, if supported, the distance driven with the warning light on and the engine run time. It gives a short summary first, then questions for the seller.
+4. Claude asks you to confirm permission and then reads the diagnostic report, the permanent codes, and, if supported, the warm-ups and distance since codes were last cleared, the distance driven with the warning light on, and the engine run time. It gives a short summary first, then questions for the seller.
 5. **After the test drive**, once parked, ask Claude to read again. A pending code that appears, or monitors that complete, are more evidence. One drive may not complete every monitor.
 6. Take the questions to the seller, and let a professional pre-purchase inspection check what a scan cannot see.
 
 ### Try it first without a car
 
-In the Claude Desktop extension settings, keep **Adapter connection** as `mock` and set **Mock scenario** to `cleared`. In other clients, set `OBD2MCP_MOCK_SCENARIO=cleared`. Then run the **used_car_check** prompt. Without an AI client, `obd2-mcp --demo --summary --scenario cleared` prints the same readings. The simulated car looks like this:
+In the Claude Desktop extension settings, keep **Adapter connection** as `mock` and set **Mock scenario** to `cleared`. In other clients, set `OBD2MCP_MOCK_SCENARIO=cleared`. Then run the **used_car_check** prompt. Without an AI client, the demo prints the same readings (Node.js 22 or 24):
+
+```bash
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.6.0/obd2-mcp-0.6.0.tgz -- obd2-mcp --demo --summary --scenario cleared
+```
+
+ The simulated car looks like this:
 
 | Reading | Simulated value | What it suggests |
 |---|---|---|
 | Stored and pending codes | none, warning light off | Nothing active right now |
 | Permanent codes | `P0420` | A catalyst-efficiency fault was detected and is not yet confirmed fixed |
 | Readiness monitors | catalyst, evaporative system and oxygen sensor incomplete; others complete or not supported | Codes were cleared or the battery was disconnected recently, or the car has not been driven enough since a repair |
+| Since codes were last cleared | 1 warm-up, 12 km | Codes were cleared very recently, by a scan tool or (on many cars) a battery disconnect |
 | Distance with warning light on | 0 km | Resets to 0 when codes are cleared, so it cannot show how long the light was on before |
 
 Useful questions for this result: when were the codes cleared or the battery replaced, and why? Was anything done on the catalytic converter or oxygen sensors, and are there repair records? Can the car be driven longer, or rechecked later, before you decide? A battery replacement explains the incomplete monitors but not the permanent `P0420`.
@@ -51,19 +58,26 @@ Useful questions for this result: when were the codes cleared or the battery rep
 1. OBD-IIアダプタを挿してデータを読むことについて、**売り手の了承を得ます**。読むだけにし、自分の車ではないのでコードは絶対に消しません。
 2. 車を**停車**させ、ELM327アダプタをOBD-IIポート（多くは運転席側のダッシュボード下）に挿します。イグニッションをオンにするか、屋外でアイドリングします。
 3. Claude Desktopの添付（＋）メニューから、obd2-mcpのプロンプト **used_car_check** を選びます。売り手の説明（例：「警告灯なし、先週バッテリー交換」）と返答言語は任意で入力できます。
-4. Claudeは了承を確認したあと、整備相談レポート、消去しても残るコード、対応していれば警告灯点灯後の走行距離とエンジン稼働時間を読みます。最初に短い要約を示し、そのあとに売り手への質問をまとめます。
+4. Claudeは了承を確認したあと、整備相談レポート、消去しても残るコード、対応していれば前回のコード消去からの暖機回数と走行距離、警告灯点灯後の走行距離、エンジン稼働時間を読みます。最初に短い要約を示し、そのあとに売り手への質問をまとめます。
 5. **試乗のあと**、停車してからもう一度読んでもらいます。保留中のコードが出たり、未完了だったモニターが完了したりすれば、判断材料が増えます。1回の走行ですべてのモニターが完了するとは限りません。
 6. まとめた質問を売り手に確認し、スキャンでは分からない部分はプロの購入前点検で見てもらいます。
 
 ### まず車なしで試す
 
-Claude Desktopの拡張機能の設定で **Adapter connection** を `mock` のままにし、**Mock scenario** を `cleared` にします。ほかのクライアントでは `OBD2MCP_MOCK_SCENARIO=cleared` を設定します。そのうえで **used_car_check** を実行すると、模擬車両は次のように見えます。AIクライアントがなくても、`obd2-mcp --demo --summary --lang ja --scenario cleared` で同じ読み取り結果を表示できます。
+Claude Desktopの拡張機能の設定で **Adapter connection** を `mock` のままにし、**Mock scenario** を `cleared` にします。ほかのクライアントでは `OBD2MCP_MOCK_SCENARIO=cleared` を設定します。そのうえで **used_car_check** を実行すると、模擬車両は次のように見えます。AIクライアントがなくても、デモで同じ読み取り結果を表示できます（Node.js 22または24）。
+
+```bash
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.6.0/obd2-mcp-0.6.0.tgz -- obd2-mcp --demo --summary --lang ja --scenario cleared
+```
+
+
 
 | 読み取り項目 | 模擬データの値 | 読み取れること |
 |---|---|---|
 | 記録済み・保留中のコード | なし、警告灯消灯 | 今は何も検出されていない |
 | 消去しても残るコード | `P0420` | 触媒の効率低下が検出され、修理がまだ確認されていない |
 | レディネスモニター | 触媒・蒸発ガス・O2センサーが未完了、ほかは完了または非対応 | 最近コードを消したかバッテリーを外した、または修理後の走行がまだ足りない |
+| 前回のコード消去から | 暖機1回・12 km | ごく最近、スキャンツールで（多くの車ではバッテリーを外しても）コードが消去された |
 | 警告灯点灯後の走行距離 | 0 km | コード消去で0に戻るため、消去前に警告灯がどれだけ点いていたかは分からない |
 
 この結果で売り手に聞くとよいこと：いつ、なぜコードを消したか（またはバッテリーを交換したか）。触媒やO2センサーの修理をしたか、その記録はあるか。決める前に、もう少し走ってから再確認できるか。バッテリー交換は未完了のモニターの説明にはなりますが、消去しても残る `P0420` の説明にはなりません。

@@ -70,8 +70,8 @@ test('language option rejects missing, invalid, duplicate, and unsupported conte
 
 test('demo --scenario shows the used-car signals for the cleared scenario', () => {
   for (const [lang, patterns] of [
-    ['en', [/Scenario: cleared/, /Stored codes: none/, /Permanent codes: P0420/, /Incomplete readiness monitors: catalyst, evaporative_system, oxygen_sensor/, /not proof/]],
-    ['ja', [/模擬シナリオ: cleared/, /消去しても残るコード: P0420/, /未完了のレディネスモニター: catalyst/, /証拠ではなく/]],
+    ['en', [/Scenario: cleared/, /Stored codes: none/, /Permanent codes: P0420/, /Incomplete readiness monitors: catalyst, evaporative_system, oxygen_sensor/, /Since codes were last cleared: 1 warm-up, 12 km/, /not proof/]],
+    ['ja', [/模擬シナリオ: cleared/, /消去しても残るコード: P0420/, /未完了のレディネスモニター: catalyst/, /前回のコード消去から: 暖機1回・12 km/, /証拠ではなく/]],
   ]) {
     const run = spawnSync(process.execPath, ['dist/index.js', '--demo', '--summary', '--lang', lang, '--scenario', 'cleared'], {
       env: { ...process.env, OBD2MCP_CONNECTION: 'tcp:127.0.0.1:1' }, encoding: 'utf8', timeout: 15000,

@@ -36,7 +36,7 @@ def answer(command):
     return known.get(command, 'NO DATA')
 
 
-def run(kind):
+def run(kind, switch=False):
     stop = threading.Event()
     commands = []
     if kind == 'tcp':
@@ -87,7 +87,9 @@ def run(kind):
 
     worker = threading.Thread(target=emulate, daemon=True)
     worker.start()
-    env = dict(os.environ, OBD2MCP_CONNECTION=connection)
+    # With switch=True the server starts on the mock vehicle and the client
+    # moves it to the simulated adapter with use_adapter, as a user would.
+    env = dict(os.environ, OBD2MCP_CONNECTION='mock' if switch else connection)
     env.pop('OBD2MCP_ENABLE_CLEAR', None)
     child = subprocess.Popen(['node', 'dist/index.js'], cwd=ROOT, env=env,
                              stdin=subprocess.PIPE, stdout=subprocess.PIPE,
@@ -126,6 +128,11 @@ def run(kind):
                                'clientInfo': {'name': 'transport-check', 'version': '1'}})
         child.stdin.write(b'{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}\n')
         child.stdin.flush()
+        if switch:
+            assert tool('read_dtcs').get('simulated') is True
+            switched = tool('use_adapter', {'connection': connection})
+            assert switched['connected'] is True and 'simulated' not in switched, switched
+            assert not any(c[:2] in ('01', '02', '03', '04', '07', '09', '0A') for c in commands), 'switching only talks to the adapter'
         assert tool('connection_status')['vehicle_communication'] == 'not_checked'
         assert 'rpm' in tool('read_supported_pids')['supported_sensor_names']
         assert tool('read_dtcs')['stored_dtcs'] == ['P0420']
@@ -140,7 +147,7 @@ def run(kind):
         assert '0902' not in commands[report_start:] and '04' not in commands[report_start:]
         denied = request('tools/call', {'name': 'clear_dtcs', 'arguments': {'confirm': True}})
         assert denied.get('isError') is True and '04' not in commands
-        print('%s: simulated ELM327 over OS transport; 9 read tools passed, clearing blocked' % kind)
+        print('%s%s: simulated ELM327 over OS transport; 9 read tools passed, clearing blocked' % (kind, ' (switched with use_adapter)' if switch else ''))
     finally:
         stop.set()
         if child.poll() is None:
@@ -156,3 +163,4 @@ def run(kind):
 
 run('tcp')
 run('serial')
+run('serial', switch=True)

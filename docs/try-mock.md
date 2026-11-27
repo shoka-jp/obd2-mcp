@@ -7,8 +7,8 @@ This walkthrough uses simulated data, not a real vehicle. AI wording varies; the
 No AI client, car, or adapter is required. With Node.js 22 or 24 and npm, run the release package directly, without Git:
 
 ```bash
-npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.5.0/obd2-mcp-0.5.0.tgz -- obd2-mcp --demo --summary
-npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.5.0/obd2-mcp-0.5.0.tgz -- obd2-mcp --demo --summary --lang ja
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.6.0/obd2-mcp-0.6.0.tgz -- obd2-mcp --demo --summary
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.6.0/obd2-mcp-0.6.0.tgz -- obd2-mcp --demo --summary --lang ja
 ```
 
 Or, from a source checkout (Git required):
@@ -30,11 +30,11 @@ and does not prove that a real vehicle or adapter is compatible.
 
 Every option starts with the simulated vehicle.
 
-- **Claude Desktop:** download `obd2-mcp-0.5.0.mcpb` from the [v0.5.0 release](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.5.0) and open it with Claude Desktop. No terminal is needed.
+- **Claude Desktop:** download `obd2-mcp-0.6.0.mcpb` from the [v0.6.0 release](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.6.0) and open it with Claude Desktop. No terminal is needed.
 - **Claude Code, without Git:** after running the demo above once (so npm has the package cached), register the same package:
 
   ```bash
-  claude mcp add obd2 --env OBD2MCP_CONNECTION=mock -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.5.0/obd2-mcp-0.5.0.tgz obd2-mcp
+  claude mcp add obd2 --env OBD2MCP_CONNECTION=mock -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.6.0/obd2-mcp-0.6.0.tgz obd2-mcp
   ```
 
   On native Windows, put `cmd /c` before `npx`.
@@ -70,7 +70,7 @@ Or use the server's guided prompt `check_engine_light` (in Claude Code: `/mcp__o
 
 The documented mock scenario is a warm idling sedan with a stored P0420 and the malfunction indicator on. A successful demo means the tools return simulated diagnostic data. It does not establish the cause of a real fault or prove adapter compatibility.
 
-To explore other simulated cases, set `OBD2MCP_MOCK_SCENARIO` to `healthy`, `misfire`, `lean`, `evap`, or `cleared` in the MCP server's environment and restart it. See [mock scenarios](../README.md#try-another-mock-scenario) for setup and limitations.
+To explore other simulated cases, set `OBD2MCP_MOCK_SCENARIO` to `healthy`, `misfire`, `lean`, `evap`, `cleared`, or `partial` in the MCP server's environment and restart it. See [mock scenarios](../README.md#try-another-mock-scenario) for setup and limitations.
 
 ## If it does not work
 
@@ -83,7 +83,7 @@ Check Node.js availability and that the client can start the MCP server. For a r
 AIクライアント・車・アダプターは不要です。Node.js 22または24とnpmがあれば、Gitを使わずにリリースパッケージを直接実行できます。
 
 ```bash
-npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.5.0/obd2-mcp-0.5.0.tgz -- obd2-mcp --demo --summary --lang ja
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.6.0/obd2-mcp-0.6.0.tgz -- obd2-mcp --demo --summary --lang ja
 ```
 
 ソースから実行する場合（Gitが必要）：
@@ -102,11 +102,11 @@ npm run demo:ja
 
 どの方法も最初は模擬車両で動きます。
 
-- **Claude Desktop：** [v0.5.0リリース](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.5.0)から `obd2-mcp-0.5.0.mcpb` をダウンロードし、Claude Desktopで開きます。ターミナルは不要です。
+- **Claude Desktop：** [v0.6.0リリース](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.6.0)から `obd2-mcp-0.6.0.mcpb` をダウンロードし、Claude Desktopで開きます。ターミナルは不要です。
 - **Claude Code（Git不要）：** 上のデモを一度実行してパッケージをキャッシュしてから、同じパッケージを登録します。
 
   ```bash
-  claude mcp add obd2 --env OBD2MCP_CONNECTION=mock -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.5.0/obd2-mcp-0.5.0.tgz obd2-mcp
+  claude mcp add obd2 --env OBD2MCP_CONNECTION=mock -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.6.0/obd2-mcp-0.6.0.tgz obd2-mcp
   ```
 
   Windows（WSLではない環境）では `npx` の前に `cmd /c` を付けます。
@@ -135,7 +135,7 @@ claude mcp add obd2 --env OBD2MCP_CONNECTION=mock -- node "/absolute/path/to/obd
 
 モックは暖機済みのセダンで、P0420が記録され警告灯が点いた想定です。模擬データの取得を体験するもので、実車の故障原因やアダプタの適合を証明するものではありません。
 
-別の模擬例を試すには、MCPサーバーの環境変数 `OBD2MCP_MOCK_SCENARIO` に `healthy`、`misfire`、`lean`、`evap`、`cleared` のいずれかを設定し、再起動してください。設定方法と注意点は[日本語README](../README.ja.md)を参照してください。
+別の模擬例を試すには、MCPサーバーの環境変数 `OBD2MCP_MOCK_SCENARIO` に `healthy`、`misfire`、`lean`、`evap`、`cleared`、`partial` のいずれかを設定し、再起動してください。設定方法と注意点は[日本語README](../README.ja.md)を参照してください。
 
 ## Next steps / 次にできること
 
