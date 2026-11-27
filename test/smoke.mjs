@@ -65,12 +65,16 @@ try {
 
   const tools = await request("tools/list", {});
   const names = tools.result.tools.map(t => t.name).sort();
-  assert(names.length === 11 && names.includes("read_permanent_dtcs") && names.includes("read_diagnostic_report") && names.includes("read_supported_pids") && names.includes("list_serial_ports"), `11 tools registered (${names.join(", ")})`);
+  assert(names.length === 13 && names.includes("find_adapter") && names.includes("use_adapter") && names.includes("read_permanent_dtcs") && names.includes("read_diagnostic_report") && names.includes("read_supported_pids") && names.includes("list_serial_ports"), `13 tools registered (${names.join(", ")})`);
   const byName = Object.fromEntries(tools.result.tools.map(t => [t.name, t]));
   assert(tools.result.tools.every(t => typeof t.title === "string" && t.title.length > 0), "every tool has a display title");
   assert(
-    names.filter(n => n !== "clear_dtcs").every(n => byName[n].annotations?.readOnlyHint === true && byName[n].annotations?.destructiveHint === false),
+    names.filter(n => !["clear_dtcs", "find_adapter", "use_adapter"].includes(n)).every(n => byName[n].annotations?.readOnlyHint === true && byName[n].annotations?.destructiveHint === false),
     "every reader is annotated read-only"
+  );
+  assert(
+    ["find_adapter", "use_adapter"].every(n => byName[n].annotations?.readOnlyHint === false && byName[n].annotations?.destructiveHint === false),
+    "find_adapter and use_adapter contact the adapter but are not destructive"
   );
   assert(
     byName.clear_dtcs.annotations?.destructiveHint === true && byName.clear_dtcs.annotations?.readOnlyHint === false,

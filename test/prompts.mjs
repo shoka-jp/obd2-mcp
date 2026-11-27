@@ -61,7 +61,9 @@ test('workshop_handover excludes identifying data and connect_adapter finds the 
     assert.match(handover, /unavailable, unknown or failed/);
     const connect = text(await client.getPrompt({ name: 'connect_adapter', arguments: { adapter: 'USB' } }));
     assert.match(connect, /My adapter: USB/);
-    assert.ok(connect.indexOf('list_serial_ports') < connect.indexOf('read_supported_pids'));
+    assert.ok(connect.indexOf('find_adapter') < connect.indexOf('use_adapter'), 'find before switching');
+    assert.ok(connect.indexOf('use_adapter') < connect.indexOf('read_supported_pids'), 'switch before reading');
+    assert.match(connect, /do not ask for a port name/);
     assert.match(connect, /OBD2MCP_CONNECTION/);
   });
 });

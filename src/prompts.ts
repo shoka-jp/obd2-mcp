@@ -109,10 +109,11 @@ export function registerPrompts(server: McpServer): void {
           compose(
             [
               "Call connection_status to see the current connection. If it starts with mock, the simulated vehicle is in use.",
-              "For a USB or Bluetooth adapter, call list_serial_ports. Point out likely candidates (for example a known USB-serial chip or a Bluetooth serial port), and suggest unplugging or unpairing the adapter and listing again if it is unclear. A Bluetooth adapter must be paired in the operating system first.",
-              "For a WiFi adapter, explain that the computer must join the adapter's WiFi network and that the value is usually tcp:192.168.0.10:35000; check the adapter's manual.",
-              "Explain how to apply the value: in the Claude Desktop extension settings, set Adapter connection; in other clients, set the environment variable OBD2MCP_CONNECTION (for example claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- ...), then restart the client or server.",
-              "After the restart, call connection_status, then read_supported_pids, and explain the results. An adapter reply alone does not prove vehicle communication.",
+              "Assume the user is not technical: do not ask for a port name, and explain each step in plain words.",
+              "For a USB or Bluetooth adapter, call find_adapter. A Bluetooth adapter must be paired in the operating system first, and the adapter must be plugged into the car with the ignition on. If it finds an adapter, ask the user, then call use_adapter with that connection value (and baud if reported). If it finds none, follow its next_step; list_serial_ports shows every port if needed.",
+              "For a WiFi adapter, ask the user to join the adapter's WiFi network first (often named OBDII; the internet may drop while connected), then call use_adapter with tcp:192.168.0.10:35000, or the address in the adapter's manual.",
+              "After use_adapter succeeds, call read_supported_pids and explain the results. An adapter reply alone does not prove vehicle communication.",
+              "Explain that this connection lasts until the extension or client restarts. To keep it, set Adapter connection in the Claude Desktop extension settings to the same value; in other clients, set OBD2MCP_CONNECTION (for example claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- ...).",
             ],
             language,
             ["Ask the user to work with the vehicle safely parked, ignition on, and the engine off or idling outdoors."]
