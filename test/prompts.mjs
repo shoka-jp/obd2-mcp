@@ -71,6 +71,12 @@ test('used_car_check asks for permission, reads permanent codes and treats clear
     const body = text(await client.getPrompt({ name: 'used_car_check', arguments: { notes: 'Battery replaced last week', language: '日本語' } }));
     assert.ok(body.indexOf("seller has agreed") < body.indexOf('read_diagnostic_report'), 'permission comes before any read');
     assert.ok(body.indexOf('read_diagnostic_report') < body.indexOf('read_permanent_dtcs'));
+    assert.ok(body.indexOf('read_permanent_dtcs') < body.indexOf('read_supported_pids'), 'supported sensors are checked before reading distance_with_mil');
+    assert.match(body, /survives a battery disconnect/);
+    assert.match(body, /repaired recently/);
+    assert.match(body, /after the test drive, once parked/);
+    assert.match(body, /not_supported do not apply/);
+    assert.ok(body.indexOf('short summary first') > 0, 'summary comes first for on-site reading');
     assert.match(body, /"""\nBattery replaced last week\n"""/);
     assert.match(body, /not as proof/);
     assert.match(body, /not a clean bill of health/);
