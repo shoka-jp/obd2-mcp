@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- List each release in the official MCP Registry (`io.github.shoka-jp/obd2-mcp`) so MCP clients and directories can find it. A new release-workflow job fills in `server.json` with the release's `.mcpb` URL and SHA-256 and publishes it with GitHub OIDC, without stored secrets; it can also be run manually for an existing release.
+
 ## [0.6.0] - 2026-11-27
 
 Easier for people without IT skills: connect by asking, get a next step when something fails, and check a used car before buying.
