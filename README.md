@@ -193,6 +193,8 @@ To select only the live sensors you need, pass PID **names**, for example `{"pid
 
 The report does not request VIN or clear codes, and omits the connection source field. Review its contents before sharing, since adapter error text can still contain device details. Save or format the returned report in your MCP client for a workshop discussion; it is not a vehicle-specific diagnosis.
 
+**See what changed.** Collect a report again later, for example after a test drive or a repair, and ask *"Compare it with the previous report."* `compare_diagnostic_reports` lists new and gone codes, the warning light, readiness monitors that completed or were reset, and live values side by side, and points out signs that codes were cleared in between. It uses reports already collected and never contacts the vehicle. To compare across days, save `obd2://report/latest` now; Claude can pass it to the tool later as `earlier_report_json`. In the mock, try: collect a report, clear the codes, collect another and compare.
+
 ## Discover available live sensors
 
 Ask your MCP client to run `read_supported_pids` before choosing live sensors. It reads the Mode 01 support bitmaps for the `01`–`60` hexadecimal range used by this server, following continuation flags. It returns `supported_sensor_names` for use as the `pids` argument of `read_live_data` or `read_diagnostic_report`.
@@ -215,6 +217,7 @@ Protocol references: [ELM327 datasheet, “Talking to the Vehicle”](https://el
 | `read_live_data` | Live sensors: RPM, coolant temp, fuel trims, MAF, O2 voltages, and more (25 PIDs) |
 | `watch_live_data` | Watch up to 4 live sensors for 5–30 seconds while parked, to see how they change (for example coolant temperature while warming up, or idle rpm stability). Returns timestamped samples and min/max/first/last per sensor; unsupported sensors stay `null`. Read-only. |
 | `read_readiness` | Emissions monitor completion status (inspection readiness), with counts and the list of incomplete monitors. Clearing codes or disconnecting the battery resets them. |
+| `compare_diagnostic_reports` | Compare two diagnostic reports, for example before and after a test drive or a repair: new and gone codes, the warning light, readiness monitors that completed or were reset, live values side by side, and neutral observations such as signs that codes were cleared in between. Works on reports already collected (the last 10 of the session, or one saved earlier from `obd2://report/latest`) and never contacts the vehicle. |
 | `read_vin` | Vehicle Identification Number from the ECU |
 | `connection_status` | Adapter identity and port voltage if available. A connected adapter does not itself confirm communication with the vehicle. |
 | `find_adapter` | Find a USB or Bluetooth ELM327 adapter automatically: opens only adapter-like ports briefly and sends the identification command `ATZ`; never contacts the vehicle. |
