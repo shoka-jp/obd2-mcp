@@ -104,7 +104,15 @@ test('find_adapter suggests use_adapter with the found connection', async t => {
   assert.match(data.current_connection, /^mock/);
 });
 
-const port = (path, extra = {}) => ({ connection: `serial:${path}`, path, description: null, manufacturer: null, vendor_id: null, product_id: null, usb_serial_chip: null, ...extra });
+test('find_adapter explains next steps when no port looks like an adapter', async t => {
+  const { call } = await session(t, { findAdapters: async () => ({ found: [], checked: [], skipped: [] }) });
+  const { response, data } = await call('find_adapter');
+  assert(!response.isError);
+  assert.match(data.next_step, /pair the Bluetooth adapter/);
+  assert.match(data.next_step, /Bluetooth LE-only adapter .* cannot be used/);
+});
+
+const port =(path, extra = {}) => ({ connection: `serial:${path}`, path, description: null, manufacturer: null, vendor_id: null, product_id: null, usb_serial_chip: null, ...extra });
 
 test('only adapter-like ports are opened', () => {
   const { candidates, skipped } = adapterCandidates([

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- When `find_adapter` sees no port that looks like an adapter, its `next_step` now also explains that a Bluetooth LE-only adapter (often sold for iPhone) never appears as a port on a computer and cannot be used. The `connect_adapter` prompt description now matches its connect-by-asking flow.
+
 ### Documentation
 
 - Add [docs/adapters.md](docs/adapters.md) (EN/JA), a guide for choosing and plugging in an adapter: which connection types work on a computer (USB, classic Bluetooth, WiFi) and which do not (Bluetooth LE only), where the OBD-II port usually is, and unplugging it afterwards to protect the battery. It recommends no product. The README, troubleshooting guide and get-started image now point to it and describe connecting by asking Claude, and the `connect_adapter` row reflects the `find_adapter`/`use_adapter` flow.
