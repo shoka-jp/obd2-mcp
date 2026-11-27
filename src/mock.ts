@@ -71,7 +71,7 @@ function defaultState(): MockState {
   };
 }
 
-export const MOCK_SCENARIOS = ["catalyst", "healthy", "misfire", "lean", "evap", "cleared"] as const;
+export const MOCK_SCENARIOS = ["catalyst", "healthy", "misfire", "lean", "evap", "cleared", "partial"] as const;
 export type MockScenario = (typeof MOCK_SCENARIOS)[number];
 
 function scenarioState(scenario: MockScenario): MockState {
@@ -107,6 +107,15 @@ function scenarioState(scenario: MockScenario): MockState {
     state.readinessIncomplete = 0x25; // catalyst, evaporative system and O2 sensor incomplete
     state.live.distance_with_mil = 0;
     state.live.run_time = 410;
+  } else if (scenario === "partial") {
+    state.storedDtcs = ["P0128"];
+    state.permanentDtcs = ["P0128"];
+    state.milOn = true;
+    state.live.coolant_temp = 72;
+    state.freezeDtc = null;
+    for (const pid of ["maf", "stft_b2", "ltft_b2", "oil_temp", "ambient_temp"]) {
+      delete state.live[pid];
+    }
   } else if (scenario === "evap") {
     state.storedDtcs = ["P0456"];
     state.permanentDtcs = ["P0456"];

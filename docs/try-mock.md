@@ -70,7 +70,7 @@ Or use the server's guided prompt `check_engine_light` (in Claude Code: `/mcp__o
 
 The documented mock scenario is a warm idling sedan with a stored P0420 and the malfunction indicator on. A successful demo means the tools return simulated diagnostic data. It does not establish the cause of a real fault or prove adapter compatibility.
 
-To explore other simulated cases, set `OBD2MCP_MOCK_SCENARIO` to `healthy`, `misfire`, `lean`, `evap`, or `cleared` in the MCP server's environment and restart it. See [mock scenarios](../README.md#try-another-mock-scenario) for setup and limitations.
+To explore other simulated cases, set `OBD2MCP_MOCK_SCENARIO` to `healthy`, `misfire`, `lean`, `evap`, `cleared`, or `partial` in the MCP server's environment and restart it. See [mock scenarios](../README.md#try-another-mock-scenario) for setup and limitations.
 
 ## If it does not work
 
@@ -135,7 +135,7 @@ claude mcp add obd2 --env OBD2MCP_CONNECTION=mock -- node "/absolute/path/to/obd
 
 モックは暖機済みのセダンで、P0420が記録され警告灯が点いた想定です。模擬データの取得を体験するもので、実車の故障原因やアダプタの適合を証明するものではありません。
 
-別の模擬例を試すには、MCPサーバーの環境変数 `OBD2MCP_MOCK_SCENARIO` に `healthy`、`misfire`、`lean`、`evap`、`cleared` のいずれかを設定し、再起動してください。設定方法と注意点は[日本語README](../README.ja.md)を参照してください。
+別の模擬例を試すには、MCPサーバーの環境変数 `OBD2MCP_MOCK_SCENARIO` に `healthy`、`misfire`、`lean`、`evap`、`cleared`、`partial` のいずれかを設定し、再起動してください。設定方法と注意点は[日本語README](../README.ja.md)を参照してください。
 
 ## Next steps / 次にできること
 
