@@ -128,7 +128,9 @@ For example, register a separate Claude Code mock server:
 claude mcp add obd2-lean --env OBD2MCP_CONNECTION=mock --env OBD2MCP_MOCK_SCENARIO=lean -- node "/absolute/path/to/obd2-mcp/dist/index.js"
 ```
 
-Restart the server after changing the setting. Each server has independent mock state. Clearing a mock scenario resets its readiness monitors and does not affect any vehicle.
+Restart the server after changing the setting. Each server has independent mock state. Clearing a mock scenario resets its readiness monitors (its permanent code stays, as on a real car) and does not affect any vehicle.
+
+To look at a scenario without an MCP client, add `--scenario` to the demo command, for example `obd2-mcp --demo --summary --scenario cleared` (add `--lang ja` for Japanese).
 
 ## Connecting a real car
 
