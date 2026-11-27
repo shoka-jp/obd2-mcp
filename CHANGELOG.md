@@ -2,18 +2,31 @@
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-27
+
+### Security and requirements
+
 - Security: update the MCP TypeScript SDK to 1.32.2 and zod to 4, with seven transitive packages, resolving the open Dependabot alerts. obd2-mcp only uses the stdio transport, so the reported HTTP server and OAuth issues were not reachable, but the packages shipped inside the `.mcpb` and npm package.
 - Update `serialport` to 13 for USB and Bluetooth adapters. **Node.js 20 or later is now required** (22 and 24 are tested), also for the Claude Desktop extension. Checked with the simulated ELM327 over a Linux pseudo-terminal and by loading the native module on Windows and macOS; not yet checked with a real adapter.
-- Build with TypeScript 7.
-- Turn on Dependabot version updates for npm packages and GitHub Actions: weekly, at least 7 days after a release (30 for major versions), always waiting for the maintainer's review.
-- Add Mode 01 PIDs `1F` (`run_time`) and `21` (`distance_with_mil`) with mock values and unit tests.
-- Explain in the contribution guide how AI-assisted maintenance works: the `autopilot` label, what may be merged automatically, and that contributor PRs and good first issues stay with people.
-- Lead the demo results page with the no-Git release-package command, and link the guided prompt and the real setup report.
+
+### New readings
+
+- Add Mode 01 PIDs `1F` (`run_time`, seconds since engine start) and `21` (`distance_with_mil`, km driven with the warning light on), with mock values and unit tests. `read_live_data` now knows 23 PIDs; the default set is unchanged. Thanks @playlikeboy.
+
+### Documentation and community
+
 - Add a bilingual security and vehicle-safety policy (`SECURITY.md`) with a private reporting route and obd2-mcp-specific scope (commands without safeguards, misleading results, prompt injection through tool output, identifying data, supply chain), linked from the READMEs and the new-issue page.
-- Redraw the README getting-started images (EN/JA) for the current path: install with the Claude Desktop extension or `npx`, try the mock car with a guided prompt, then connect an adapter.
-- Run the mock tests, package check and serial port listing on Windows and macOS in CI, in addition to Linux.
 - Add a bilingual "Real setup report" issue form and a reported-setups page, so people can share adapter and vehicle results safely (no VIN, parked, read-only) and others can see which combinations have been tried.
+- Redraw the README getting-started images (EN/JA) for the current path: install with the Claude Desktop extension or `npx`, try the mock car with a guided prompt, then connect an adapter.
 - Update the mock walkthrough with the no-Git demo command and the Claude Desktop extension and `npx` setup, and point to the `check_engine_light` prompt.
+- Lead the demo results page with the no-Git release-package command, and link the guided prompt and the real setup report.
+- Explain in the contribution guide how AI-assisted maintenance works: the `autopilot` label, what may be merged automatically, and that contributor PRs and good first issues stay with people.
+
+### Build and CI
+
+- Run the mock tests, package check and serial port listing on Windows and macOS in CI, in addition to Linux.
+- Turn on Dependabot version updates for npm packages and GitHub Actions: weekly, at least 7 days after a release (30 for major versions), always waiting for the maintainer's review.
+- Build with TypeScript 7.
 
 ## [0.4.0] - 2026-11-26
 
