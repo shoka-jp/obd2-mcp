@@ -29,7 +29,7 @@ The report uses sequential reads and does not request VIN or clear codes; it is 
 ### 3. Expand diagnostic evidence carefully
 
 - Permanent trouble codes (Mode 0A) are available since v0.6.0 as `read_permanent_dtcs`. Next, collect real-vehicle reports of how different cars answer it.
-- Investigate read-only Mode 09 calibration IDs and Mode 06 on-board monitoring results, including unsupported and multi-ECU responses.
+- Mode 09 module information (names, calibration IDs and verification numbers from every module that answers, on CAN vehicles) is available as `read_ecu_info`, tested with the mock only. Next, collect real-vehicle reports of how modules answer, and investigate Mode 06 on-board monitoring results.
 - Explore oxygen-sensor sampling for catalyst-related investigations only with clear sampling limits and without treating a pattern as proof of a failed component.
 
 These are proposals, not supported features. Vehicle, protocol and adapter capabilities vary; a missing reading must not be presented as a clean result. Real-vehicle code clearing remains disabled by default and separately confirmation-gated.

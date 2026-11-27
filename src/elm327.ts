@@ -12,6 +12,8 @@ const FATAL_PATTERNS = ["UNABLE TO CONNECT", "CAN ERROR", "BUS INIT", "BUS ERROR
 export class Elm327 {
   private initialized = false;
   private initializing: Promise<string> | null = null;
+  /** Serializes requests, so a headers-on section (withHeaders) never interleaves with another request. */
+  private queue: Promise<unknown> = Promise.resolve();
 
   constructor(private transport: Transport) {}
 
@@ -43,18 +45,48 @@ export class Elm327 {
     if (!this.initialized) await this.init();
   }
 
+  private exclusive<T>(fn: () => Promise<T>): Promise<T> {
+    const next = this.queue.then(fn, fn);
+    this.queue = next.catch(() => undefined);
+    return next;
+  }
+
   /** Send an AT command; return the cleaned response as one line. */
   async at(cmd: string): Promise<string> {
-    await this.ensureInit();
-    return clean(await this.transport.sendRaw(cmd)).join(" ");
+    return this.exclusive(async () => {
+      await this.ensureInit();
+      return clean(await this.transport.sendRaw(cmd)).join(" ");
+    });
   }
 
   /**
-   * Send an OBD request ("03", "0101", "020200"…) and return the payload bytes
-   * that follow `expectPrefix` (hex, no spaces) in the reassembled response.
+   * Run fn with message headers shown (ATH1), so answers from several control
+   * modules can be told apart. fn gets a send function that returns the cleaned
+   * response lines (NO DATA and adapter errors throw as in obd()). Headers are
+   * turned off again afterwards; if that fails, the session is closed so that
+   * the next request re-initializes the adapter instead of misreading headers.
    */
-  async obd(cmd: string, expectPrefix: string): Promise<number[]> {
-    await this.ensureInit();
+  async withHeaders<T>(fn: (send: (cmd: string) => Promise<string[]>) => Promise<T>): Promise<T> {
+    return this.exclusive(async () => {
+      await this.ensureInit();
+      const on = clean(await this.transport.sendRaw("ATH1"));
+      if (!on.includes("OK")) throw new Error(`Adapter rejected ATH1: ${on.join(" | ")}`);
+      try {
+        return await fn(cmd => this.lines(cmd));
+      } finally {
+        let restored = false;
+        try {
+          restored = clean(await this.transport.sendRaw("ATH0")).includes("OK");
+        } catch {
+          restored = false;
+        }
+        if (!restored) await this.close();
+      }
+    });
+  }
+
+  /** Send a command and return its cleaned lines; NO DATA and adapter errors throw. */
+  private async lines(cmd: string): Promise<string[]> {
     const lines = clean(await this.transport.sendRaw(cmd));
     if (lines.some(l => l.includes("NO DATA"))) {
       if (lines.some(l => !l.includes("NO DATA"))) throw new Error(`Ambiguous response to "${cmd}": NO DATA mixed with other responses`);
@@ -65,6 +97,20 @@ export class Elm327 {
         if (l.includes(p)) throw new Error(`Adapter error for "${cmd}": ${l}`);
       }
     }
+    return lines;
+  }
+
+  /**
+   * Send an OBD request ("03", "0101", "020200"…) and return the payload bytes
+   * that follow `expectPrefix` (hex, no spaces) in the reassembled response.
+   */
+  async obd(cmd: string, expectPrefix: string): Promise<number[]> {
+    return this.exclusive(() => this.obdUnlocked(cmd, expectPrefix));
+  }
+
+  private async obdUnlocked(cmd: string, expectPrefix: string): Promise<number[]> {
+    await this.ensureInit();
+    const lines = await this.lines(cmd);
     // Reassemble hex. In multi-frame (ISO-TP) responses the adapter prints a
     // bare length line ("014") followed by "0: …", "1: …" frame lines — drop
     // the length line, strip the frame indices, and concatenate the rest.

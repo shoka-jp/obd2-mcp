@@ -45,6 +45,7 @@
     { "name": "read_diagnostic_report", "description": "Collect codes, freeze frame, live data and readiness in one evidence report." },
     { "name": "compare_diagnostic_reports", "description": "Compare two diagnostic reports to see what changed, without contacting the vehicle." },
     { "name": "read_vin", "description": "Read the Vehicle Identification Number." },
+    { "name": "read_ecu_info", "description": "List the control modules that answer, with their names, software calibration IDs and verification numbers." },
     { "name": "clear_dtcs", "description": "Clear trouble codes (destructive; disabled for real vehicles by default)." }
   ],
   "prompts_generated": true,

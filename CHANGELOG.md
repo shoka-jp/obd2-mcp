@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add the `read_ecu_info` tool: the control modules that answer OBD-II requests (engine, transmission and others), each with its name, calibration IDs (software version) and calibration verification numbers, from mode 09 PIDs 0A, 04 and 06. Useful when a workshop asks for software versions. Several modules can answer one request, so these reads turn message headers on (`ATH1`), group the answers by CAN address (11-bit and 29-bit) and turn headers off again (`ATH0`); if that fails, the next request re-initializes the adapter. Requests are now serialized, so no other read runs while headers are on. If the protocol is not known yet, one `0100` request finds it first. Older protocols, a vehicle without mode 09 support, fields a module does not advertise, refusals and broken answers are reported as such, per module, never guessed. It does not read the VIN, and its description and the server instructions say not to infer tuning or needed updates from the numbers. The mock now has an engine and a transmission module (the `partial` scenario has only an engine with its name). Tested with the mock only.
+
 ## [0.8.0] - 2026-11-27
 
 See what changed: compare two diagnostic reports (before and after a test drive, a repair or some days of driving), check a car after a repair, and find permanent codes in every report.
