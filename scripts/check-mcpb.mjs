@@ -58,7 +58,7 @@ await withServer({}, async client => {
   const names = (await client.listTools()).tools.map(t => t.name).sort();
   assert.deepEqual(names, manifest.tools.map(t => t.name).sort(), 'manifest tools must match the server');
   const prompts = (await client.listPrompts()).prompts.map(p => p.name).sort();
-  assert.deepEqual(prompts, ['check_engine_light', 'connect_adapter', 'workshop_handover']);
+  assert.deepEqual(prompts, ['check_engine_light', 'connect_adapter', 'used_car_check', 'workshop_handover']);
   const codes = json(await client.callTool({ name: 'read_dtcs', arguments: {} }));
   assert.equal(codes.simulated, true);
   assert.deepEqual(codes.stored_dtcs, ['P0420']);
@@ -79,4 +79,4 @@ await withServer({ mock_scenario: 'healthy' }, async client => {
   assert.deepEqual(codes.stored_dtcs, []);
 });
 
-console.log(`PASS: ${manifest.name} ${manifest.version} bundle starts with default, cleared and changed settings; ${manifest.tools.length} tools and 3 prompts match`);
+console.log(`PASS: ${manifest.name} ${manifest.version} bundle starts with default, cleared and changed settings; ${manifest.tools.length} tools and 4 prompts match`);

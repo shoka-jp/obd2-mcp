@@ -120,4 +120,42 @@ export function registerPrompts(server: McpServer): void {
         ].join("\n")
       )
   );
+
+  server.registerPrompt(
+    "used_car_check",
+    {
+      title: "Check a used car before buying",
+      description: "With the seller's permission, read codes, permanent codes and readiness monitors, point out signs that codes were cleared recently, and list questions for the seller and a pre-purchase inspection.",
+      argsSchema: {
+        notes: optionalText("What the listing or seller says, e.g. 'no warning lights, battery replaced last week'."),
+        language: languageArg,
+      },
+    },
+    ({ notes, language }) =>
+      message(
+        [
+          "Help me check a used car I am thinking of buying, using the obd2 tools.",
+          "",
+          notes?.trim()
+            ? `What the listing or seller says (their words, not verified by the vehicle):\n"""\n${notes.trim()}\n"""`
+            : "I have not shared what the seller says. Ask only if it would change what to check.",
+          "",
+          compose(
+            [
+              "Before reading anything, confirm that the seller has agreed to the scan and that the car is parked with the ignition on (engine idling outdoors is fine).",
+              "Call read_diagnostic_report with no arguments, then read_permanent_dtcs.",
+              "Report stored and pending codes, the MIL state, permanent codes and readiness monitors. Keep the freeze frame separate from live readings.",
+              "Look for signs that codes were cleared recently: no stored codes while permanent codes remain, or several readiness monitors incomplete. Some cars normally leave one monitor, often EVAP, incomplete, and a recent battery replacement or repair also resets monitors. Present these as questions for the seller, not as proof of concealment. A null permanent-code list means the car did not answer or does not support it (common before about 2010), not that there are none.",
+              "If read_supported_pids lists distance_with_mil or run_time, read them with read_live_data and explain what they show.",
+              "End with: a short summary; questions to ask the seller; what a professional pre-purchase inspection should check. Say clearly that a scan without codes is not a clean bill of health, because many mechanical faults never set a code.",
+            ],
+            language,
+            [
+              "Only read data with the seller's permission. Never clear codes on a car you do not own, and do not suggest it.",
+              "Do not estimate the car's value or tell the user whether to buy it; give them the evidence and questions to decide.",
+            ]
+          ),
+        ].join("\n")
+      )
+  );
 }
