@@ -175,6 +175,7 @@ Not sure what to ask? The server provides four ready-made prompts. Claude Deskto
 |---|---|
 | `check_engine_light` | Reads the diagnostic report, explains each code in plain words, keeps the freeze frame separate from live readings, and lists inexpensive checks before a workshop visit. Optional: your symptoms and reply language. |
 | `workshop_handover` | Turns the diagnostic report into a short note for a mechanic, with unknowns and errors kept visible and the VIN and personal details left out. |
+| `inspection_check` | Before an emissions (smog) inspection, or after a repair or battery change: reads the warning light, codes, permanent codes and readiness monitors, explains the usual OBD criteria (for example how many incomplete monitors are typically allowed by model year) as typical rules rather than a verdict, and what to do if monitors are not ready yet. Notes that Japan's 車検 OBD inspection reads manufacturer-defined codes this tool cannot. Never suggests clearing codes. Optional: model year, fuel and region, and reply language. |
 | `used_car_check` | For a used car you are considering: with the seller's permission, reads codes, permanent codes (`read_permanent_dtcs`) and readiness monitors, points out signs that codes were cleared recently as questions rather than proof, suggests reading again after the test drive, and lists questions for the seller and a pre-purchase inspection. Optional: what the seller says and reply language. [Walkthrough](docs/used-car-check.md) |
 | `connect_adapter` | Finds a USB or Bluetooth adapter with `find_adapter`, connects with `use_adapter` after asking, checks the connection, and explains how to keep the setting. Written for users who are not technical: it does not ask for a port name. |
 
@@ -206,7 +207,7 @@ Protocol references: [ELM327 datasheet, “Talking to the Vehicle”](https://el
 |---|---|
 | `read_supported_pids` | Discover advertised support for this server's live sensors; preserve unknowns and partial failures. |
 | `read_diagnostic_report` | Collect a timestamped evidence report from four readers, optionally selecting live sensors and including unavailable fields and errors. |
-| `read_dtcs` | Stored + pending trouble codes, MIL state, DTC count. A code list is `null` when the adapter returns no data; this is not a confirmed empty list. |
+| `read_dtcs` | Stored + pending trouble codes, MIL state, DTC count. A code list is `null` when the adapter returns no data; this is not a confirmed empty list. `code_info` tells, for each code, its system and whether SAE or the manufacturer defines its meaning. |
 | `read_permanent_dtcs` | Permanent trouble codes (Mode 0A) that stay after codes are cleared until the car confirms the repair: a clue that codes were cleared recently, for example before buying a used car. `null` when the vehicle does not support it (common before about 2010); this is not a confirmed empty list. |
 | `read_freeze_frame` | The DTC that set the freeze frame and the engine conditions at that moment |
 | `read_live_data` | Live sensors: RPM, coolant temp, fuel trims, MAF, O2 voltages, and more (25 PIDs) |

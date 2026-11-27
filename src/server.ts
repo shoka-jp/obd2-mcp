@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { Elm327, NoDataError } from "./elm327.js";
 import { parseDtcPayload, decodeDtcPair } from "./dtc.js";
+import { codeInfo } from "./dtc-info.js";
 import { PIDS, PID_BY_NAME, DEFAULT_PIDS, FREEZE_PIDS } from "./pids.js";
 import { discoverSupportedPids } from "./supported-pids.js";
 import { listSerialPorts } from "./ports.js";
@@ -231,7 +232,8 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
       if (count > 0 && (!stored || stored.length < count)) {
         throw new Error(`Incomplete stored DTC response: vehicle reports ${count} code(s), received ${stored?.length ?? 0}`);
       }
-      return wrap({ mil_on: milOn, dtc_count: count, stored_dtcs: stored, pending_dtcs: pending });
+      const info = codeInfo([...(stored ?? []), ...(pending ?? [])]);
+      return wrap({ mil_on: milOn, dtc_count: count, stored_dtcs: stored, pending_dtcs: pending, ...(info ? { code_info: info } : {}) });
     } catch (err) {
       return fail(err);
     }
@@ -241,7 +243,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
     "read_dtcs",
     {
       title: "Read trouble codes",
-      description: "Read diagnostic trouble codes: stored (confirmed) DTCs, pending DTCs, MIL (check-engine light) state, and DTC count. A null code list means the adapter returned no data, not that there are no codes. Use first when a warning light is on.",
+      description: "Read diagnostic trouble codes: stored (confirmed) DTCs, pending DTCs, MIL (check-engine light) state, and DTC count. A null code list means the adapter returned no data, not that there are no codes. code_info tells, for each code, its system and whether SAE or the manufacturer defines its meaning. Use first when a warning light is on.",
       inputSchema: {},
       annotations: READ_ONLY,
     },
@@ -272,7 +274,8 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
             throw e;
           }
         }
-        return wrap({ permanent_dtcs: permanent, ...(note ? { note } : {}) });
+        const info = codeInfo(permanent ?? []);
+        return wrap({ permanent_dtcs: permanent, ...(info ? { code_info: info } : {}), ...(note ? { note } : {}) });
       } catch (err) {
         return fail(err);
       }
@@ -413,7 +416,8 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
           if (!(err instanceof NoDataError)) throw err;
         }
       }
-      return wrap({ freeze_frame: { dtc, conditions } });
+      const info = codeInfo([dtc]);
+      return wrap({ freeze_frame: { dtc, conditions }, ...(info ? { code_info: info } : {}) });
     } catch (err) {
       if (err instanceof NoDataError) return wrap({ freeze_frame: null, note: "Freeze frame unavailable: the vehicle returned no data; this does not confirm that no frame is stored." });
       return fail(err);

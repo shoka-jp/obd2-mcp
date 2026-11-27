@@ -20,10 +20,10 @@ const text = result => {
   return result.messages[0].content.text;
 };
 
-test('four guided prompts are listed with titles and optional arguments', async () => {
+test('five guided prompts are listed with titles and optional arguments', async () => {
   await withClient(async client => {
     const { prompts } = await client.listPrompts();
-    assert.deepEqual(prompts.map(p => p.name).sort(), ['check_engine_light', 'connect_adapter', 'used_car_check', 'workshop_handover']);
+    assert.deepEqual(prompts.map(p => p.name).sort(), ['check_engine_light', 'connect_adapter', 'inspection_check', 'used_car_check', 'workshop_handover']);
     for (const prompt of prompts) {
       assert.ok(prompt.title && prompt.description, prompt.name);
       assert.ok(prompt.arguments.every(arg => arg.required !== true), `${prompt.name} arguments are optional`);
@@ -46,7 +46,7 @@ test('check_engine_light uses the report, keeps evidence separate and never clea
 
 test('prompts work without arguments', async () => {
   await withClient(async client => {
-    for (const name of ['check_engine_light', 'workshop_handover', 'connect_adapter', 'used_car_check']) {
+    for (const name of ['check_engine_light', 'workshop_handover', 'connect_adapter', 'used_car_check', 'inspection_check']) {
       const body = text(await client.getPrompt({ name, arguments: {} }));
       assert.match(body, /Reply in the language of this conversation\./, name);
       assert.doesNotMatch(body, /undefined/, name);
@@ -85,5 +85,21 @@ test('used_car_check asks for permission, reads permanent codes and treats clear
     assert.match(body, /Never clear codes on a car you do not own/);
     assert.match(body, /Do not call clear_dtcs/);
     assert.match(body, /Write your reply in 日本語\./);
+  });
+});
+
+test('inspection_check reads readiness and permanent codes, explains typical rules and never suggests clearing', async () => {
+  await withClient(async client => {
+    const body = text(await client.getPrompt({ name: 'inspection_check', arguments: { vehicle: '2015 gasoline, California', language: 'English' } }));
+    assert.ok(body.indexOf('parked') < body.indexOf('read_dtcs'), 'parking comes before any read');
+    for (const tool of ['read_dtcs', 'read_readiness', 'read_permanent_dtcs', 'read_supported_pids']) assert.match(body, new RegExp(tool));
+    assert.match(body, /"""\n2015 gasoline, California\n"""/);
+    assert.match(body, /1996 to 2000 may have up to two incomplete monitors, 2001 and newer up to one/);
+    assert.match(body, /not_supported do not apply/);
+    assert.match(body, /does not guarantee passing/);
+    assert.match(body, /Never suggest clearing codes, disconnecting the battery/);
+    assert.match(body, /Do not promise that the car will pass/);
+    assert.match(body, /Do not call clear_dtcs/);
+    assert.match(body, /Write your reply in English\./);
   });
 });
