@@ -28,8 +28,8 @@ async function session(t, { scenario = 'catalyst', failAfter } = {}) {
   const [a, b] = InMemoryTransport.createLinkedPair();
   await Promise.all([server.connect(b), client.connect(a)]);
   t.after(async () => { await client.close(); await server.close(); });
-  const call = async args => {
-    const response = await client.callTool({ name: 'watch_live_data', arguments: args });
+  const call = async (args, options) => {
+    const response = await client.callTool({ name: 'watch_live_data', arguments: args }, undefined, options);
     return { response, data: JSON.parse(response.content[0].text) };
   };
   return { call, commands, sleeps };
@@ -104,4 +104,13 @@ test('a lost connection stops watching and returns what was read', async t => {
   assert.match(data.stopped_early, /Connection closed/);
   assert.equal(data.samples.length, 1);
   assert.equal(commands.length, 1);
+});
+
+test('reports MCP progress for each sample when the client asks for it', async t => {
+  const { call } = await session(t);
+  const progress = [];
+  const { data } = await call({ pids: ['rpm'], seconds: 6, interval_seconds: 2 }, { onprogress: p => progress.push(p) });
+  assert.equal(data.samples.length, 4);
+  assert.deepEqual(progress.map(p => [p.progress, p.total]), [[1, 4], [2, 4], [3, 4], [4, 4]]);
+  assert.match(progress[0].message, /Sample 1 of 4/);
 });

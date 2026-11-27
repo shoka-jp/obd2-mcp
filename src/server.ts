@@ -339,7 +339,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
       },
       annotations: READ_ONLY,
     },
-    async ({ pids, seconds = 20, interval_seconds = 2 }) => {
+    async ({ pids, seconds = 20, interval_seconds = 2 }, extra) => {
       const names = [...new Set(pids.map(p => p.toLowerCase().trim()))];
       const unknown = names.filter(name => !PID_BY_NAME.has(name));
       if (unknown.length > 0) {
@@ -375,6 +375,14 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
           }
         }
         samples.push({ t, values });
+        // MCP progress, so clients can show it and keep waiting during the watch.
+        const progressToken = extra._meta?.progressToken;
+        if (progressToken !== undefined) {
+          await extra.sendNotification({
+            method: "notifications/progress",
+            params: { progressToken, progress: samples.length, total: count, message: `Sample ${samples.length} of ${count}` },
+          }).catch(() => undefined);
+        }
       }
       const summary: Record<string, { unit: string; min: number | null; max: number | null; first: number | null; last: number | null; readings: number; failed: number }> = {};
       for (const name of names) {
