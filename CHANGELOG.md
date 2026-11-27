@@ -2,9 +2,15 @@
 
 ## [Unreleased]
 
-- Add the `partial` mock scenario (`P0128` with coolant at 72 °C, five unsupported sensors reported as `not_advertised` / unavailable, and no freeze frame).
-- Reset `distance_with_mil` (PID `21`) to `0` when the mock vehicle clears trouble codes via Mode `04` (only when supported).
-- Add Mode 01 PIDs `30` (`warmups_since_clear`) and `31` (`distance_since_clear`) with mock values, Mode `04` reset behavior, and unit tests.
+### Added
+
+- Add Mode 01 PIDs `30` (`warmups_since_clear`) and `31` (`distance_since_clear`) with mock values, Mode `04` reset behavior, and unit tests. `read_live_data` now knows 25 PIDs; the default set is unchanged. Thanks @playlikeboy.
+- The `used_car_check` prompt and server instructions use these PIDs: few warm-ups or little distance since codes were cleared is the most direct sign of a recent clear, presented as a question for the seller. The demo summary shows them too (`--scenario cleared` prints 1 warm-up and 12 km), and the [used-car walkthrough](docs/used-car-check.md) explains them.
+- Add the `partial` mock scenario (`P0128` with coolant at 72 °C, five unsupported sensors reported as `not_advertised` / unavailable, and no freeze frame). Thanks @playlikeboy.
+
+### Fixed
+
+- Reset `distance_with_mil` (PID `21`) to `0` when the mock vehicle clears trouble codes via Mode `04` (only when supported), as a real engine computer does. Thanks @playlikeboy.
 
 ### Changed
 
