@@ -72,8 +72,8 @@ test('used_car_check asks for permission, reads permanent codes and treats clear
   await withClient(async client => {
     const body = text(await client.getPrompt({ name: 'used_car_check', arguments: { notes: 'Battery replaced last week', language: '日本語' } }));
     assert.ok(body.indexOf("seller has agreed") < body.indexOf('read_diagnostic_report'), 'permission comes before any read');
-    assert.ok(body.indexOf('read_diagnostic_report') < body.indexOf('read_permanent_dtcs'));
-    assert.ok(body.indexOf('read_permanent_dtcs') < body.indexOf('read_supported_pids'), 'supported sensors are checked before reading distance_with_mil');
+    assert.match(body, /It includes permanent codes \(read_permanent_dtcs\)/);
+    assert.ok(body.indexOf('read_diagnostic_report') < body.indexOf('read_supported_pids'), 'supported sensors are checked before reading distance_with_mil');
     assert.match(body, /survives a battery disconnect/);
     assert.match(body, /repaired recently/);
     assert.match(body, /after the test drive, once parked/);
@@ -111,7 +111,7 @@ test('after_repair_check compares with a report from before the repair and treat
     assert.ok(body.indexOf('read_diagnostic_report') < body.indexOf('compare_diagnostic_reports'), 'collect before comparing');
     assert.match(body, /"""\nCatalytic converter replaced for P0420 last Tuesday\n"""/);
     assert.match(body, /earlier_report_json/);
-    assert.match(body, /read_permanent_dtcs/);
+    assert.match(body, /it includes permanent codes \(read_permanent_dtcs\)/);
     assert.match(body, /not a sign that the repair failed/);
     assert.match(body, /Incomplete readiness monitors are normal after a repair/);
     assert.match(body, /Do not judge the workshop/);

@@ -35,7 +35,9 @@ test('report combines existing readers with timestamps, structured data and no V
     assert.deepEqual(response.structuredContent, report);
     assert.equal(report.schema_version, 1);
     assert.equal(report.simulated, true);
-    assert.deepEqual(Object.keys(report.sections), ['read_dtcs', 'read_freeze_frame', 'read_live_data', 'read_readiness']);
+    assert.deepEqual(Object.keys(report.sections), ['read_dtcs', 'read_permanent_dtcs', 'read_freeze_frame', 'read_live_data', 'read_readiness']);
+    assert.deepEqual(report.sections.read_permanent_dtcs.data.permanent_dtcs, ['P0420']);
+    assert(commands.includes('0A'));
     assert.deepEqual(report.sections.read_dtcs.data.stored_dtcs, ['P0420']);
     assert.equal(report.sections.read_freeze_frame.data.freeze_frame.conditions.rpm.value, 2210);
     assert.equal(report.sections.read_live_data.data.live_data.coolant_temp.value, 89);
@@ -133,4 +135,19 @@ test('report preserves unknown code lists and per-sensor errors', async () => {
     assert.equal('value' in report.sections.read_live_data.data.live_data.rpm, false);
     assert.equal(report.sections.read_live_data.data.live_data.coolant_temp.value, 89);
   } finally { await client.close(); await server.close(); }
+});
+
+test('a car without permanent code support keeps the report usable', async () => {
+  for (const answer of ['NO DATA', '7F 0A 11']) {
+    const { client, server } = await session({ '0A': answer });
+    try {
+      const response = await client.callTool({ name: 'read_diagnostic_report', arguments: {} });
+      const report = JSON.parse(response.content[0].text);
+      assert.equal(report.sections.read_permanent_dtcs.is_error, false, answer);
+      assert.equal(report.sections.read_permanent_dtcs.data.permanent_dtcs, null, answer);
+      assert.match(report.sections.read_permanent_dtcs.data.note, /not a confirmed empty list/, answer);
+      assert.deepEqual(report.sections.read_dtcs.data.stored_dtcs, ['P0420'], answer);
+      assert.equal(report.sections.read_readiness.is_error, false, answer);
+    } finally { await client.close(); await server.close(); }
+  }
 });
