@@ -256,6 +256,29 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
     readDtcs
   );
 
+  const readPermanentDtcs = async () => {
+    try {
+      let permanent: string[] | null = null;
+      let note: string | undefined;
+      try {
+        permanent = parseDtcPayload(await session.elm.obd("0A", "4A"));
+      } catch (e) {
+        if (e instanceof NoDataError) {
+          note = "No answer to Mode 0A: the vehicle may not support permanent codes (common before about 2010), or the ignition is off. This is not a confirmed empty list.";
+        } else if (e instanceof Error && /Unexpected response to "0A": 7F\s?0A/i.test(e.message)) {
+          note = "The vehicle reported Mode 0A (permanent codes) as unsupported. This is not a confirmed empty list.";
+        } else {
+          throw e;
+        }
+      }
+      remember(permanent ?? []);
+      const info = codeInfo(permanent ?? []);
+      return wrap({ permanent_dtcs: permanent, ...(info ? { code_info: info } : {}), ...(note ? { note } : {}) });
+    } catch (err) {
+      return fail(err);
+    }
+  };
+
   server.registerTool(
     "read_permanent_dtcs",
     {
@@ -265,28 +288,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
       inputSchema: {},
       annotations: READ_ONLY,
     },
-    async () => {
-      try {
-        let permanent: string[] | null = null;
-        let note: string | undefined;
-        try {
-          permanent = parseDtcPayload(await session.elm.obd("0A", "4A"));
-        } catch (e) {
-          if (e instanceof NoDataError) {
-            note = "No answer to Mode 0A: the vehicle may not support permanent codes (common before about 2010), or the ignition is off. This is not a confirmed empty list.";
-          } else if (e instanceof Error && /Unexpected response to "0A": 7F\s?0A/i.test(e.message)) {
-            note = "The vehicle reported Mode 0A (permanent codes) as unsupported. This is not a confirmed empty list.";
-          } else {
-            throw e;
-          }
-        }
-        remember(permanent ?? []);
-        const info = codeInfo(permanent ?? []);
-        return wrap({ permanent_dtcs: permanent, ...(info ? { code_info: info } : {}), ...(note ? { note } : {}) });
-      } catch (err) {
-        return fail(err);
-      }
-    }
+    readPermanentDtcs
   );
 
   server.registerTool(
@@ -496,7 +498,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
     "read_diagnostic_report",
     {
       title: "Collect diagnostic evidence report",
-      description: `Collect stored/pending codes, freeze frame, live data and readiness into one timestamped evidence record for a workshop discussion. Optionally select live sensor names with pids; omit or pass an empty list for the defaults. Available names: ${PIDS.map(p => p.name).join(", ")}. Readings are collected sequentially. Preserve each section's errors and unknown values when summarizing. VIN is not requested and codes are not cleared. The result contains observations, not a diagnosis. Each report gets a session_report_number; collect another later (for example after a test drive or a repair) and call compare_diagnostic_reports to see what changed.`,
+      description: `Collect stored/pending/permanent codes, freeze frame, live data and readiness into one timestamped evidence record for a workshop discussion. Optionally select live sensor names with pids; omit or pass an empty list for the defaults. Available names: ${PIDS.map(p => p.name).join(", ")}. Readings are collected sequentially. Preserve each section's errors and unknown values when summarizing. VIN is not requested and codes are not cleared. The result contains observations, not a diagnosis. Each report gets a session_report_number; collect another later (for example after a test drive or a repair) and call compare_diagnostic_reports to see what changed.`,
       inputSchema: { pids: z.array(z.string()).optional().describe("Live PID names to read; omit or pass an empty list for the default set") },
       annotations: READ_ONLY,
     },
@@ -509,6 +511,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
       }> = {};
       const readers = [
         ["read_dtcs", readDtcs],
+        ["read_permanent_dtcs", readPermanentDtcs],
         ["read_freeze_frame", readFreezeFrame],
         ["read_live_data", () => readLiveData({ pids })],
         ["read_readiness", readReadiness],

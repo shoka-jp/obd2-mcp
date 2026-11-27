@@ -188,9 +188,9 @@ The server also sends usage instructions when a client connects, so Claude knows
 
 With the server configured in your MCP client, ask: **"Run read_diagnostic_report and turn its observations, missing values and errors into a workshop handover note. Keep freeze-frame values separate from live readings."**
 
-`read_diagnostic_report` collects codes, freeze frame, live sensors and readiness in one response, with collection timestamps and structured JSON. It reuses the individual readers and preserves their null values and errors if part of the collection fails. Collection is sequential, so the readings can come from different moments.
+`read_diagnostic_report` collects stored, pending and permanent codes, freeze frame, live sensors and readiness in one response, with collection timestamps and structured JSON. It reuses the individual readers and preserves their null values and errors if part of the collection fails. Collection is sequential, so the readings can come from different moments.
 
-To select only the live sensors you need, pass PID **names**, for example `{"pids":["rpm","coolant_temp"]}`. Omit `pids` or pass an empty array to use the same default set as `read_live_data`. An unknown name is retained as a per-sensor error, and other requested sensors are still read. This selection affects live data only; codes, freeze frame and readiness are collected as usual.
+To select only the live sensors you need, pass PID **names**, for example `{"pids":["rpm","coolant_temp"]}`. Omit `pids` or pass an empty array to use the same default set as `read_live_data`. An unknown name is retained as a per-sensor error, and other requested sensors are still read. This selection affects live data only; codes, permanent codes, freeze frame and readiness are collected as usual. A car without permanent-code support (common before about 2010) gets `null` there with a note, and the rest of the report is unaffected.
 
 The report does not request VIN or clear codes, and omits the connection source field. Review its contents before sharing, since adapter error text can still contain device details. Save or format the returned report in your MCP client for a workshop discussion; it is not a vehicle-specific diagnosis.
 
@@ -211,7 +211,7 @@ Protocol references: [ELM327 datasheet, “Talking to the Vehicle”](https://el
 | Tool | What it does |
 |---|---|
 | `read_supported_pids` | Discover advertised support for this server's live sensors; preserve unknowns and partial failures. |
-| `read_diagnostic_report` | Collect a timestamped evidence report from four readers, optionally selecting live sensors and including unavailable fields and errors. |
+| `read_diagnostic_report` | Collect a timestamped evidence report from five readers (codes, permanent codes, freeze frame, live data, readiness), optionally selecting live sensors and including unavailable fields and errors. |
 | `read_dtcs` | Stored + pending trouble codes, MIL state, DTC count. A code list is `null` when the adapter returns no data; this is not a confirmed empty list. `code_info` tells, for each code, its system and whether SAE or the manufacturer defines its meaning. |
 | `read_permanent_dtcs` | Permanent trouble codes (Mode 0A) that stay after codes are cleared until the car confirms the repair: a clue that codes were cleared recently, for example before buying a used car. `null` when the vehicle does not support it (common before about 2010); this is not a confirmed empty list. |
 | `read_freeze_frame` | The DTC that set the freeze frame and the engine conditions at that moment |

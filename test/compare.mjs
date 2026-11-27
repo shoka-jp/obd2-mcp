@@ -16,7 +16,7 @@ const ALL_COMPLETE = {
 
 /** A report shaped like read_diagnostic_report output. */
 function report({
-  started = '2026-11-27T10:00:00.000Z', simulated = false, mil = false, stored = [], pending = [],
+  started = '2026-11-27T10:00:00.000Z', simulated = false, mil = false, stored = [], pending = [], permanent = [],
   ff = null, ffNote = 'No freeze frame stored.', monitors = {}, live = {}, errors = {},
 } = {}) {
   const sec = (name, data) => ({ collected_at: started, is_error: Boolean(errors[name]), data: errors[name] ? { error: errors[name] } : data });
@@ -27,6 +27,7 @@ function report({
     simulated,
     sections: {
       read_dtcs: sec('read_dtcs', { mil_on: mil, dtc_count: stored.length, stored_dtcs: stored, pending_dtcs: pending }),
+      ...(permanent === 'omit' ? {} : { read_permanent_dtcs: sec('read_permanent_dtcs', { permanent_dtcs: permanent }) }),
       read_freeze_frame: sec('read_freeze_frame', ff ? { freeze_frame: { dtc: ff, conditions: {} } } : { freeze_frame: null, note: ffNote }),
       read_live_data: sec('read_live_data', {
         live_data: Object.fromEntries(Object.entries(live).map(([k, v]) => [k, v === null ? { error: 'No data' } : { value: v, unit: 'x' }])),
@@ -81,7 +82,32 @@ test('after a test drive: a new pending code and completed monitors', () => {
 
 test('a stored code that disappears without signs of a clear asks about it', () => {
   const result = compare(report({ stored: ['P0456'] }), report({ stored: [] }));
-  assert(result.observations.some(o => /^Stored code\(s\) no longer reported: P0456\. .*about 40 warm-ups.*read_permanent_dtcs/.test(o)));
+  assert(result.observations.some(o => /^Stored code\(s\) no longer reported: P0456\. .*about 40 warm-ups.*ask whether codes were cleared\.$/.test(o)));
+});
+
+test('permanent codes: still permanent after a clear, confirmed gone after driving, and older reports', () => {
+  // Stored code gone but still permanent, with no other sign of a clear.
+  const cleared = compare(report({ stored: ['P0420'], permanent: ['P0420'] }), report({ stored: [], permanent: ['P0420'] }));
+  assert.deepEqual(cleared.permanent_dtcs, { status: 'compared', earlier: ['P0420'], later: ['P0420'], new: [], gone: [] });
+  assert(cleared.observations.some(o => /^P0420: no longer stored but still a permanent code\. This usually means codes were cleared/.test(o)));
+  assert(!cleared.observations.some(o => /about 40 warm-ups/.test(o)), 'the permanent code explains it');
+
+  // With a counter drop the clear is already stated once.
+  const counted = compare(
+    report({ stored: ['P0420'], permanent: ['P0420'], live: { warmups_since_clear: 30 } }),
+    report({ permanent: ['P0420'], live: { warmups_since_clear: 0 } })
+  );
+  assert(counted.observations.some(o => o === 'P0420: no longer stored but still a permanent code, so the car has not yet confirmed that the fault is fixed.'));
+
+  // After the repair and some driving, the car erases the permanent code itself.
+  const confirmed = compare(report({ permanent: ['P0420'] }), report({ permanent: [] }));
+  assert(confirmed.observations.some(o => /^Permanent code\(s\) no longer reported: P0420\. The car's own monitor found that fault no longer present/.test(o)));
+  const appeared = compare(report(), report({ mil: true, stored: ['P0301'], permanent: ['P0301'] }));
+  assert(appeared.observations.some(o => /^New permanent code\(s\): P0301\./.test(o)));
+
+  // A car without Mode 0A support, and a report from 0.7.x without the section.
+  assert.match(compare(report({ permanent: null }), report()).permanent_dtcs.reason, /did not answer the permanent code request in the earlier report/);
+  assert.match(compare(report({ permanent: 'omit' }), report()).permanent_dtcs.reason, /the earlier report has no read_permanent_dtcs section/);
 });
 
 test('failed sections and missing lists are unknown, never a change', () => {
@@ -126,7 +152,7 @@ test('mixed simulated and real reports, and no changes', () => {
   const mixed = compare(report({ simulated: true }), report());
   assert.match(mixed.observations[0], /simulated vehicle and the other does not/);
   const same = compare(report({ stored: ['P0420'], mil: true }), report({ stored: ['P0420'], mil: true }));
-  assert.deepEqual(same.observations, ['No change in the warning light, trouble codes, freeze frame or readiness monitors that both reports could show.']);
+  assert.deepEqual(same.observations, ['No change in the warning light, stored, pending or permanent codes, freeze frame or readiness monitors that both reports could show.']);
   assert(same.notes.some(n => /not a diagnosis/.test(n)));
 });
 

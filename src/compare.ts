@@ -45,11 +45,15 @@ function section(report: Report, name: string, label: string): Known<Record<stri
   return { known: true, value: sec.data };
 }
 
-function codeList(report: Report, key: "stored_dtcs" | "pending_dtcs", label: string): Known<string[]> {
-  const sec = section(report, "read_dtcs", label);
+function codeList(report: Report, key: "stored_dtcs" | "pending_dtcs" | "permanent_dtcs", label: string): Known<string[]> {
+  const sec = section(report, key === "permanent_dtcs" ? "read_permanent_dtcs" : "read_dtcs", label);
   if (!sec.known) return sec;
   const list = sec.value[key];
-  if (!Array.isArray(list)) return { known: false, reason: `the ${label} report has no data for ${key} (the adapter returned no answer)` };
+  if (!Array.isArray(list)) {
+    return { known: false, reason: key === "permanent_dtcs"
+      ? `the car did not answer the permanent code request in the ${label} report, or does not support it`
+      : `the ${label} report has no data for ${key} (the adapter returned no answer)` };
+  }
   const codes = list.filter((c): c is string => typeof c === "string" && CODE.test(c));
   if (codes.length !== list.length) return { known: false, reason: `the ${label} report has malformed ${key}` };
   return { known: true, value: [...new Set(codes)] };
@@ -148,6 +152,7 @@ export function compareReports(earlierInput: CompareInput, laterInput: CompareIn
 
   const stored = diffCodes(codeList(earlier, "stored_dtcs", "earlier"), codeList(later, "stored_dtcs", "later"));
   const pending = diffCodes(codeList(earlier, "pending_dtcs", "earlier"), codeList(later, "pending_dtcs", "later"));
+  const permanent = diffCodes(codeList(earlier, "permanent_dtcs", "earlier"), codeList(later, "permanent_dtcs", "later"));
 
   const ffE = freezeFrameCode(earlier, "earlier");
   const ffL = freezeFrameCode(later, "later");
@@ -211,6 +216,7 @@ export function compareReports(earlierInput: CompareInput, laterInput: CompareIn
   const codesGone = gone.length > 0;
   const lightWentOff = warningLight.status === "compared" && warningLight.earlier && !warningLight.later;
   const monitorsReset = reset.length > 0;
+  const clearNoted = counterDrop.length > 0 || (monitorsReset && (codesGone || lightWentOff));
   if (counterDrop.length > 0) {
     observations.push(`${counterDrop.map(n => `${n} went down (${liveData[n].earlier} to ${liveData[n].later})`).join(" and ")}: trouble codes were cleared between the reports, by a scan tool, a battery disconnect or a repair. Ask what was done.`);
   } else if (monitorsReset && (codesGone || lightWentOff)) {
@@ -224,8 +230,22 @@ export function compareReports(earlierInput: CompareInput, laterInput: CompareIn
   if (pending.status === "compared" && pending.new.length > 0) {
     observations.push(`New pending code(s): ${list(pending.new)}. The car detected a possible fault since the earlier report; a pending code is not confirmed yet and can become a stored code if it happens again.`);
   }
-  if (codesGone && counterDrop.length === 0 && !monitorsReset) {
-    observations.push(`Stored code(s) no longer reported: ${list(gone)}. Under the OBD-II rules a car usually keeps a stored code for about 40 warm-ups after the fault stops, so if little driving happened in between, ask whether codes were cleared, and check permanent codes (read_permanent_dtcs).`);
+  // A stored code that is gone while the same code is still permanent: the car did not erase it by itself.
+  const stillPermanent = permanent.status === "compared" ? gone.filter(c => permanent.later.includes(c)) : [];
+  if (stillPermanent.length > 0) {
+    observations.push(clearNoted
+      ? `${list(stillPermanent)}: no longer stored but still a permanent code, so the car has not yet confirmed that the fault is fixed.`
+      : `${list(stillPermanent)}: no longer stored but still a permanent code. This usually means codes were cleared (scan tool, battery disconnect or repair) and the car has not yet confirmed that the fault is fixed.`);
+  }
+  const goneUnexplained = gone.filter(c => !stillPermanent.includes(c));
+  if (goneUnexplained.length > 0 && counterDrop.length === 0 && !monitorsReset) {
+    observations.push(`Stored code(s) no longer reported: ${list(goneUnexplained)}. Under the OBD-II rules a car usually keeps a stored code for about 40 warm-ups after the fault stops, so if little driving happened in between, ask whether codes were cleared.`);
+  }
+  if (permanent.status === "compared" && permanent.gone.length > 0) {
+    observations.push(`Permanent code(s) no longer reported: ${list(permanent.gone)}. The car's own monitor found that fault no longer present, which is how a repair is confirmed.`);
+  }
+  if (permanent.status === "compared" && permanent.new.length > 0) {
+    observations.push(`New permanent code(s): ${list(permanent.new)}. The car turned the warning light on for this fault; clearing codes or disconnecting the battery does not remove it until the car confirms the repair.`);
   }
   if (warningLight.status === "compared" && warningLight.changed) {
     observations.push(warningLight.later ? "The warning light came on since the earlier report." : "The warning light went off since the earlier report.");
@@ -239,7 +259,7 @@ export function compareReports(earlierInput: CompareInput, laterInput: CompareIn
       : "The freeze frame stored in the earlier report is gone.");
   }
   if (observations.length === 0) {
-    observations.push("No change in the warning light, trouble codes, freeze frame or readiness monitors that both reports could show.");
+    observations.push("No change in the warning light, stored, pending or permanent codes, freeze frame or readiness monitors that both reports could show.");
   }
 
   return {
@@ -250,13 +270,14 @@ export function compareReports(earlierInput: CompareInput, laterInput: CompareIn
     warning_light: warningLight,
     stored_dtcs: stored,
     pending_dtcs: pending,
+    permanent_dtcs: permanent,
     freeze_frame_dtc: freezeFrame,
     readiness,
     live_data: liveData,
     notes: [
       "This compares observations from two reports; it is not a diagnosis. A section that failed or had no data is reported as unknown, never as a change.",
       "Live values depend on engine conditions. Compare them only when both reports were read in similar conditions, for example both at warm idle; null means that read failed.",
-      "Permanent codes are not part of the report. Call read_permanent_dtcs to see whether a code the car stored is still waiting to be confirmed as fixed.",
+      "Reports collected before permanent codes were part of the report (obd2-mcp 0.7.x) show permanent_dtcs as unknown.",
     ],
   };
 }
@@ -279,7 +300,7 @@ export function parseSavedReport(text: string): { report: Report } | { error: st
   if (!isObject(value) || value.schema_version !== 1 || !isObject(value.sections)) {
     return { error: "This does not look like an obd2-mcp diagnostic report (schema_version 1 with sections)." };
   }
-  const known = ["read_dtcs", "read_freeze_frame", "read_live_data", "read_readiness"].filter(name => name in (value as { sections: Record<string, unknown> }).sections);
-  if (known.length === 0) return { error: "The saved report has none of the expected sections (read_dtcs, read_freeze_frame, read_live_data, read_readiness)." };
+  const known = ["read_dtcs", "read_permanent_dtcs", "read_freeze_frame", "read_live_data", "read_readiness"].filter(name => name in (value as { sections: Record<string, unknown> }).sections);
+  if (known.length === 0) return { error: "The saved report has none of the expected sections (read_dtcs, read_permanent_dtcs, read_freeze_frame, read_live_data, read_readiness)." };
   return { report: value };
 }

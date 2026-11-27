@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- `read_diagnostic_report` now also includes permanent codes (Mode 0A) as a `read_permanent_dtcs` section, so one report shows whether a code is still waiting for the car to confirm a repair. This adds one Mode 0A request per report, the same read-only request that `read_permanent_dtcs` already sends; a car that does not answer or reports it unsupported gets `null` with a note, and the other sections are unaffected. `compare_diagnostic_reports` now compares permanent codes: a stored code that is gone while still permanent usually means codes were cleared, and a permanent code that disappears means the car confirmed the repair. Reports from 0.7.x show permanent codes as unknown. The `used_car_check`, `after_repair_check` and `workshop_handover` prompts use the report's permanent codes.
+
 ### Added
 
 - Add the `compare_diagnostic_reports` tool to see what changed between two diagnostic reports, for example before and after a test drive, a repair or some days of driving. It reports new and gone stored and pending codes, the warning light, the freeze frame code, readiness monitors that completed or were reset, and live values side by side, with neutral observations: for example, warm-ups or distance since codes were cleared going down means codes were cleared in between. By default it compares the two most recent reports of the session; a session keeps the last 10, and each `read_diagnostic_report` result now carries a `session_report_number`. A report saved from `obd2://report/latest` in an earlier session can be passed as `earlier_report_json`; only well-formed values (codes, known sensor and monitor names, numbers, timestamps) are read from it. Sections that failed are reported as unknown, never as a change. It works on reports already collected and never contacts the adapter or the vehicle. The `used_car_check` prompt uses it after the test drive.
