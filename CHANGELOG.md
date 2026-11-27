@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Add the `cleared` mock scenario: codes cleared recently, with no stored codes and the MIL off, but a permanent P0420 and incomplete catalyst, evaporative-system and oxygen-sensor monitors. Try `used_car_check` without a car.
 - Add the `used_car_check` guided prompt: with the seller's permission, read codes, permanent codes and readiness monitors, present signs of recently cleared codes as questions for the seller rather than proof, and list what a pre-purchase inspection should check. It never clears codes and does not judge the price or whether to buy.
 - Add the read-only `read_permanent_dtcs` tool (Mode 0A): permanent trouble codes stay after a scan-tool clear until the car confirms the repair, which helps tell whether codes were cleared recently, for example before buying a used car. It returns `null` with a note when the vehicle gives no answer or rejects the request (common before about 2010), instead of failing or reporting an empty list. It is a separate tool, so `read_dtcs` and `read_diagnostic_report` send the same requests as before. The mock vehicle keeps its permanent code after `clear_dtcs`, as a real engine computer does, and the server instructions explain how to present the result.
 

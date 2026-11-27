@@ -22,7 +22,7 @@ async function call(client, name, args = {}) {
   return JSON.parse(r.content[0].text);
 }
 
-for (const [scenario, code] of [['catalyst', 'P0420'], ['misfire', 'P0301'], ['lean', 'P0171'], ['evap', 'P0456'], ['healthy', null]]) {
+for (const [scenario, code] of [['catalyst', 'P0420'], ['misfire', 'P0301'], ['lean', 'P0171'], ['evap', 'P0456'], ['healthy', null], ['cleared', null]]) {
   test(`${scenario}: codes, freeze frame and simulation label`, async () => {
     const { client, server } = await createClient(scenario);
     try {
@@ -40,6 +40,21 @@ for (const [scenario, code] of [['catalyst', 'P0420'], ['misfire', 'P0301'], ['l
     } finally { await client.close(); await server.close(); }
   });
 }
+
+test('cleared: no stored codes, but the permanent code and incomplete monitors remain', async () => {
+  const { client, server } = await createClient('cleared');
+  try {
+    const codes = await call(client, 'read_dtcs');
+    assert.deepEqual(codes.stored_dtcs, []);
+    assert.equal(codes.mil_on, false);
+    assert.deepEqual((await call(client, 'read_permanent_dtcs')).permanent_dtcs, ['P0420']);
+    const monitors = (await call(client, 'read_readiness')).readiness_monitors;
+    for (const name of ['catalyst', 'evaporative_system', 'oxygen_sensor']) assert.equal(monitors[name], 'incomplete', name);
+    assert.equal(monitors.misfire, 'complete');
+    const live = await call(client, 'read_live_data', { pids: ['distance_with_mil'] });
+    assert.equal(live.live_data.distance_with_mil.value, 0);
+  } finally { await client.close(); await server.close(); }
+});
 
 test('clearing one mock session resets readiness but not other sessions', async () => {
   const a = await createClient('catalyst');
