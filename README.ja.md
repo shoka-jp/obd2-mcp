@@ -25,6 +25,8 @@ npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Mock and package checks](https://github.com/shoka-jp/obd2-mcp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/shoka-jp/obd2-mcp/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/shoka-jp/obd2-mcp)](https://github.com/shoka-jp/obd2-mcp/releases/latest)
+[![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.shoka--jp%2Fobd2--mcp-4b7bec)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.shoka-jp/obd2-mcp)
+[![Claude Desktop拡張機能](https://img.shields.io/badge/Claude_Desktop-1%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%81%AE%E6%8B%A1%E5%BC%B5%E6%A9%9F%E8%83%BD_%28.mcpb%29-d97757)](https://github.com/shoka-jp/obd2-mcp/releases/latest)
 
 安価なELM327アダプタ経由で、AIアシスタントが**あなたの車のOBD-IIデータを直接読める**ようにするMCPサーバーです。故障コード(DTC)、ライブセンサー、フリーズフレーム、レディネスモニタ、車台番号(VIN)に対応。
 
