@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-27
+
+See what changed: compare two diagnostic reports (before and after a test drive, a repair or some days of driving), check a car after a repair, and find permanent codes in every report.
+
 ### Changed
 
 - `read_diagnostic_report` now also includes permanent codes (Mode 0A) as a `read_permanent_dtcs` section, so one report shows whether a code is still waiting for the car to confirm a repair. This adds one Mode 0A request per report, the same read-only request that `read_permanent_dtcs` already sends; a car that does not answer or reports it unsupported gets `null` with a note, and the other sections are unaffected. `compare_diagnostic_reports` now compares permanent codes: a stored code that is gone while still permanent usually means codes were cleared, and a permanent code that disappears means the car confirmed the repair. Reports from 0.7.x show permanent codes as unknown. The `used_car_check`, `after_repair_check` and `workshop_handover` prompts use the report's permanent codes.

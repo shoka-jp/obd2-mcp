@@ -7,8 +7,8 @@ This walkthrough uses simulated data, not a real vehicle. AI wording varies; the
 No AI client, car, or adapter is required. With Node.js 22 or 24 and npm, run the release package directly, without Git:
 
 ```bash
-npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.7.0/obd2-mcp-0.7.0.tgz -- obd2-mcp --demo --summary
-npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.7.0/obd2-mcp-0.7.0.tgz -- obd2-mcp --demo --summary --lang ja
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.8.0/obd2-mcp-0.8.0.tgz -- obd2-mcp --demo --summary
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.8.0/obd2-mcp-0.8.0.tgz -- obd2-mcp --demo --summary --lang ja
 ```
 
 Or, from a source checkout (Git required):
@@ -30,11 +30,11 @@ and does not prove that a real vehicle or adapter is compatible.
 
 Every option starts with the simulated vehicle.
 
-- **Claude Desktop:** download `obd2-mcp-0.7.0.mcpb` from the [v0.7.0 release](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.7.0) and open it with Claude Desktop. No terminal is needed.
+- **Claude Desktop:** download `obd2-mcp-0.8.0.mcpb` from the [v0.8.0 release](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.8.0) and open it with Claude Desktop. No terminal is needed.
 - **Claude Code, without Git:** after running the demo above once (so npm has the package cached), register the same package:
 
   ```bash
-  claude mcp add obd2 --env OBD2MCP_CONNECTION=mock -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.7.0/obd2-mcp-0.7.0.tgz obd2-mcp
+  claude mcp add obd2 --env OBD2MCP_CONNECTION=mock -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.8.0/obd2-mcp-0.8.0.tgz obd2-mcp
   ```
 
   On native Windows, put `cmd /c` before `npx`.
@@ -83,7 +83,7 @@ Check Node.js availability and that the client can start the MCP server. For a r
 AIクライアント・車・アダプターは不要です。Node.js 22または24とnpmがあれば、Gitを使わずにリリースパッケージを直接実行できます。
 
 ```bash
-npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.7.0/obd2-mcp-0.7.0.tgz -- obd2-mcp --demo --summary --lang ja
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.8.0/obd2-mcp-0.8.0.tgz -- obd2-mcp --demo --summary --lang ja
 ```
 
 ソースから実行する場合（Gitが必要）：
@@ -102,11 +102,11 @@ npm run demo:ja
 
 どの方法も最初は模擬車両で動きます。
 
-- **Claude Desktop：** [v0.7.0リリース](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.7.0)から `obd2-mcp-0.7.0.mcpb` をダウンロードし、Claude Desktopで開きます。ターミナルは不要です。
+- **Claude Desktop：** [v0.8.0リリース](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.8.0)から `obd2-mcp-0.8.0.mcpb` をダウンロードし、Claude Desktopで開きます。ターミナルは不要です。
 - **Claude Code（Git不要）：** 上のデモを一度実行してパッケージをキャッシュしてから、同じパッケージを登録します。
 
   ```bash
-  claude mcp add obd2 --env OBD2MCP_CONNECTION=mock -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.7.0/obd2-mcp-0.7.0.tgz obd2-mcp
+  claude mcp add obd2 --env OBD2MCP_CONNECTION=mock -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.8.0/obd2-mcp-0.8.0.tgz obd2-mcp
   ```
 
   Windows（WSLではない環境）では `npx` の前に `cmd /c` を付けます。

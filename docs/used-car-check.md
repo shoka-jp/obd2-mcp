@@ -25,7 +25,7 @@ This project has not yet verified a real vehicle or adapter combination. The exa
 In the Claude Desktop extension settings, keep **Adapter connection** as `mock` and set **Mock scenario** to `cleared`. In other clients, set `OBD2MCP_MOCK_SCENARIO=cleared`. Then run the **used_car_check** prompt. Without an AI client, the demo prints the same readings (Node.js 22 or 24):
 
 ```bash
-npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.7.0/obd2-mcp-0.7.0.tgz -- obd2-mcp --demo --summary --scenario cleared
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.8.0/obd2-mcp-0.8.0.tgz -- obd2-mcp --demo --summary --scenario cleared
 ```
 
  The simulated car looks like this:
@@ -67,7 +67,7 @@ Useful questions for this result: when were the codes cleared or the battery rep
 Claude Desktopの拡張機能の設定で **Adapter connection** を `mock` のままにし、**Mock scenario** を `cleared` にします。ほかのクライアントでは `OBD2MCP_MOCK_SCENARIO=cleared` を設定します。そのうえで **used_car_check** を実行すると、模擬車両は次のように見えます。AIクライアントがなくても、デモで同じ読み取り結果を表示できます（Node.js 22または24）。
 
 ```bash
-npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.7.0/obd2-mcp-0.7.0.tgz -- obd2-mcp --demo --summary --lang ja --scenario cleared
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.8.0/obd2-mcp-0.8.0.tgz -- obd2-mcp --demo --summary --lang ja --scenario cleared
 ```
 
 
