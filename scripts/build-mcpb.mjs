@@ -20,6 +20,10 @@ for (const path of ['dist', 'package.json', 'package-lock.json', 'LICENSE', 'REA
   cpSync(join(root, path), join(out, path), { recursive: true });
 }
 cpSync(join(root, 'mcpb/icon.png'), join(out, 'icon.png'));
+// Guides served as MCP resources (src/resources.ts).
+for (const guide of ['adapters.md', 'troubleshooting.md', 'used-car-check.md']) {
+  cpSync(join(root, 'docs', guide), join(out, 'docs', guide));
+}
 
 const manifest = JSON.parse(readFileSync(join(root, 'mcpb/manifest.json'), 'utf8'));
 manifest.version = pkg.version;

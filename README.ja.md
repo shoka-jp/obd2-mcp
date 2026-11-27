@@ -220,6 +220,23 @@ claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- node "/absolute/path
 | `list_serial_ports` | このPCのシリアルポートと `serial:` の設定値を一覧表示し、USB・Bluetoothアダプタの接続先を探す。ポートは開かず、モックモードでも使えます |
 | `clear_dtcs` | コード消去 — **実車では初期状態で無効**。フリーズフレームが消え、モニタがリセットされます |
 
+## リソース
+
+Claudeにツールを呼んでもらわなくても、会話に添付できる参考情報です。Claude Desktopでは、添付（＋）メニューのobd2-mcpから選べます。リソースはアダプタや車には一切アクセスしません。
+
+| リソース | 内容 |
+|---|---|
+| `obd2://guide/adapters` | [アダプタの選び方と差し方](./docs/adapters.md#日本語)（英日） |
+| `obd2://guide/troubleshooting` | [接続のトラブルシューティング](./docs/troubleshooting.md#日本語)（英日） |
+| `obd2://guide/used-car-check` | [中古車チェックの使い方](./docs/used-car-check.md#日本語)（英日） |
+| `obd2://sensors` | 読み取れるライブセンサーの一覧（PID、単位、既定の組み合わせやフリーズフレームに含まれるか） |
+| `obd2://scenarios` | 模擬車両のシナリオ一覧 |
+| `obd2://report/latest` | このセッションで最後に集めた `read_diagnostic_report`（アダプタのポートやアドレスは除く）。集める前と再起動後は空です |
+| `obd2://code/{code}` | 故障コードの系統と、意味を定めるのがSAEかメーカーか（コードの意味そのものは含みません）。このセッションで読んだコードを補完します |
+| `obd2://sensor/{name}` | 1つのセンサーのPID・単位・説明。センサー名を補完します |
+
+引数の補完に対応したクライアントでは、プロンプトの `language` 引数に言語の候補も表示されます。
+
 ## automotive-ai-skills との連携 🔧
 
 このサーバーは「道具」レイヤーです。「知識」レイヤー — コードから原因への推論方法、部品を買う前に試すべきテスト、プロに任せる境界 — は [automotive-ai-skills](https://github.com/shoka-jp/automotive-ai-skills) が担います:

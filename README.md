@@ -220,6 +220,23 @@ Protocol references: [ELM327 datasheet, “Talking to the Vehicle”](https://el
 | `list_serial_ports` | List this computer's serial ports and their `serial:` connection values to find a USB or Bluetooth adapter. Does not open a port; works in mock mode. |
 | `clear_dtcs` | Clear codes — **disabled for real adapters by default**; warns that freeze frame evidence is erased and readiness monitors reset |
 
+## Resources
+
+Reference material you can attach to a conversation without asking Claude to call a tool. In Claude Desktop, find them under obd2-mcp in the attachment (+) menu. Resources never contact the adapter or the car.
+
+| Resource | What it contains |
+|---|---|
+| `obd2://guide/adapters` | [Choosing and plugging in an adapter](./docs/adapters.md) (EN/JA) |
+| `obd2://guide/troubleshooting` | [Troubleshooting a connection](./docs/troubleshooting.md) (EN/JA) |
+| `obd2://guide/used-car-check` | [Checking a used car](./docs/used-car-check.md) (EN/JA) |
+| `obd2://sensors` | Every live sensor name with its PID and unit, and whether it is in the default set or the freeze frame |
+| `obd2://scenarios` | The simulated vehicle scenarios |
+| `obd2://report/latest` | The latest `read_diagnostic_report` from this session, without the adapter's port or address; empty until one is collected and after a restart |
+| `obd2://code/{code}` | A trouble code's system and whether SAE or the manufacturer defines its meaning (no meanings bundled); completes codes read in this session |
+| `obd2://sensor/{name}` | One sensor's PID, unit and description; completes sensor names |
+
+Clients that support argument completion also suggest languages for the prompts' `language` argument.
+
 ## Pairs with automotive-ai-skills 🔧
 
 This server is the *tool* layer. The knowledge layer — how to reason from codes to causes, what to test before buying parts, when to see a professional — lives in [automotive-ai-skills](https://github.com/shoka-jp/automotive-ai-skills):
