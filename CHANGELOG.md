@@ -5,6 +5,7 @@
 ### Added
 
 - `read_dtcs`, `read_permanent_dtcs` and `read_freeze_frame` now return `code_info` for each code: its system (powertrain, chassis, body, network) and whether its meaning is defined by SAE (the same on every make), by the manufacturer, or depends on the code. The server instructions ask the client not to state a meaning from memory for manufacturer-defined codes, but to say it depends on the make and suggest the manufacturer's information or a workshop. The vehicle requests are unchanged.
+- Add the `inspection_check` guided prompt for an emissions (smog) inspection, or after a repair or battery change. It reads the warning light, codes, permanent codes and readiness monitors (and, if supported, warm-ups and distance since codes were cleared), explains the usual OBD criteria as typical rules (EPA guidance: up to two incomplete monitors for model years 1996–2000, one for 2001 and newer; stricter in some states such as California), explains how monitors complete with normal driving, and notes that Japan's 車検 OBD inspection reads manufacturer-defined codes that this tool cannot. It never suggests clearing codes or disconnecting the battery and does not promise a pass.
 
 ## [0.6.2] - 2026-11-27
 

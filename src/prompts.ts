@@ -160,4 +160,44 @@ export function registerPrompts(server: McpServer): void {
         ].join("\n")
       )
   );
+
+  server.registerPrompt(
+    "inspection_check",
+    {
+      title: "Check before an emissions inspection",
+      description: "Before an emissions (smog) inspection, or after a repair or battery change: read the warning light, codes, permanent codes and readiness monitors, explain what usually makes the OBD part of an inspection fail, and what to do next. Rules differ by region; this does not replace the inspection.",
+      argsSchema: {
+        vehicle: optionalText("Model year, fuel and where the inspection is, e.g. '2015 gasoline, California' or '2022年式 ガソリン車 日本'."),
+        language: languageArg,
+      },
+    },
+    ({ vehicle, language }) =>
+      message(
+        [
+          "Help me check whether my car is ready for an emissions inspection, using the obd2 tools.",
+          "",
+          vehicle?.trim()
+            ? `About the car (the user's words, not verified by the vehicle):\n"""\n${vehicle.trim()}\n"""`
+            : "I have not said the model year, fuel or region. Ask only if the answer would change, for example when one or two monitors are incomplete.",
+          "",
+          compose(
+            [
+              "Confirm the car is parked with the ignition on (engine idling outdoors is fine). Readings are only taken while parked.",
+              "Call read_dtcs, read_readiness and read_permanent_dtcs. Then call read_supported_pids and, if it lists warmups_since_clear and distance_since_clear, read them with read_live_data: they show how long ago codes were last cleared (by a scan tool, a battery disconnect or a repair).",
+              "Report the warning light (MIL) state; stored, pending and permanent codes; and the readiness monitors as complete, incomplete or not_supported. Monitors reported as not_supported do not apply to this car and never count against it.",
+              "Explain the usual OBD criteria, as typical rules rather than this car's verdict. US programs following EPA guidance fail a car when the warning light is commanded on, and when too many monitors are incomplete: model years 1996 to 2000 may have up to two incomplete monitors, 2001 and newer up to one. Diesel vehicles and some states are stricter: for example, California allows only the EVAP monitor to be incomplete on 2000 and newer gasoline cars and also fails 2010 and newer cars that report a permanent code, and Oregon does not accept an incomplete catalyst or EVAP monitor. The local inspection program sets the actual rules; suggest checking its website.",
+              "If monitors are incomplete after a battery change, a repair or a code clear, explain that they complete by themselves with normal driving, usually within days to a couple of weeks, often needing a mix of city and highway driving and an overnight cool-down; diesel monitors can take much longer. The exact conditions differ by manufacturer (the owner's manual or a workshop can say), so suggest driving normally and checking again with read_readiness before the inspection. If warmups_since_clear and distance_since_clear are small, say that this is why monitors are not ready yet.",
+              "If there is a pending code, explain it may become a stored code and turn the warning light on, so it is worth having it looked at before the inspection. If there is a permanent code, explain that it clears only after the car confirms the repair during normal driving.",
+              "If the car is in Japan: explain that the OBD inspection in 車検 (for new domestic models introduced from October 2021, and imported models from October 2022) uses an official scan tool and a server check for manufacturer-defined \"specific DTCs\" in safety systems such as driver assistance and brakes. This tool cannot read those, so a clean result here does not guarantee passing; it still shows the engine warning light and emissions-related codes.",
+              "Reply with a short summary first: likely ready, not ready yet (wait and drive), or needs a repair first, framed as an estimate from the readings and not a promise. Then list the next steps.",
+            ],
+            language,
+            [
+              "Never suggest clearing codes, disconnecting the battery, or any other way to hide a fault before an inspection: it resets readiness monitors, makes the car fail the readiness check, and tampering with emissions controls can be illegal.",
+              "Do not promise that the car will pass.",
+            ]
+          ),
+        ].join("\n")
+      )
+  );
 }
