@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Turn a missing `udevadm` error (`spawn udevadm ENOENT`) during serial port listing on Linux (such as in minimal containers or WSL) into an actionable message that keeps the original error text and explains how to check `/dev/ttyUSB*` and set `serial:<path>` directly.
 - The demo accepts `--scenario <name>` (for example `--demo --summary --scenario cleared`) to show any mock scenario without an MCP client. The summary now also shows permanent codes and incomplete readiness monitors, and explains the "no stored codes but a permanent code" pattern as a reason to ask, not proof.
 - `read_readiness` (and the readiness section of `read_diagnostic_report`) now also returns `supported_count`, `complete_count` and `incomplete_monitors`, so "several monitors incomplete" is explicit and `not_supported` monitors are never counted. The vehicle requests are unchanged.
 - Add the `cleared` mock scenario: codes cleared recently, with no stored codes and the MIL off, but a permanent P0420 and incomplete catalyst, evaporative-system and oxygen-sensor monitors. Try `used_car_check` without a car.
