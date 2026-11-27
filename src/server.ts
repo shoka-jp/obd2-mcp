@@ -144,6 +144,37 @@ export function buildServer(elm: Elm327, mock: boolean): McpServer {
   );
 
   server.registerTool(
+    "read_permanent_dtcs",
+    {
+      title: "Read permanent trouble codes",
+      description:
+        "Read permanent DTCs (Mode 0A): codes the engine computer keeps after codes are cleared with a scan tool or the battery is disconnected, until its own monitor confirms the fault is gone. Useful to check whether codes were cleared recently, for example before buying a used car. Many vehicles built before about 2010 do not support it: permanent_dtcs is null when the vehicle gives no answer or reports the request unsupported, which is not a confirmed empty list. Read-only; it never clears anything.",
+      inputSchema: {},
+      annotations: READ_ONLY,
+    },
+    async () => {
+      try {
+        let permanent: string[] | null = null;
+        let note: string | undefined;
+        try {
+          permanent = parseDtcPayload(await elm.obd("0A", "4A"));
+        } catch (e) {
+          if (e instanceof NoDataError) {
+            note = "No answer to Mode 0A: the vehicle may not support permanent codes (common before about 2010), or the ignition is off. This is not a confirmed empty list.";
+          } else if (e instanceof Error && /Unexpected response to "0A": 7F\s?0A/i.test(e.message)) {
+            note = "The vehicle reported Mode 0A (permanent codes) as unsupported. This is not a confirmed empty list.";
+          } else {
+            throw e;
+          }
+        }
+        return wrap({ permanent_dtcs: permanent, ...(note ? { note } : {}) });
+      } catch (err) {
+        return fail(err);
+      }
+    }
+  );
+
+  server.registerTool(
     "read_supported_pids",
     {
       title: "Discover supported live sensors",

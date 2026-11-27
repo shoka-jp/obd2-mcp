@@ -65,7 +65,7 @@ try {
 
   const tools = await request("tools/list", {});
   const names = tools.result.tools.map(t => t.name).sort();
-  assert(names.length === 10 && names.includes("read_diagnostic_report") && names.includes("read_supported_pids") && names.includes("list_serial_ports"), `10 tools registered (${names.join(", ")})`);
+  assert(names.length === 11 && names.includes("read_permanent_dtcs") && names.includes("read_diagnostic_report") && names.includes("read_supported_pids") && names.includes("list_serial_ports"), `11 tools registered (${names.join(", ")})`);
   const byName = Object.fromEntries(tools.result.tools.map(t => [t.name, t]));
   assert(tools.result.tools.every(t => typeof t.title === "string" && t.title.length > 0), "every tool has a display title");
   assert(
@@ -82,6 +82,9 @@ try {
   assert(dtcs.mil_on === true && dtcs.dtc_count === 1, "MIL on with count 1");
   assert(dtcs.pending_dtcs?.length === 0, "no pending DTCs");
   assert(dtcs.simulated === true, "mock responses are labeled simulated");
+
+  const permanent = toolJson(await request("tools/call", { name: "read_permanent_dtcs", arguments: {} }));
+  assert(permanent.permanent_dtcs?.length === 1 && permanent.permanent_dtcs[0] === "P0420", "read_permanent_dtcs finds permanent P0420");
 
   const ff = toolJson(await request("tools/call", { name: "read_freeze_frame", arguments: {} }));
   assert(ff.freeze_frame?.dtc === "P0420", "freeze frame DTC is P0420");
@@ -113,6 +116,8 @@ try {
 
   const after = toolJson(await request("tools/call", { name: "read_dtcs", arguments: {} }));
   assert(after.stored_dtcs?.length === 0 && after.mil_on === false, "DTCs gone and MIL off after clear");
+  const permanentAfter = toolJson(await request("tools/call", { name: "read_permanent_dtcs", arguments: {} }));
+  assert(permanentAfter.permanent_dtcs?.[0] === "P0420", "permanent P0420 survives clearing, as on a real ECU");
 
   console.log("\nPASS: all smoke tests passed");
   child.kill();

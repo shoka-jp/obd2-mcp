@@ -22,7 +22,7 @@ def answer(command):
         'ATZ': 'ELM327 v1.5', 'ATI': 'ELM327 v1.5', 'ATRV': '12.6V',
         '0100': '41 00 98 18 80 01', '0120': '41 20 00 00 00 01',
         '0140': '41 40 00 00 00 00', '0101': '41 01 81 07 E5 04',
-        '03': '43 01 04 20', '07': '47 00', '010C': '41 0C 0B B0',
+        '03': '43 01 04 20', '07': '47 00', '0A': '4A 01 04 20', '010C': '41 0C 0B B0',
         '0105': '41 05 81', '020200': '42 02 00 04 20',
         '020500': '42 05 00 81',
     }
@@ -129,6 +129,7 @@ def run(kind):
         assert tool('connection_status')['vehicle_communication'] == 'not_checked'
         assert 'rpm' in tool('read_supported_pids')['supported_sensor_names']
         assert tool('read_dtcs')['stored_dtcs'] == ['P0420']
+        assert tool('read_permanent_dtcs')['permanent_dtcs'] == ['P0420']
         assert tool('read_freeze_frame')['freeze_frame']['dtc'] == 'P0420'
         assert tool('read_live_data', {'pids': ['rpm']})['live_data']['rpm']['value'] == 748
         assert tool('read_readiness')['readiness_monitors']['catalyst'] == 'complete'
@@ -139,7 +140,7 @@ def run(kind):
         assert '0902' not in commands[report_start:] and '04' not in commands[report_start:]
         denied = request('tools/call', {'name': 'clear_dtcs', 'arguments': {'confirm': True}})
         assert denied.get('isError') is True and '04' not in commands
-        print('%s: simulated ELM327 over OS transport; 8 read tools passed, clearing blocked' % kind)
+        print('%s: simulated ELM327 over OS transport; 9 read tools passed, clearing blocked' % kind)
     finally:
         stop.set()
         if child.poll() is None:

@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add the read-only `read_permanent_dtcs` tool (Mode 0A): permanent trouble codes stay after a scan-tool clear until the car confirms the repair, which helps tell whether codes were cleared recently, for example before buying a used car. It returns `null` with a note when the vehicle gives no answer or rejects the request (common before about 2010), instead of failing or reporting an empty list. It is a separate tool, so `read_dtcs` and `read_diagnostic_report` send the same requests as before. The mock vehicle keeps its permanent code after `clear_dtcs`, as a real engine computer does, and the server instructions explain how to present the result.
+
 ## [0.5.0] - 2026-11-27
 
 ### Security and requirements
