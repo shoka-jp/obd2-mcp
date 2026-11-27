@@ -7,6 +7,7 @@ import { PIDS, PID_BY_NAME, DEFAULT_PIDS, FREEZE_PIDS } from "./pids.js";
 import { discoverSupportedPids } from "./supported-pids.js";
 import { listSerialPorts } from "./ports.js";
 import { registerPrompts } from "./prompts.js";
+import { registerResources, type SessionRecord } from "./resources.js";
 import { VERSION } from "./version.js";
 import { SERVER_INSTRUCTIONS } from "./instructions.js";
 import { errorHint } from "./hints.js";
@@ -52,6 +53,9 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
   // The active connection. use_adapter can replace it during a session, so
   // every tool reads it here instead of capturing the original values.
   const session = { elm, mock };
+  // Remembered for the MCP resources (latest report, codes read this session); never sent anywhere.
+  const record: SessionRecord = { latestReport: null, seenCodes: new Set() };
+  const remember = (codes: Array<string | null | undefined>) => { for (const code of codes) if (code) record.seenCodes.add(code); };
   const server = new McpServer({ name: "obd2-mcp", version: VERSION }, { instructions: SERVER_INSTRUCTIONS });
 
   const wrap = (data: Record<string, unknown>) => {
@@ -225,6 +229,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
       if (count > 0 && (!stored || stored.length < count)) {
         throw new Error(`Incomplete stored DTC response: vehicle reports ${count} code(s), received ${stored?.length ?? 0}`);
       }
+      remember([...(stored ?? []), ...(pending ?? [])]);
       const info = codeInfo([...(stored ?? []), ...(pending ?? [])]);
       return wrap({ mil_on: milOn, dtc_count: count, stored_dtcs: stored, pending_dtcs: pending, ...(info ? { code_info: info } : {}) });
     } catch (err) {
@@ -267,6 +272,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
             throw e;
           }
         }
+        remember(permanent ?? []);
         const info = codeInfo(permanent ?? []);
         return wrap({ permanent_dtcs: permanent, ...(info ? { code_info: info } : {}), ...(note ? { note } : {}) });
       } catch (err) {
@@ -337,6 +343,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
           if (!(err instanceof NoDataError)) throw err;
         }
       }
+      remember([dtc]);
       const info = codeInfo([dtc]);
       return wrap({ freeze_frame: { dtc, conditions }, ...(info ? { code_info: info } : {}) });
     } catch (err) {
@@ -441,6 +448,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
           "Keep null values, section errors and per-sensor errors as unknown or unavailable. A trouble code alone does not identify a failed part.",
         ],
       };
+      record.latestReport = report;
       return {
         content: [{ type: "text" as const, text: JSON.stringify(report, null, 2) }],
         structuredContent: report,
@@ -515,6 +523,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
   );
 
   registerPrompts(server);
+  registerResources(server, record);
   return server;
 }
 

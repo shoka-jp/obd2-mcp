@@ -1,5 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { completable } from "@modelcontextprotocol/sdk/server/completable.js";
 
 /**
  * Guided prompts for people who do not know which tool to call. Clients show
@@ -16,7 +17,13 @@ const SHARED_RULES = [
 
 const optionalText = (description: string) => z.string().max(2000).optional().describe(description);
 
-const languageArg = optionalText('Reply language, for example "Japanese" or "日本語". Omit to use the language of the conversation.');
+const LANGUAGES = ["日本語", "English", "Español", "Português", "Français", "Deutsch", "中文", "한국어"];
+
+/** Suggested in clients that support argument completion; any language name is accepted. */
+const languageArg = completable(
+  optionalText('Reply language, for example "Japanese" or "日本語". Omit to use the language of the conversation.'),
+  value => LANGUAGES.filter(name => name.toLowerCase().startsWith((value ?? "").trim().toLowerCase()))
+);
 
 function compose(steps: string[], language: string | undefined, extra: string[] = []): string {
   const lines = [...steps.map((step, i) => `${i + 1}. ${step}`), "", "Rules:", ...[...SHARED_RULES, ...extra].map(rule => `- ${rule}`)];
