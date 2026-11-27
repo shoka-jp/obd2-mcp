@@ -97,7 +97,7 @@ export function registerPrompts(server: McpServer): void {
     "connect_adapter",
     {
       title: "Set up a real OBD-II adapter",
-      description: "Find the connection value for a USB, Bluetooth or WiFi ELM327 adapter, explain how to apply it, and check the connection afterwards.",
+      description: "Connect a real USB, Bluetooth or WiFi ELM327 adapter step by step without asking for a port name: find it, connect after asking, check that it answers, and explain how to keep the setting.",
       argsSchema: { adapter: optionalText("Adapter type or model if known, e.g. 'USB', 'Bluetooth', 'WiFi' or the product name."), language: languageArg },
     },
     ({ adapter, language }) =>
