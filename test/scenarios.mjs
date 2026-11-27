@@ -85,6 +85,23 @@ test('clearing one mock session resets readiness but not other sessions', async 
   } finally { await a.client.close(); await a.server.close(); await b.client.close(); await b.server.close(); }
 });
 
+test('clearing mock codes resets distance_with_mil to 0 only when supported', async () => {
+  const { client, server } = await createClient('catalyst');
+  try {
+    const before = await call(client, 'read_live_data', { pids: ['distance_with_mil'] });
+    assert.equal(before.live_data.distance_with_mil.value, 128);
+    await call(client, 'clear_dtcs', { confirm: true });
+    const after = await call(client, 'read_live_data', { pids: ['distance_with_mil'] });
+    assert.equal(after.live_data.distance_with_mil.value, 0);
+  } finally { await client.close(); await server.close(); }
+
+  const unsupportedMock = new MockTransport('catalyst');
+  delete unsupportedMock.state.live.distance_with_mil;
+  assert.equal(await unsupportedMock.sendRaw('04'), '44\r');
+  assert.equal(await unsupportedMock.sendRaw('0121'), 'NO DATA\r');
+  assert.equal('distance_with_mil' in unsupportedMock.state.live, false);
+});
+
 test('unknown scenario is rejected before the mock server starts', () => {
   const result = spawnSync(process.execPath, ['dist/index.js'], {
     env: { ...process.env, OBD2MCP_CONNECTION: 'mock', OBD2MCP_MOCK_SCENARIO: 'unknown' }, encoding: 'utf8', timeout: 5000,

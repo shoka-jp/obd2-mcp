@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Reset `distance_with_mil` (PID `21`) to `0` when the mock vehicle clears trouble codes via Mode `04` (only when supported).
+
 ### Documentation
 
 - Add [docs/adapters.md](docs/adapters.md) (EN/JA), a guide for choosing and plugging in an adapter: which connection types work on a computer (USB, classic Bluetooth, WiFi) and which do not (Bluetooth LE only), where the OBD-II port usually is, and unplugging it afterwards to protect the battery. It recommends no product. The README, troubleshooting guide and get-started image now point to it and describe connecting by asking Claude, and the `connect_adapter` row reflects the `find_adapter`/`use_adapter` flow.

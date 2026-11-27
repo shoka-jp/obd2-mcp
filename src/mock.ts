@@ -166,6 +166,9 @@ export class MockTransport implements Transport {
       this.state.freezeDtc = null;
       this.state.readinessIncomplete = 0xe5;
       this.state.continuousIncomplete = 0x70;
+      if ("distance_with_mil" in this.state.live) {
+        this.state.live.distance_with_mil = 0;
+      }
       return "44\r";
     }
     // Mode 01 support bitmaps: advertise exactly the implemented mock commands.
