@@ -63,7 +63,7 @@
     "mock_scenario": {
       "type": "string",
       "title": "Mock scenario",
-      "description": "Used only with mock: catalyst (P0420, default), healthy, misfire (P0301), lean (P0171), evap (P0456) or cleared (codes cleared recently: no stored codes, but a permanent P0420 and incomplete monitors). Synthetic examples, not diagnoses.",
+      "description": "Used only with mock: catalyst (P0420, default), healthy, misfire (P0301), lean (P0171), evap (P0456), cleared (codes cleared recently: no stored codes, but a permanent P0420 and incomplete monitors) or partial (P0128 with unsupported sensors and no freeze frame). Synthetic examples, not diagnoses.",
       "default": "catalyst",
       "required": false
     },

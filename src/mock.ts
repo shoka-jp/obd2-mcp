@@ -73,7 +73,7 @@ function defaultState(): MockState {
   };
 }
 
-export const MOCK_SCENARIOS = ["catalyst", "healthy", "misfire", "lean", "evap", "cleared"] as const;
+export const MOCK_SCENARIOS = ["catalyst", "healthy", "misfire", "lean", "evap", "cleared", "partial"] as const;
 export type MockScenario = (typeof MOCK_SCENARIOS)[number];
 
 function scenarioState(scenario: MockScenario): MockState {
@@ -111,6 +111,15 @@ function scenarioState(scenario: MockScenario): MockState {
     state.live.warmups_since_clear = 1;
     state.live.distance_since_clear = 12;
     state.live.run_time = 410;
+  } else if (scenario === "partial") {
+    state.storedDtcs = ["P0128"];
+    state.permanentDtcs = ["P0128"];
+    state.milOn = true;
+    state.live.coolant_temp = 72;
+    state.freezeDtc = null;
+    for (const pid of ["maf", "stft_b2", "ltft_b2", "oil_temp", "ambient_temp"]) {
+      delete state.live[pid];
+    }
   } else if (scenario === "evap") {
     state.storedDtcs = ["P0456"];
     state.permanentDtcs = ["P0456"];
@@ -170,7 +179,7 @@ export class MockTransport implements Transport {
       this.state.freezeDtc = null;
       this.state.readinessIncomplete = 0xe5;
       this.state.continuousIncomplete = 0x70;
-      for (const pid of ["warmups_since_clear", "distance_since_clear"]) {
+      for (const pid of ["distance_with_mil", "warmups_since_clear", "distance_since_clear"]) {
         if (pid in this.state.live) {
           this.state.live[pid] = 0;
         }

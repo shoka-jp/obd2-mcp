@@ -60,6 +60,34 @@ test('cleared: no stored codes, but the permanent code and incomplete monitors r
   } finally { await client.close(); await server.close(); }
 });
 
+test('partial: unsupported sensors remain missing and no freeze frame is available', async () => {
+  const { client, server } = await createClient('partial');
+  try {
+    const codes = await call(client, 'read_dtcs');
+    assert.equal(codes.simulated, true);
+    assert.match(codes.source, /mock:partial/);
+    assert.deepEqual(codes.stored_dtcs, ['P0128']);
+    assert.equal(codes.mil_on, true);
+
+    const freeze = await call(client, 'read_freeze_frame');
+    assert.equal(freeze.freeze_frame, null);
+    assert.match(freeze.note, /unavailable/i);
+
+    const support = await call(client, 'read_supported_pids');
+    const unsupported = ['maf', 'stft_b2', 'ltft_b2', 'oil_temp', 'ambient_temp'];
+    for (const name of unsupported) {
+      assert.equal(support.sensors.find((s) => s.name === name)?.support, 'not_advertised', name);
+      assert.ok(!support.supported_sensor_names.includes(name), name);
+    }
+
+    const live = await call(client, 'read_live_data');
+    assert.equal(live.live_data.coolant_temp.value, 72);
+    assert.ok('maf' in live.live_data, 'maf key should remain present in default live data');
+    assert.equal(live.live_data.maf.value, undefined);
+    assert.match(live.live_data.maf.error, /No data/i);
+  } finally { await client.close(); await server.close(); }
+});
+
 test('readiness summary counts only supported monitors', async () => {
   for (const [scenario, incomplete] of [['healthy', []], ['catalyst', ['evaporative_system']]]) {
     const { client, server } = await createClient(scenario);
@@ -83,6 +111,23 @@ test('clearing one mock session resets readiness but not other sessions', async 
     assert.deepEqual((await call(b.client, 'read_dtcs')).stored_dtcs, ['P0420']);
     assert.equal((await call(b.client, 'read_readiness')).readiness_monitors.catalyst, 'complete');
   } finally { await a.client.close(); await a.server.close(); await b.client.close(); await b.server.close(); }
+});
+
+test('clearing mock codes resets distance_with_mil to 0 only when supported', async () => {
+  const { client, server } = await createClient('catalyst');
+  try {
+    const before = await call(client, 'read_live_data', { pids: ['distance_with_mil'] });
+    assert.equal(before.live_data.distance_with_mil.value, 128);
+    await call(client, 'clear_dtcs', { confirm: true });
+    const after = await call(client, 'read_live_data', { pids: ['distance_with_mil'] });
+    assert.equal(after.live_data.distance_with_mil.value, 0);
+  } finally { await client.close(); await server.close(); }
+
+  const unsupportedMock = new MockTransport('catalyst');
+  delete unsupportedMock.state.live.distance_with_mil;
+  assert.equal(await unsupportedMock.sendRaw('04'), '44\r');
+  assert.equal(await unsupportedMock.sendRaw('0121'), 'NO DATA\r');
+  assert.equal('distance_with_mil' in unsupportedMock.state.live, false);
 });
 
 test('unknown scenario is rejected before the mock server starts', () => {

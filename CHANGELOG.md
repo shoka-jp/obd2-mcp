@@ -2,7 +2,14 @@
 
 ## [Unreleased]
 
+- Add the `partial` mock scenario (`P0128` with coolant at 72 °C, five unsupported sensors reported as `not_advertised` / unavailable, and no freeze frame).
+- Reset `distance_with_mil` (PID `21`) to `0` when the mock vehicle clears trouble codes via Mode `04` (only when supported).
 - Add Mode 01 PIDs `30` (`warmups_since_clear`) and `31` (`distance_since_clear`) with mock values, Mode `04` reset behavior, and unit tests.
+
+### Changed
+
+- List each release in the official MCP Registry (`io.github.shoka-jp/obd2-mcp`) so MCP clients and directories can find it. A new release-workflow job fills in `server.json` with the release's `.mcpb` URL and SHA-256 and publishes it with GitHub OIDC, without stored secrets; it can also be run manually for an existing release.
+- When `find_adapter` sees no port that looks like an adapter, its `next_step` now also explains that a Bluetooth LE-only adapter (often sold for iPhone) never appears as a port on a computer and cannot be used. The `connect_adapter` prompt description now matches its connect-by-asking flow.
 
 ### Documentation
 
