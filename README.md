@@ -52,7 +52,7 @@ Each [GitHub release](https://github.com/shoka-jp/obd2-mcp/releases/latest) from
 2. Open it with Claude Desktop (double-click it, or install it from **Settings → Extensions**) and confirm the installation.
 3. Ask: *"Read my car's trouble codes and tell me what to check before I spend money."* The extension starts with the simulated vehicle.
 
-To use a real adapter, open the extension's settings and change **Adapter connection** to a value such as `serial:COM3`, `serial:/dev/ttyUSB0` or `tcp:192.168.0.10:35000`. Ask Claude to run `list_serial_ports` to find the value for a USB or Bluetooth adapter. The extension includes its dependencies and serial-port support for Windows, macOS and Linux. Release checks start it with the mock vehicle on Linux; Windows and macOS installs and real adapters have not been verified.
+**To use a real adapter, just ask.** Plug the adapter into the car, turn the ignition on (pair a Bluetooth adapter in the computer's settings first, or join a WiFi adapter's network), and ask: *"Connect to my car's adapter."* Claude finds a USB or Bluetooth adapter with `find_adapter` and, after asking you, connects with `use_adapter`. No port name or restart is needed. This lasts until Claude Desktop restarts; to keep it, set **Adapter connection** in the extension's settings to the value Claude shows (for example `serial:COM3` or `tcp:192.168.0.10:35000`). The extension includes its dependencies and serial-port support for Windows, macOS and Linux. Release checks start it with the mock vehicle on Linux; Windows and macOS installs and real adapters have not been verified.
 
 ## Quick start (mock mode — no hardware)
 
@@ -136,7 +136,9 @@ To look at a scenario without an MCP client, add `--scenario` to the demo comman
 
 You need an ELM327-compatible USB, Bluetooth-serial, or WiFi adapter plugged into the vehicle's OBD-II port, with the ignition on. Support varies by vehicle, market, protocol, adapter and connection method; this project has not yet verified a real-vehicle or real-adapter combination. Start with read-only checks while parked, and do not assume that an adapter connection confirms vehicle communication.
 
-Set the connection via environment variable or CLI flag:
+**The easy way:** ask your MCP client to connect. `find_adapter` checks only ports that look like an adapter (a known USB-serial chip or a Bluetooth serial port) and asks each to identify itself (`ATZ`), without contacting the vehicle; `use_adapter` then switches the session after checking that the adapter answers. For safety, `use_adapter` accepts only serial port names and local-network WiFi addresses, and clearing codes stays disabled.
+
+To set a connection permanently, use the environment variable or CLI flag:
 
 | Adapter | Setting |
 |---|---|
@@ -208,6 +210,8 @@ Protocol references: [ELM327 datasheet, “Talking to the Vehicle”](https://el
 | `read_readiness` | Emissions monitor completion status (inspection readiness), with counts and the list of incomplete monitors. Clearing codes or disconnecting the battery resets them. |
 | `read_vin` | Vehicle Identification Number from the ECU |
 | `connection_status` | Adapter identity and port voltage if available. A connected adapter does not itself confirm communication with the vehicle. |
+| `find_adapter` | Find a USB or Bluetooth ELM327 adapter automatically: opens only adapter-like ports briefly and sends the identification command `ATZ`; never contacts the vehicle. |
+| `use_adapter` | Connect this session to a found adapter (or back to mock) without editing settings or restarting. Checks the adapter first and keeps the old connection on failure; accepts only serial ports and local-network WiFi addresses. |
 | `list_serial_ports` | List this computer's serial ports and their `serial:` connection values to find a USB or Bluetooth adapter. Does not open a port; works in mock mode. |
 | `clear_dtcs` | Clear codes — **disabled for real adapters by default**; warns that freeze frame evidence is erased and readiness monitors reset |
 

@@ -12,7 +12,7 @@ If the server does not start at all, check it without hardware first: run `obd2-
 
 ### Find the right connection value
 
-Ask Claude to run `list_serial_ports`, or run `obd2-mcp --list-ports`. To identify the adapter, unplug or unpair it, list again, and see which entry disappeared. Use the listed `serial:` value as `OBD2MCP_CONNECTION` (or the Claude Desktop extension's **Adapter connection**) and restart the server.
+The easiest way is to ask Claude to connect to your adapter: it runs `find_adapter`, which checks adapter-like ports and asks each to identify itself, then `use_adapter`. If that finds nothing, ask Claude to run `list_serial_ports`, or run `obd2-mcp --list-ports`. To identify the adapter, unplug or unpair it, list again, and see which entry disappeared. Use the listed `serial:` value as `OBD2MCP_CONNECTION` (or the Claude Desktop extension's **Adapter connection**) and restart the server.
 
 If listing fails because the optional `serialport` package is missing, reinstall where npm can install it, or use a WiFi adapter (`tcp:<host>:<port>`).
 
@@ -60,7 +60,7 @@ Open a [real setup report](https://github.com/shoka-jp/obd2-mcp/issues/new?templ
 
 ### 正しい接続先を調べる
 
-Claudeに `list_serial_ports` を実行してもらうか、`obd2-mcp --list-ports` を実行します。どれがアダプタか分からないときは、抜く（ペアリングを解除する）前後で一覧を比べます。表示された `serial:` の値を `OBD2MCP_CONNECTION`（Claude Desktop拡張機能では **Adapter connection**）に設定し、サーバーを再起動します。
+一番かんたんなのは、Claudeに「アダプタにつないで」と頼む方法です。`find_adapter` がアダプタらしいポートを確認し、`use_adapter` で接続します。それで見つからないときは、Claudeに `list_serial_ports` を実行してもらうか、`obd2-mcp --list-ports` を実行します。どれがアダプタか分からないときは、抜く（ペアリングを解除する）前後で一覧を比べます。表示された `serial:` の値を `OBD2MCP_CONNECTION`（Claude Desktop拡張機能では **Adapter connection**）に設定し、サーバーを再起動します。
 
 任意依存の `serialport` がないため一覧表示できない場合は、npmがインストールできる環境で入れ直すか、WiFiアダプタ（`tcp:<ホスト>:<ポート>`）を使ってください。
 

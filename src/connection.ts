@@ -79,3 +79,44 @@ function parseHostPort(spec: string): { host: string; port: number } {
   if (!/^\d+$/.test(portText) || port < 1 || port > 65535) throw invalid("port must be a whole number from 1 to 65535");
   return { host, port };
 }
+
+/**
+ * use_adapter lets the AI client change the connection during a chat, so it is
+ * limited to what a real adapter uses: a serial port name, or a WiFi adapter
+ * on the local network (an IP address in a private or link-local range). A
+ * value read from a web page or a document therefore cannot point the server
+ * at an arbitrary internet host. The OBD2MCP_CONNECTION setting, chosen by the
+ * user, is not limited this way.
+ */
+export function sessionConnectionError(spec: string): string | undefined {
+  if (spec === "mock") return undefined;
+  if (spec.startsWith("serial:")) {
+    const path = spec.slice("serial:".length);
+    return /^(COM\d{1,3}|\\\\\.\\COM\d{1,3}|\/dev\/[\w.\-/]+)$/i.test(path)
+      ? undefined
+      : `"${path}" does not look like a serial port; expected a name such as COM3, /dev/ttyUSB0 or /dev/cu.OBDII-SPPDev`;
+  }
+  if (spec.startsWith("tcp:")) {
+    let host: string;
+    try {
+      host = parseHostPort(spec).host;
+    } catch (err) {
+      return err instanceof Error ? err.message : String(err);
+    }
+    return isLocalNetworkAddress(host)
+      ? undefined
+      : `"${host}" is not a local network address. WiFi adapters use a private address such as 192.168.0.10; to use another host, set OBD2MCP_CONNECTION in the settings`;
+  }
+  return undefined; // parseConnection reports other invalid values
+}
+
+function isLocalNetworkAddress(host: string): boolean {
+  const v4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
+  if (v4) {
+    const [a, b] = [Number(v4[1]), Number(v4[2])];
+    if (v4.slice(1).some(part => Number(part) > 255)) return false;
+    return a === 10 || a === 127 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 169 && b === 254);
+  }
+  const v6 = host.toLowerCase();
+  return v6 === "::1" || /^f[cd][0-9a-f]{2}:/.test(v6) || /^fe[89ab][0-9a-f]:/.test(v6);
+}
