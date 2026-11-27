@@ -62,6 +62,13 @@ await withServer({}, async client => {
   const codes = json(await client.callTool({ name: 'read_dtcs', arguments: {} }));
   assert.equal(codes.simulated, true);
   assert.deepEqual(codes.stored_dtcs, ['P0420']);
+  // The guides are bundled and readable as resources.
+  const resources = (await client.listResources()).resources.map(r => r.uri);
+  assert.equal(resources.length, 6, resources.join(', '));
+  for (const uri of resources.filter(uri => uri.startsWith('obd2://guide/'))) {
+    const [content] = (await client.readResource({ uri })).contents;
+    assert.match(content.text, /## 日本語/, uri);
+  }
   // Loads serialport's native binary from the bundle on this platform.
   const ports = json(await client.callTool({ name: 'list_serial_ports', arguments: {} }));
   assert.ok(Array.isArray(ports.ports));
@@ -79,4 +86,4 @@ await withServer({ mock_scenario: 'healthy' }, async client => {
   assert.deepEqual(codes.stored_dtcs, []);
 });
 
-console.log(`PASS: ${manifest.name} ${manifest.version} bundle starts with default, cleared and changed settings; ${manifest.tools.length} tools and 5 prompts match`);
+console.log(`PASS: ${manifest.name} ${manifest.version} bundle starts with default, cleared and changed settings; ${manifest.tools.length} tools, 5 prompts and 6 resources match`);
