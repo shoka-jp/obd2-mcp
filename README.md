@@ -45,6 +45,8 @@ Ask Claude *"why is my check-engine light on?"* and it reads the actual codes fr
 
 Every path starts with the simulated vehicle, so you can check the setup before connecting a car. In your MCP client, the [guided prompts](#guided-prompts) such as `check_engine_light` are an easy first question.
 
+obd2-mcp is listed in the [official MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.shoka-jp/obd2-mcp) as `io.github.shoka-jp/obd2-mcp`, so MCP clients and directories that read the registry can find each release.
+
 ## Claude Desktop: install as an extension
 
 Each [GitHub release](https://github.com/shoka-jp/obd2-mcp/releases/latest) from v0.4.0 includes `obd2-mcp-<version>.mcpb`, a Claude Desktop extension. It needs no Git, build step or JSON editing:
