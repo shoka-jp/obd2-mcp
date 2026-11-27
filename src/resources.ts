@@ -133,6 +133,37 @@ export function registerResources(server: McpServer, record: SessionRecord): voi
   );
 
   server.registerResource(
+    "session-report",
+    new ResourceTemplate("obd2://reports/{number}", {
+      list: async () => ({
+        resources: record.reports.map(({ number, report }) => ({
+          uri: `obd2://reports/${number}`,
+          name: `report-${number}`,
+          title: `Diagnostic report ${number}`,
+          description: `Collected ${typeof report.started_at === "string" ? report.started_at : "in this session"}${report.simulated === true ? " from the simulated vehicle" : ""}.`,
+          mimeType: "application/json",
+        })),
+      }),
+      complete: { number: value => startsWith(record.reports.map(r => String(r.number)), value) },
+    }),
+    {
+      title: "Diagnostic report from this session",
+      description: `A read_diagnostic_report from this session by its session_report_number (the last ${KEPT_REPORTS} are kept), without the adapter's port or address. Save one before a repair or a test drive to compare later with compare_diagnostic_reports.`,
+      mimeType: "application/json",
+    },
+    async (uri, variables) => {
+      const number = Number(variables.number);
+      const entry = record.reports.find(r => r.number === number);
+      return json(uri.href, entry?.report ?? {
+        available: false,
+        note: record.reports.length
+          ? `Report ${String(variables.number)} is not available. Reports kept in this session: ${record.reports.map(r => r.number).join(", ")}.`
+          : "No diagnostic report has been collected since the server started.",
+      });
+    }
+  );
+
+  server.registerResource(
     "trouble-code",
     new ResourceTemplate("obd2://code/{code}", {
       list: undefined,

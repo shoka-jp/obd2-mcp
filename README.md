@@ -171,13 +171,14 @@ claude mcp add obd2 --env OBD2MCP_CONNECTION=serial:COM3 -- node "/absolute/path
 
 ## Guided prompts
 
-Not sure what to ask? The server provides four ready-made prompts. Claude Desktop lists them in the attachment (+) menu under the server's name, and Claude Code offers them as slash commands such as `/mcp__obd2__check_engine_light`.
+Not sure what to ask? The server provides six ready-made prompts. Claude Desktop lists them in the attachment (+) menu under the server's name, and Claude Code offers them as slash commands such as `/mcp__obd2__check_engine_light`.
 
 | Prompt | What it does |
 |---|---|
 | `check_engine_light` | Reads the diagnostic report, explains each code in plain words, keeps the freeze frame separate from live readings, and lists inexpensive checks before a workshop visit. Optional: your symptoms and reply language. |
 | `workshop_handover` | Turns the diagnostic report into a short note for a mechanic, with unknowns and errors kept visible and the VIN and personal details left out. |
 | `inspection_check` | Before an emissions (smog) inspection, or after a repair or battery change: reads the warning light, codes, permanent codes and readiness monitors, explains the usual OBD criteria (for example how many incomplete monitors are typically allowed by model year) as typical rules rather than a verdict, and what to do if monitors are not ready yet. Notes that Japan's 車検 OBD inspection reads manufacturer-defined codes this tool cannot. Never suggests clearing codes. Optional: model year, fuel and region, and reply language. |
+| `after_repair_check` | After a repair or a part replacement: reads codes, permanent codes and readiness monitors, compares with a report from before the repair when there is one (`compare_diagnostic_reports`), and explains whether the fault has shown up again, why a remaining permanent code means the fix is not confirmed yet rather than failed, and what driving is still needed. Does not judge the workshop's work. Optional: what was repaired and reply language. |
 | `used_car_check` | For a used car you are considering: with the seller's permission, reads codes, permanent codes (`read_permanent_dtcs`) and readiness monitors, points out signs that codes were cleared recently as questions rather than proof, suggests reading again after the test drive, and lists questions for the seller and a pre-purchase inspection. Optional: what the seller says and reply language. [Walkthrough](docs/used-car-check.md) |
 | `connect_adapter` | Finds a USB or Bluetooth adapter with `find_adapter`, connects with `use_adapter` after asking, checks the connection, and explains how to keep the setting. Written for users who are not technical: it does not ask for a port name. |
 
@@ -237,6 +238,7 @@ Reference material you can attach to a conversation without asking Claude to cal
 | `obd2://sensors` | Every live sensor name with its PID and unit, and whether it is in the default set or the freeze frame |
 | `obd2://scenarios` | The simulated vehicle scenarios |
 | `obd2://report/latest` | The latest `read_diagnostic_report` from this session, without the adapter's port or address; empty until one is collected and after a restart |
+| `obd2://reports/{number}` | A report from this session by its `session_report_number` (the last 10 are kept), without the adapter's port or address; listed after it is collected. Save one before a repair or a test drive to compare later |
 | `obd2://code/{code}` | A trouble code's system and whether SAE or the manufacturer defines its meaning (no meanings bundled); completes codes read in this session |
 | `obd2://sensor/{name}` | One sensor's PID, unit and description; completes sensor names |
 
