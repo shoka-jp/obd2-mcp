@@ -145,7 +145,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
           ? `Found ${result.found.length} adapter(s). Ask the user, then call use_adapter with connection ${first.connection}${first.baud && first.baud !== 38400 ? ` and baud ${first.baud}` : ""}.`
           : result.checked.length > 0
             ? "No adapter answered. Check that it is plugged into the car, the ignition is ON, and (for Bluetooth) that it is paired and nearby; then try again."
-            : "No port looks like an OBD-II adapter. Plug in the USB adapter, or pair the Bluetooth adapter in the operating system settings, then try again. WiFi adapters use tcp:<host>:<port>.";
+            : "No port looks like an OBD-II adapter. Plug in the USB adapter, or pair the Bluetooth adapter in the operating system settings, then try again. WiFi adapters use tcp:<host>:<port>. A Bluetooth LE-only adapter (often sold for iPhone) never appears as a port on a computer and cannot be used; see docs/adapters.md.";
         const payload = { ...result, current_connection: session.elm.describe(), next_step };
         return { content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }] };
       } catch (err) {
