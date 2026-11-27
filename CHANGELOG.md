@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Turn a missing `udevadm` error (`spawn udevadm ENOENT`) during serial port listing on Linux (such as in minimal containers or WSL) into an actionable message that keeps the original error text and explains how to check `/dev/ttyUSB*` and set `serial:<path>` directly. Thanks @techkayacodes.
+
 ## [0.6.1] - 2026-11-27
 
 The used-car check now reads how many warm-ups and kilometres have passed since codes were cleared, a guide explains which adapters work on a computer, and obd2-mcp is listed in the official MCP Registry.
@@ -14,7 +18,6 @@ The used-car check now reads how many warm-ups and kilometres have passed since 
 
 ### Fixed
 
-- Turn a missing `udevadm` error (`spawn udevadm ENOENT`) during serial port listing on Linux (such as in minimal containers or WSL) into an actionable message that keeps the original error text and explains how to check `/dev/ttyUSB*` and set `serial:<path>` directly.
 - Reset `distance_with_mil` (PID `21`) to `0` when the mock vehicle clears trouble codes via Mode `04` (only when supported), as a real engine computer does. Thanks @playlikeboy.
 
 ### Changed
