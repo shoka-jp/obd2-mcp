@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-11-27
+
+Listing serial ports on Linux without `udevadm` now explains what to do instead of failing with a bare error, and the README mentions the official MCP Registry listing.
+
 ### Fixed
 
 - Turn a missing `udevadm` error (`spawn udevadm ENOENT`) during serial port listing on Linux (such as in minimal containers or WSL) into an actionable message that keeps the original error text and explains how to check `/dev/ttyUSB*` and set `serial:<path>` directly. Thanks @techkayacodes.
