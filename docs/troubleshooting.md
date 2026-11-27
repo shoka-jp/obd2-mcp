@@ -16,6 +16,8 @@ Ask Claude to run `list_serial_ports`, or run `obd2-mcp --list-ports`. To identi
 
 If listing fails because the optional `serialport` package is missing, reinstall where npm can install it, or use a WiFi adapter (`tcp:<host>:<port>`).
 
+On Linux systems without `udevadm` (some containers, minimal installs and WSL setups), listing fails with `spawn udevadm ENOENT`; check `ls /dev/ttyUSB* /dev/ttyACM* /dev/rfcomm*` and set `serial:<path>` directly.
+
 ### Bluetooth adapters
 
 - Pair the adapter in the operating system first. Only classic Bluetooth adapters that provide a serial port (SPP) appear as a serial port.
@@ -63,6 +65,8 @@ Open a [real setup report](https://github.com/shoka-jp/obd2-mcp/issues/new?templ
 Claudeに `list_serial_ports` を実行してもらうか、`obd2-mcp --list-ports` を実行します。どれがアダプタか分からないときは、抜く（ペアリングを解除する）前後で一覧を比べます。表示された `serial:` の値を `OBD2MCP_CONNECTION`（Claude Desktop拡張機能では **Adapter connection**）に設定し、サーバーを再起動します。
 
 任意依存の `serialport` がないため一覧表示できない場合は、npmがインストールできる環境で入れ直すか、WiFiアダプタ（`tcp:<ホスト>:<ポート>`）を使ってください。
+
+`udevadm` がないLinux環境（一部のコンテナ、最小構成、WSLなど）では `spawn udevadm ENOENT` で一覧取得に失敗しますが、`ls /dev/ttyUSB* /dev/ttyACM* /dev/rfcomm*` でデバイスを確認して `serial:<パス>` を直接指定できます。
 
 ### Bluetoothアダプタ
 
