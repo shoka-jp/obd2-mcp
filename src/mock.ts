@@ -11,6 +11,8 @@ import { PID_BY_CODE, PID_BY_NAME } from "./pids.js";
 interface MockState {
   storedDtcs: string[];
   pendingDtcs: string[];
+  /** Mode 0A permanent DTCs: survive a scan-tool clear until the ECU confirms the repair. */
+  permanentDtcs: string[];
   milOn: boolean;
   vin: string;
   freezeDtc: string | null;
@@ -26,6 +28,7 @@ function defaultState(): MockState {
   return {
     storedDtcs: ["P0420"],
     pendingDtcs: [],
+    permanentDtcs: ["P0420"],
     milOn: true,
     vin: "1HGFC2F59GA000042",
     freezeDtc: "P0420",
@@ -75,17 +78,20 @@ function scenarioState(scenario: MockScenario): MockState {
   const state = defaultState();
   if (scenario === "healthy") {
     state.storedDtcs = [];
+    state.permanentDtcs = [];
     state.milOn = false;
     state.freezeDtc = null;
     state.readinessIncomplete = 0;
     state.live.distance_with_mil = 0;
   } else if (scenario === "misfire") {
     state.storedDtcs = ["P0301"];
+    state.permanentDtcs = ["P0301"];
     state.freezeDtc = "P0301";
     state.live.rpm = 690;
     state.freeze.rpm = 1850;
   } else if (scenario === "lean") {
     state.storedDtcs = ["P0171"];
+    state.permanentDtcs = ["P0171"];
     state.freezeDtc = "P0171";
     state.live.stft_b1 = 18;
     state.live.ltft_b1 = 15;
@@ -93,6 +99,7 @@ function scenarioState(scenario: MockScenario): MockState {
     state.freeze.ltft_b1 = 16;
   } else if (scenario === "evap") {
     state.storedDtcs = ["P0456"];
+    state.permanentDtcs = ["P0456"];
     state.freezeDtc = "P0456";
   }
   return state;
@@ -138,7 +145,10 @@ export class MockTransport implements Transport {
     if (cmd === "07") {
       return this.dtcResponse(0x47, this.state.pendingDtcs);
     }
-    // Mode 04: clear
+    // Mode 0A: permanent DTCs
+    if (cmd === "0A") return this.dtcResponse(0x4a, this.state.permanentDtcs);
+    // Mode 04: clear. Permanent DTCs deliberately stay, as on a real ECU:
+    // they clear only after the monitor confirms the repair.
     if (cmd === "04") {
       this.state.storedDtcs = [];
       this.state.pendingDtcs = [];
