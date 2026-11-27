@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- `read_dtcs`, `read_permanent_dtcs` and `read_freeze_frame` now return `code_info` for each code: its system (powertrain, chassis, body, network) and whether its meaning is defined by SAE (the same on every make), by the manufacturer, or depends on the code. The server instructions ask the client not to state a meaning from memory for manufacturer-defined codes, but to say it depends on the make and suggest the manufacturer's information or a workshop. The vehicle requests are unchanged.
+
 ## [0.6.2] - 2026-11-27
 
 Listing serial ports on Linux without `udevadm` now explains what to do instead of failing with a bare error, and the README mentions the official MCP Registry listing.
