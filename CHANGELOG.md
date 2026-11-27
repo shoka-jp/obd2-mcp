@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-11-27
+
+The used-car check now reads how many warm-ups and kilometres have passed since codes were cleared, a guide explains which adapters work on a computer, and obd2-mcp is listed in the official MCP Registry.
+
 ### Added
 
 - Add Mode 01 PIDs `30` (`warmups_since_clear`) and `31` (`distance_since_clear`) with mock values, Mode `04` reset behavior, and unit tests. `read_live_data` now knows 25 PIDs; the default set is unchanged. Thanks @playlikeboy.

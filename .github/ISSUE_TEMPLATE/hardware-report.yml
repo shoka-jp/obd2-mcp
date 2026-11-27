@@ -27,7 +27,7 @@ body:
     attributes:
       label: "obd2-mcp version / バージョン"
       description: "`obd2-mcp --version`, or the release you installed. / リリース名でも構いません。"
-      placeholder: "0.6.0"
+      placeholder: "0.6.1"
     validations:
       required: true
   - type: dropdown
