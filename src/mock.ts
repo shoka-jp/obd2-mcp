@@ -28,7 +28,11 @@ interface MockState {
   freeze: Record<string, number>;
   /** Control modules answering mode 09; empty lists mean the module does not support that PID. */
   modules: MockModule[];
+  /** Mode 06 results of the engine module by MID: [TID, UASID, value, min, max] (signed when UASID >= 80). */
+  monitorTests: Record<number, MonitorRecord[]>;
 }
+
+type MonitorRecord = [tid: number, uasid: number, value: number, min: number, max: number];
 
 interface MockModule {
   /** 11-bit CAN response header, e.g. 7E8 for the engine. */
@@ -99,6 +103,18 @@ function defaultState(): MockState {
       { header: "7E8", name: "ECM-EngineControl", calibrationIds: ["MOCK-ECM-A540"], cvns: ["4E1F2A3C"] },
       { header: "7E9", name: "TCM-TransmissionCtl", calibrationIds: ["MOCK-TCM-A120"], cvns: [] },
     ],
+    monitorTests: {
+      0x01: [[0x05, 0x10, 72, 0, 100], [0x06, 0x10, 64, 0, 100]], // O2 B1S1 switch times (ms)
+      0x02: [[0x07, 0x0a, 817, 0, 3600]], // O2 B1S2 minimum voltage, 0.10 V of at most 0.44 V
+      0x21: [[0x80, 0x06, 2689, 0, 2131]], // catalyst bank 1 above its limit: the P0420 test
+      0x3b: [[0x80, 0x01, 18, 0, 80]],
+      0x3c: [[0x80, 0x01, 22, 0, 80]],
+      0x81: [[0x80, 0x83, 310, -2500, 2500]], // fuel system bank 1, signed
+      0xa2: [[0x0b, 0x24, 0, 0, 0], [0x0c, 0x24, 0, 0, 0]],
+      0xa3: [[0x0b, 0x24, 0, 0, 0], [0x0c, 0x24, 0, 0, 0]],
+      0xa4: [[0x0b, 0x24, 1, 0, 0], [0x0c, 0x24, 0, 0, 0]],
+      0xa5: [[0x0b, 0x24, 0, 0, 0], [0x0c, 0x24, 0, 0, 0]],
+    },
   };
 }
 
@@ -115,10 +131,13 @@ function scenarioState(scenario: MockScenario): MockState {
     state.readinessIncomplete = 0;
     state.live.distance_with_mil = 0;
     state.live.time_with_mil = 0;
+    state.monitorTests[0x21] = [[0x80, 0x06, 689, 0, 2131]];
   } else if (scenario === "misfire") {
     state.storedDtcs = ["P0301"];
     state.permanentDtcs = ["P0301"];
     state.freezeDtc = "P0301";
+    state.monitorTests[0x21] = [[0x80, 0x06, 689, 0, 2131]];
+    state.monitorTests[0xa2] = [[0x0b, 0x24, 46, 0, 0], [0x0c, 0x24, 38, 0, 0]];
     state.live.rpm = 690;
     state.freeze.rpm = 1850;
   } else if (scenario === "lean") {
@@ -129,6 +148,8 @@ function scenarioState(scenario: MockScenario): MockState {
     state.live.ltft_b1 = 15;
     state.freeze.stft_b1 = 19;
     state.freeze.ltft_b1 = 16;
+    state.monitorTests[0x21] = [[0x80, 0x06, 689, 0, 2131]];
+    state.monitorTests[0x81] = [[0x80, 0x83, 3300, -2500, 2500]]; // above the lean limit
   } else if (scenario === "cleared") {
     // Codes were cleared shortly before (for example before a sale): nothing
     // stored and the MIL off, but the permanent P0420 remains and several
@@ -143,6 +164,9 @@ function scenarioState(scenario: MockScenario): MockState {
     state.live.time_since_clear = 22;
     state.live.time_with_mil = 0;
     state.live.run_time = 410;
+    // Clearing also erased the Mode 06 results; most tests have not run again yet.
+    for (const records of Object.values(state.monitorTests)) for (const r of records) r.fill(0, 2);
+    state.monitorTests[0x01] = [[0x05, 0x10, 70, 0, 100], [0x06, 0x10, 66, 0, 100]];
   } else if (scenario === "partial") {
     state.storedDtcs = ["P0128"];
     state.permanentDtcs = ["P0128"];
@@ -152,8 +176,9 @@ function scenarioState(scenario: MockScenario): MockState {
     for (const pid of ["maf", "stft_b2", "ltft_b2", "oil_temp", "ambient_temp"]) {
       delete state.live[pid];
     }
-    // Only the engine answers, and only with its name.
+    // Only the engine answers, and only with its name. No Mode 06 either.
     state.modules = [{ header: "7E8", name: "ECM-EngineControl", calibrationIds: [], cvns: [] }];
+    state.monitorTests = {};
   } else if (scenario === "diesel") {
     // A diesel with a particulate filter that cannot regenerate on short trips.
     state.diesel = true;
@@ -172,10 +197,16 @@ function scenarioState(scenario: MockScenario): MockState {
     state.live.catalyst_temp_b1s1 = 265;
     state.freeze.rpm = 1650;
     state.freeze.vehicle_speed = 42;
+    state.monitorTests = {
+      0x21: [[0x80, 0x06, 540, 0, 2131]], // NMHC catalyst
+      0xb0: [[0x80, 0x01, 0, 0, 0]], // particulate filter: not run
+    };
   } else if (scenario === "evap") {
     state.storedDtcs = ["P0456"];
     state.permanentDtcs = ["P0456"];
     state.freezeDtc = "P0456";
+    state.monitorTests[0x21] = [[0x80, 0x06, 689, 0, 2131]];
+    state.monitorTests[0x3c] = [[0x80, 0x01, 96, 0, 80]]; // very small leak test failed
   }
   return state;
 }
@@ -279,6 +310,7 @@ export class MockTransport implements Transport {
       this.state.freezeDtc = null;
       this.state.readinessIncomplete = 0xe5;
       this.state.continuousIncomplete = 0x70;
+      for (const records of Object.values(this.state.monitorTests)) for (const r of records) r.fill(0, 2);
       for (const pid of ["distance_with_mil", "warmups_since_clear", "distance_since_clear", "time_with_mil", "time_since_clear"]) {
         if (pid in this.state.live) {
           this.state.live[pid] = 0;
@@ -310,6 +342,8 @@ export class MockTransport implements Transport {
       const d = this.state.readinessIncomplete;
       return `41 01 ${join([a, b, c, d])}\r`;
     }
+    // Mode 06: monitor test results, engine module only.
+    if (/^06[0-9A-F]{2}$/.test(cmd)) return this.monitorTestAnswer(parseInt(cmd.slice(2), 16));
     // Mode 01 PID 41: monitor status this drive cycle (byte A reserved). The EVAP
     // test has not been enabled yet on this drive and the catalyst test is still running.
     if (cmd === "0141") {
@@ -348,6 +382,25 @@ export class MockTransport implements Transport {
       return "NO DATA\r";
     }
     return "?\r";
+  }
+
+  private monitorTestAnswer(mid: number): string {
+    const mids = Object.keys(this.state.monitorTests).map(Number);
+    if (mids.length === 0) return "NO DATA\r";
+    if (mid % 0x20 === 0) {
+      const continuation = [0x20, 0x40, 0x60, 0x80, 0xa0, 0xc0, 0xe0].filter(m => m < Math.max(...mids));
+      if (mid > 0 && !continuation.includes(mid)) return "NO DATA\r";
+      const bitmap = [0, 0, 0, 0];
+      for (const m of [...mids, ...continuation]) {
+        const bit = m - mid - 1;
+        if (bit >= 0 && bit < 32) bitmap[Math.floor(bit / 8)] |= 0x80 >> (bit % 8);
+      }
+      return headerlessFrames([0x46, mid, ...bitmap]);
+    }
+    const records = this.state.monitorTests[mid];
+    if (!records) return "NO DATA\r";
+    const word = (n: number) => [(n >> 8) & 0xff, n & 0xff];
+    return headerlessFrames([0x46, ...records.flatMap(([tid, uasid, value, min, max]) => [mid, tid, uasid, ...word(value), ...word(min), ...word(max)])]);
   }
 
   private dtcResponse(mode: number, codes: string[]): string {

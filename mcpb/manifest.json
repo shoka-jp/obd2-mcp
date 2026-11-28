@@ -51,6 +51,7 @@
     { "name": "read_battery_voltage", "description": "Read the voltage at the OBD-II port as measured by the adapter, with a rough battery guide." },
     { "name": "read_vin", "description": "Read the Vehicle Identification Number." },
     { "name": "read_ecu_info", "description": "List the control modules that answer, with their names, software calibration IDs and verification numbers." },
+    { "name": "read_monitor_tests", "description": "Read the car's own emissions self-test results with their limits, and misfire counts per cylinder (Mode 06)." },
     { "name": "clear_dtcs", "description": "Clear trouble codes (destructive; disabled for real vehicles by default)." }
   ],
   "prompts_generated": true,

@@ -22,6 +22,7 @@ import {
   reassembleByHeader,
   supportedInfoPids,
 } from "./mode09.js";
+import { SUPPORT_MIDS, supportedMids, isNegative06, describeMid, parseMonitorTests, MONITOR_GROUPS, type MonitorTest } from "./mode06.js";
 import { VERSION } from "./version.js";
 import { SERVER_INSTRUCTIONS } from "./instructions.js";
 import { IMPERIAL_INSTRUCTION, unitSystem, type UnitSystem } from "./units.js";
@@ -783,6 +784,20 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
     }
   );
 
+  /** The protocol number (ATDPN); the adapter finds the vehicle's protocol on the first request. */
+  const findProtocol = async (send: (cmd: string) => Promise<string[]>) => {
+    let protocol = protocolNumber(await send("ATDPN"));
+    if (!protocol) {
+      try {
+        await send("0100");
+      } catch (err) {
+        if (!(err instanceof NoDataError)) throw err;
+      }
+      protocol = protocolNumber(await send("ATDPN"));
+    }
+    return protocol;
+  };
+
   server.registerTool(
     "read_ecu_info",
     {
@@ -794,16 +809,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
     async () => {
       try {
         const result = await session.elm.withHeaders(async send => {
-          let protocol = protocolNumber(await send("ATDPN"));
-          if (!protocol) {
-            // The adapter finds the vehicle's protocol on the first request.
-            try {
-              await send("0100");
-            } catch (err) {
-              if (!(err instanceof NoDataError)) throw err;
-            }
-            protocol = protocolNumber(await send("ATDPN"));
-          }
+          const protocol = await findProtocol(send);
           if (!protocol) {
             return { supported: false, modules: [], note: "The adapter has not found the vehicle's protocol, so module information could not be read. Check that the ignition is on, then try read_dtcs." };
           }
@@ -875,6 +881,129 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
               ...(Object.keys(m.errors).length ? { errors: m.errors } : {}),
             })),
             note: "Calibration IDs name the software version in each module; a workshop can check them against the manufacturer's software updates. Calibration verification numbers are checksums of that software: only the manufacturer's reference values can tell whether it was changed, so do not conclude from them that a module was modified or tuned. Fields a module did not advertise are listed as not_supported.",
+          };
+        });
+        return wrap(result);
+      } catch (err) {
+        return fail(err);
+      }
+    }
+  );
+
+  server.registerTool(
+    "read_monitor_tests",
+    {
+      title: "Read monitor test results (Mode 06)",
+      description: "Read the results of the car's own emissions self-tests (Mode 06): for each test the measured value with the minimum and maximum the car accepts, and pass, fail or not_run (all zero, usually not run since codes were cleared). A failing or borderline test can show a problem before a trouble code is set, or confirm a repair. Also returns misfire counts per cylinder when the car reports them (an average of the last 10 drives and this or the last drive), which helps locate a misfiring cylinder. monitor limits the read to one system (for example misfire or catalyst); the default reads every advertised test, one request per monitor. Tests from 80 up are manufacturer-defined: their meaning and unit are in the manufacturer's information, so give their pass or fail but do not guess what they measure. Read-only; CAN vehicles only (most cars from 2008 on). Not a diagnosis.",
+      inputSchema: {
+        monitor: z.enum(["all", ...MONITOR_GROUPS]).optional().describe("Only this system's tests. Default all."),
+      },
+      annotations: READ_ONLY,
+    },
+    async ({ monitor }) => {
+      try {
+        const result = await session.elm.withHeaders(async send => {
+          const protocol = await findProtocol(send);
+          if (!protocol) {
+            return { supported: false, modules: [], note: "The adapter has not found the vehicle's protocol, so monitor tests could not be read. Check that the ignition is on, then try read_dtcs." };
+          }
+          const can = CAN_PROTOCOLS[protocol];
+          if (!can) {
+            return { supported: false, protocol: protocolName(protocol), modules: [], note: "Monitor test results are read only on CAN vehicles (most cars from 2008 on), where their layout is standard. This vehicle uses an older protocol, so they are reported as not supported rather than guessed." };
+          }
+          type Module = { address: string; mids: Set<number>; tests: MonitorTest[]; errors: Record<string, string> };
+          const modules = new Map<string, Module>();
+          const module = (address: string) => {
+            if (!modules.has(address)) modules.set(address, { address, mids: new Set(), tests: [], errors: {} });
+            return modules.get(address)!;
+          };
+          const hex = (n: number) => n.toString(16).toUpperCase().padStart(2, "0");
+          // Support ranges: every module answers 0600; later ranges only where a module advertised them.
+          for (const base of SUPPORT_MIDS) {
+            const asked = base === 0 ? null : [...modules.values()].filter(m => m.mids.has(base));
+            if (asked && asked.length === 0) break;
+            let answers: Map<string, number[] | Error>;
+            try {
+              answers = reassembleByHeader(await send(`06${hex(base)}`), can.headerHexDigits);
+            } catch (err) {
+              if (base === 0 && err instanceof NoDataError) {
+                return { supported: false, protocol: can.name, modules: [], note: "No module answered the request for supported monitor tests (Mode 06), so this vehicle may not provide them." };
+              }
+              if (base === 0) throw err;
+              const message = err instanceof NoDataError ? "advertised more monitor tests but did not answer" : (err instanceof Error ? err.message : String(err));
+              for (const m of asked!) m.errors[`support_${hex(base)}`] = message;
+              break;
+            }
+            for (const [address, payload] of answers) {
+              if (asked && !asked.some(m => m.address === address)) continue;
+              const m = module(address);
+              if (payload instanceof Error) m.errors[`support_${hex(base)}`] = payload.message;
+              else if (!isNegative06(payload)) {
+                try {
+                  for (const mid of supportedMids(payload, base)) m.mids.add(mid);
+                } catch (err) {
+                  m.errors[`support_${hex(base)}`] = err instanceof Error ? err.message : String(err);
+                }
+              }
+            }
+          }
+          const wanted = new Set<number>();
+          for (const m of modules.values()) {
+            for (const mid of m.mids) {
+              if (SUPPORT_MIDS.includes(mid)) continue;
+              if (!monitor || monitor === "all" || describeMid(mid).group === monitor) wanted.add(mid);
+            }
+          }
+          for (const mid of [...wanted].sort((a, b) => a - b)) {
+            const asked = [...modules.values()].filter(m => m.mids.has(mid));
+            let answers: Map<string, number[] | Error>;
+            try {
+              answers = reassembleByHeader(await send(`06${hex(mid)}`), can.headerHexDigits);
+            } catch (err) {
+              const message = err instanceof NoDataError ? "advertised this monitor but did not answer" : (err instanceof Error ? err.message : String(err));
+              for (const m of asked) m.errors[hex(mid)] = message;
+              continue;
+            }
+            for (const m of asked) {
+              const payload = answers.get(m.address);
+              if (!payload) m.errors[hex(mid)] = "advertised this monitor but did not answer";
+              else if (payload instanceof Error) m.errors[hex(mid)] = payload.message;
+              else if (!isNegative06(payload)) {
+                try {
+                  m.tests.push(...parseMonitorTests(payload, mid));
+                } catch (err) {
+                  m.errors[hex(mid)] = err instanceof Error ? err.message : String(err);
+                }
+              }
+            }
+          }
+          const list = [...modules.values()].sort((a, b) => a.address.localeCompare(b.address));
+          const all = list.flatMap(m => m.tests.map(t => ({ address: m.address, ...t })));
+          const misfire = all.filter(t => t.result === "counts");
+          const cylinders = new Map<string, Record<string, unknown>>();
+          for (const t of misfire) {
+            const key = `${t.address} ${t.mid}`;
+            const entry = cylinders.get(key) ?? { address: t.address, monitor: t.monitor };
+            entry[t.tid === "0B" ? "average_last_10_drives" : "this_or_last_drive"] = t.value;
+            cylinders.set(key, entry);
+          }
+          return {
+            supported: true,
+            protocol: can.name,
+            ...(monitor && monitor !== "all" ? { monitor } : {}),
+            failed_tests: all.filter(t => t.result === "fail"),
+            counts: {
+              pass: all.filter(t => t.result === "pass").length,
+              fail: all.filter(t => t.result === "fail").length,
+              not_run: all.filter(t => t.result === "not_run").length,
+            },
+            ...(cylinders.size ? { misfire_counts: [...cylinders.values()] } : {}),
+            modules: list.map(m => ({
+              address: m.address,
+              tests: m.tests.filter(t => t.result !== "counts"),
+              ...(Object.keys(m.errors).length ? { errors: m.errors } : {}),
+            })),
+            note: "Each test passes when its value is between min and max as the car itself judges; this is the car's own self-test, not an independent measurement. A test with value, min and max all zero has usually not run since codes were cleared or the battery was disconnected. Tests marked manufacturer_defined have a meaning and unit that only the manufacturer's information gives; unit null with scaling unknown means the numbers are raw. A failed test points to a system, not to a part that must be replaced.",
           };
         });
         return wrap(result);
