@@ -17,7 +17,6 @@ test('common adapter and vehicle errors get a plain-language next step', () => {
     ['connect ECONNREFUSED 192.168.0.10:35000', /WiFi network/],
     ['Timed out after 10000 ms connecting to the adapter at tcp:192.168.0.10:35000.', /WiFi network/],
     ['Adapter rejected ATE0: ?', /find_adapter/],
-    ['Compression-ignition readiness monitors are not yet supported', /diesel/],
   ]) {
     assert.match(errorHint(message) ?? '', pattern, message);
   }

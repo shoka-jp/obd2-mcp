@@ -56,7 +56,7 @@ test('sensor and scenario catalogues match the server', async t => {
   const coolant = sensors.find(s => s.name === 'coolant_temp');
   assert.deepEqual(coolant, { name: 'coolant_temp', pid: '01 05', description: 'Engine coolant temperature', unit: 'degC', in_default_set: true, in_freeze_frame: true });
   const { scenarios } = await readJson('obd2://scenarios');
-  assert.deepEqual(scenarios.map(s => s.name), ['catalyst', 'healthy', 'misfire', 'lean', 'evap', 'cleared', 'partial']);
+  assert.deepEqual(scenarios.map(s => s.name), ['catalyst', 'healthy', 'misfire', 'lean', 'evap', 'cleared', 'partial', 'diesel']);
   assert(scenarios.every(s => s.description.length > 10));
 });
 

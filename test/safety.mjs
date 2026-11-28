@@ -137,12 +137,34 @@ test('freeze frame propagates communication errors', async () => {
   } finally { await client.close(); await server.close(); }
 });
 
-test('diesel readiness does not use gasoline monitor labels', async () => {
-  const { client, server } = await clientFor({ '0101': '41 01 00 08 00 00' });
+test('diesel readiness uses the diesel monitor meanings, never the petrol labels', async () => {
+  // B: bit 3 diesel, misfire and components available; C: NMHC, NOx/SCR, boost, exhaust gas sensor, PM filter, EGR/VVT; D: PM filter and NOx/SCR incomplete.
+  const { client, server } = await clientFor({ '0101': '41 01 81 0D EB 42' });
   try {
     const result = await client.callTool({ name: 'read_readiness', arguments: {} });
-    assert.equal(result.isError, true);
-    assert.match(result.content[0].text, /Compression-ignition/);
+    assert.notEqual(result.isError, true);
+    const data = JSON.parse(result.content[0].text);
+    assert.equal(data.engine_type, 'compression_ignition');
+    assert.equal(data.mil_on, true);
+    assert.deepEqual(data.readiness_monitors, {
+      misfire: 'complete', fuel_system: 'not_supported', components: 'complete',
+      nmhc_catalyst: 'complete', nox_scr: 'incomplete', boost_pressure: 'complete',
+      exhaust_gas_sensor: 'complete', pm_filter: 'incomplete', egr_vvt_system: 'complete',
+    });
+    assert.deepEqual(data.incomplete_monitors, ['nox_scr', 'pm_filter']);
+    for (const petrol of ['catalyst', 'evaporative_system', 'oxygen_sensor', 'secondary_air_system']) {
+      assert.equal(petrol in data.readiness_monitors, false, petrol);
+    }
+  } finally { await client.close(); await server.close(); }
+});
+
+test('petrol readiness reports engine_type spark_ignition', async () => {
+  const { client, server } = await clientFor({ '0101': '41 01 00 07 E5 04' });
+  try {
+    const data = JSON.parse((await client.callTool({ name: 'read_readiness', arguments: {} })).content[0].text);
+    assert.equal(data.engine_type, 'spark_ignition');
+    assert.equal(data.readiness_monitors.evaporative_system, 'incomplete');
+    assert.equal('pm_filter' in data.readiness_monitors, false);
   } finally { await client.close(); await server.close(); }
 });
 

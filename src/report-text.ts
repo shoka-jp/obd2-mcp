@@ -26,6 +26,12 @@ const MONITORS: Record<string, { en: string; ja: string }> = {
   oxygen_sensor: { en: "Oxygen sensor", ja: "O2センサー" },
   oxygen_sensor_heater: { en: "Oxygen sensor heater", ja: "O2センサーヒーター" },
   egr_system: { en: "EGR system", ja: "EGR系統" },
+  nmhc_catalyst: { en: "NMHC catalyst (diesel)", ja: "NMHC触媒（ディーゼル）" },
+  nox_scr: { en: "NOx/SCR aftertreatment (diesel)", ja: "NOx・SCR後処理（ディーゼル）" },
+  boost_pressure: { en: "Boost pressure (diesel)", ja: "過給圧（ディーゼル）" },
+  exhaust_gas_sensor: { en: "Exhaust gas sensor (diesel)", ja: "排気ガスセンサー（ディーゼル）" },
+  pm_filter: { en: "Particulate filter (DPF, diesel)", ja: "粒子状物質フィルター（DPF、ディーゼル）" },
+  egr_vvt_system: { en: "EGR/VVT system (diesel)", ja: "EGR・可変バルブ系統（ディーゼル）" },
 };
 
 const SENSORS_JA: Record<string, string> = {

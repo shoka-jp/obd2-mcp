@@ -39,6 +39,15 @@ const MONITORS_CD = [
   "oxygen_sensor_heater",
   "egr_system",
 ] as const;
+/** Byte C/D bits for compression-ignition (diesel) engines; bits 2 and 4 are reserved. */
+const MONITORS_CD_DIESEL: Array<[number, string]> = [
+  [0, "nmhc_catalyst"],
+  [1, "nox_scr"],
+  [3, "boost_pressure"],
+  [5, "exhaust_gas_sensor"],
+  [6, "pm_filter"],
+  [7, "egr_vvt_system"],
+];
 
 /**
  * MCP tool annotations let clients decide how to present a tool, for example
@@ -500,22 +509,24 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
     try {
       const b = await session.elm.obd("0101", "4101");
       requireBytes(b, 4, "0101");
-      if ((b[1] & 0x08) !== 0) throw new Error("Compression-ignition readiness monitors are not yet supported");
+      const diesel = (b[1] & 0x08) !== 0;
       const monitors: Record<string, string> = {};
       MONITORS_B.forEach((name, i) => {
         const available = (b[1] & (1 << i)) !== 0;
         const incomplete = (b[1] & (1 << (i + 4))) !== 0;
         monitors[name] = !available ? "not_supported" : incomplete ? "incomplete" : "complete";
       });
-      MONITORS_CD.forEach((name, i) => {
-        const available = (b[2] & (1 << i)) !== 0;
-        const incomplete = (b[3] & (1 << i)) !== 0;
+      const cd: Array<[number, string]> = diesel ? MONITORS_CD_DIESEL : MONITORS_CD.map((name, i) => [i, name]);
+      for (const [bit, name] of cd) {
+        const available = (b[2] & (1 << bit)) !== 0;
+        const incomplete = (b[3] & (1 << bit)) !== 0;
         monitors[name] = !available ? "not_supported" : incomplete ? "incomplete" : "complete";
-      });
+      }
       const states = Object.entries(monitors);
       const supported = states.filter(([, state]) => state !== "not_supported");
       return wrap({
         mil_on: (b[0] & 0x80) !== 0,
+        engine_type: diesel ? "compression_ignition" : "spark_ignition",
         readiness_monitors: monitors,
         supported_count: supported.length,
         complete_count: supported.filter(([, state]) => state === "complete").length,
@@ -530,7 +541,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
     "read_readiness",
     {
       title: "Read readiness monitors",
-      description: "Read readiness monitors (emissions self-tests): which monitors this vehicle supports and whether each has completed, with supported_count, complete_count and the incomplete_monitors list. Monitors reported as not_supported do not apply to the vehicle. Clearing codes or disconnecting the battery resets monitors; they complete again after enough driving, and some vehicles normally leave one (often EVAP) incomplete. Useful when preparing for an emissions inspection or checking a used car; this result alone does not determine whether the vehicle will pass.",
+      description: "Read readiness monitors (emissions self-tests): which monitors this vehicle supports and whether each has completed, with supported_count, complete_count and the incomplete_monitors list. Monitors reported as not_supported do not apply to the vehicle. Diesel (compression-ignition) engines report their own set: NMHC catalyst, NOx/SCR, boost pressure, exhaust gas sensor, PM filter and EGR/VVT, with engine_type compression_ignition. Clearing codes or disconnecting the battery resets monitors; they complete again after enough driving, and some vehicles normally leave one (often EVAP) incomplete. Useful when preparing for an emissions inspection or checking a used car; this result alone does not determine whether the vehicle will pass.",
       inputSchema: {},
       annotations: READ_ONLY,
     },

@@ -162,3 +162,19 @@ test('scenario setting does not affect real connection selection', () => {
   assert.equal(result.status, 0);
   assert.match(result.stderr, /serial:\/nonexistent/);
 });
+
+test('diesel: diesel readiness monitors, a particulate filter code, and readable labels', async () => {
+  const { client, server } = await createClient('diesel');
+  try {
+    const call = async name => JSON.parse((await client.callTool({ name, arguments: {} })).content[0].text);
+    const readiness = await call('read_readiness');
+    assert.equal(readiness.engine_type, 'compression_ignition');
+    assert.deepEqual(readiness.incomplete_monitors, ['pm_filter']);
+    assert.equal(readiness.readiness_monitors.nox_scr, 'complete');
+    assert.equal(readiness.readiness_monitors.catalyst, undefined);
+    assert.deepEqual((await call('read_dtcs')).stored_dtcs, ['P2463']);
+    await call('read_diagnostic_report');
+    const text = (await client.callTool({ name: 'format_diagnostic_report', arguments: { language: 'ja' } })).content[0].text;
+    assert.match(text, /- 未完了：粒子状物質フィルター（DPF、ディーゼル）/);
+  } finally { await client.close(); await server.close(); }
+});
