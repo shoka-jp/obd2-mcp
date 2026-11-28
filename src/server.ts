@@ -10,6 +10,7 @@ import { registerPrompts } from "./prompts.js";
 import { registerResources, KEPT_REPORTS, type SessionRecord } from "./resources.js";
 import { compareReports, parseSavedReport, MAX_SAVED_REPORT_CHARS } from "./compare.js";
 import { renderReport } from "./report-text.js";
+import { loadReports, reportDir, saveReport } from "./history.js";
 import {
   CAN_PROTOCOLS,
   calibrationIds,
@@ -67,6 +68,8 @@ export interface ServerDeps {
   sleep?: (ms: number) => Promise<void>;
   /** Clock for watch_live_data timestamps, in milliseconds. */
   now?: () => number;
+  /** Report history folder; undefined reads OBD2MCP_REPORT_DIR, null turns history off. */
+  reportDir?: string | null;
 }
 
 /** Limits for watch_live_data: a short look at how values change while parked, not a driving logger. */
@@ -84,6 +87,13 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
   const session = { elm, mock };
   // Remembered for the MCP resources (latest report, codes read this session); never sent anywhere.
   const record: SessionRecord = { latestReport: null, reports: [], seenCodes: new Set() };
+  // Optional history folder: earlier real-vehicle reports come back as reports 1, 2, … so they can be compared.
+  const historyDir = deps.reportDir === undefined ? reportDir(process.env) : deps.reportDir ?? undefined;
+  if (historyDir) {
+    for (const [i, { file, report }] of loadReports(historyDir, KEPT_REPORTS).entries()) {
+      record.reports.push({ number: i + 1, report: { ...report, session_report_number: i + 1, loaded_from: file } });
+    }
+  }
   const remember = (codes: Array<string | null | undefined>) => { for (const code of codes) if (code) record.seenCodes.add(code); };
   const server = new McpServer({ name: "obd2-mcp", version: VERSION }, { instructions: SERVER_INSTRUCTIONS });
 
@@ -557,7 +567,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
     "read_diagnostic_report",
     {
       title: "Collect diagnostic evidence report",
-      description: `Collect stored/pending/permanent codes, freeze frame, live data and readiness into one timestamped evidence record for a workshop discussion. Optionally select live sensor names with pids; omit or pass an empty list for the defaults. Available names: ${PIDS.map(p => p.name).join(", ")}. Readings are collected sequentially. Preserve each section's errors and unknown values when summarizing. VIN is not requested and codes are not cleared. The result contains observations, not a diagnosis. Each report gets a session_report_number; collect another later (for example after a test drive or a repair) and call compare_diagnostic_reports to see what changed.`,
+      description: `Collect stored/pending/permanent codes, freeze frame, live data and readiness into one timestamped evidence record for a workshop discussion. Optionally select live sensor names with pids; omit or pass an empty list for the defaults. Available names: ${PIDS.map(p => p.name).join(", ")}. Readings are collected sequentially. Preserve each section's errors and unknown values when summarizing. VIN is not requested and codes are not cleared. The result contains observations, not a diagnosis. Each report gets a session_report_number; collect another later (for example after a test drive or a repair) and call compare_diagnostic_reports to see what changed. If the user set a report history folder, reports from a real vehicle are also saved there and the latest come back after a restart (marked loaded_from), so reports from earlier days can be compared.`,
       inputSchema: { pids: z.array(z.string()).optional().describe("Live PID names to read; omit or pass an empty list for the default set") },
       annotations: READ_ONLY,
     },
@@ -600,6 +610,10 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
           "Keep null values, section errors and per-sensor errors as unknown or unavailable. A trouble code alone does not identify a failed part.",
         ],
       };
+      if (historyDir && !session.mock) {
+        const saved = saveReport(historyDir, report);
+        Object.assign(report, "file" in saved ? { saved_as: saved.file } : { history_error: saved.error });
+      }
       record.latestReport = report;
       record.reports.push({ number, report });
       if (record.reports.length > KEPT_REPORTS) record.reports.shift();
