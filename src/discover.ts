@@ -57,6 +57,9 @@ export function adapterCandidates(ports: SerialPortSummary[]): {
       skipped.push(port);
     } else if (port.usb_serial_chip) {
       candidates.push({ port, reason: `USB-serial chip ${port.usb_serial_chip}`, usb: true });
+    } else if (/^\/dev\/tty(USB|ACM)\d+$/.test(port.path)) {
+      // On Linux these names are always USB serial devices, even when the chip is unknown.
+      candidates.push({ port, reason: "Linux USB serial device", usb: true });
     } else if (BLUETOOTH.test(text)) {
       candidates.push({ port, reason: "Bluetooth or OBD-named serial port", usb: false });
     } else {

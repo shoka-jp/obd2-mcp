@@ -1,3 +1,5 @@
+import { readdir } from "node:fs/promises";
+
 /**
  * Serial port discovery for USB and Bluetooth (serial) ELM327 adapters.
  *
@@ -51,11 +53,15 @@ export const SERIALPORT_MISSING =
  * missing. The original error text is kept so users and maintainers can search
  * for it, matching `serialOpenError` in `src/transport.ts`.
  */
+function missingUdevadm(err: unknown): boolean {
+  const error = err instanceof Error ? err : new Error(String(err));
+  return /udevadm/i.test(error.message) && (/ENOENT/i.test(error.message) || (error as NodeJS.ErrnoException).code === "ENOENT");
+}
+
 export function serialListError(err: unknown): Error {
   const error = err instanceof Error ? err : new Error(String(err));
   const text = error.message;
-  const code = (error as NodeJS.ErrnoException).code;
-  if (/udevadm/i.test(text) && (/ENOENT/i.test(text) || code === "ENOENT")) {
+  if (missingUdevadm(error)) {
     return new Error(
       `Could not list serial ports: ${text}. ` +
         "Listing serial ports on Linux needs udevadm (part of udev/systemd), which is not available here. " +
@@ -70,7 +76,34 @@ export function serialListError(err: unknown): Error {
  * List serial ports reported by the operating system. Serial numbers and other
  * device identifiers are omitted so the result can be shared more safely.
  */
-export async function listSerialPorts(load: () => Promise<SerialPortModule> = loadSerialPort): Promise<SerialPortSummary[]> {
+/** Linux device files that can be an OBD-II adapter: USB serial, USB modem-class (CDC-ACM) and Bluetooth serial. */
+const LINUX_ADAPTER_FILES = /^(ttyUSB\d+|ttyACM\d+|rfcomm\d+)$/;
+
+/**
+ * Without udevadm (minimal Linux installs, containers, some WSL setups) the
+ * serialport package cannot list ports. Look for the device files directly;
+ * the descriptions are then unknown, but find_adapter can still check them.
+ */
+async function linuxDeviceFiles(readDir: (dir: string) => Promise<string[]>): Promise<SerialPortSummary[]> {
+  const names = await readDir("/dev");
+  return names
+    .filter(name => LINUX_ADAPTER_FILES.test(name))
+    .map(name => ({
+      connection: `serial:/dev/${name}`,
+      path: `/dev/${name}`,
+      description: name.startsWith("rfcomm") ? "Bluetooth serial device (found in /dev; udevadm unavailable)" : "USB serial device (found in /dev; udevadm unavailable)",
+      manufacturer: null,
+      vendor_id: null,
+      product_id: null,
+      usb_serial_chip: null,
+    }))
+    .sort((a, b) => a.path.localeCompare(b.path, "en", { numeric: true }));
+}
+
+export async function listSerialPorts(
+  load: () => Promise<SerialPortModule> = loadSerialPort,
+  fallback: { platform?: string; readDir?: (dir: string) => Promise<string[]> } = {}
+): Promise<SerialPortSummary[]> {
   let mod: SerialPortModule;
   try {
     mod = await load();
@@ -85,6 +118,13 @@ export async function listSerialPorts(load: () => Promise<SerialPortModule> = lo
   try {
     raw = await Promise.race([mod.SerialPort.list(), timeout]);
   } catch (err) {
+    if ((fallback.platform ?? process.platform) === "linux" && missingUdevadm(err)) {
+      try {
+        return await linuxDeviceFiles(fallback.readDir ?? (dir => readdir(dir)));
+      } catch {
+        // Fall through to the explained error below.
+      }
+    }
     throw serialListError(err);
   } finally {
     clearTimeout(timer);
