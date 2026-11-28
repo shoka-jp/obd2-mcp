@@ -126,6 +126,31 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
   );
 
   server.registerTool(
+    "reconnect",
+    {
+      title: "Reconnect to the adapter",
+      description: "Reconnect to the current adapter after it stopped answering (a timeout, an adapter unplugged and plugged back in, or a dropped Bluetooth or WiFi link), without restarting the server or Claude Desktop. Closes the connection, opens it again and initializes the adapter as at start-up; nothing is sent to the vehicle. Call it once when a read fails because the adapter stopped answering, then retry the read.",
+      inputSchema: {},
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+    },
+    async () => {
+      try {
+        const identity = await session.elm.reconnect();
+        return wrap({
+          reconnected: true,
+          connection: session.elm.describe(),
+          adapter: identity || null,
+          vehicle_communication: "not_checked",
+          note: "The adapter answers again. Retry the read; if the car does not answer, check that the ignition is on.",
+        });
+      } catch (err) {
+        await session.elm.close().catch(() => undefined);
+        return fail(err);
+      }
+    }
+  );
+
+  server.registerTool(
     "list_serial_ports",
     {
       title: "Find adapter serial ports",
@@ -202,6 +227,9 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
         return fail(err);
       }
       const candidate = new Elm327(next.transport);
+      // The same port cannot be open twice (Windows refuses it): close the
+      // current connection first when switching to the same adapter again.
+      if (candidate.describe() === session.elm.describe()) await session.elm.close().catch(() => undefined);
       let identity: string;
       try {
         identity = await candidate.init();

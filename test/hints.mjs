@@ -12,7 +12,7 @@ test('common adapter and vehicle errors get a plain-language next step', () => {
     ['Adapter error for "0101": UNABLE TO CONNECT', /ignition ON/],
     ['Adapter error for "03": BUS INIT: ...ERROR', /ignition ON/],
     ['Vehicle returned NO DATA for "0105" (parameter not supported, or ignition off)', /does not mean the result is clean/],
-    ['Timeout waiting for adapter response to "ATZ" (12000 ms)', /restart the server/],
+    ['Timeout waiting for adapter response to "ATZ" (12000 ms)', /ask Claude to reconnect/],
     ['Adapter connection is unusable; restart the server: Serial adapter connection closed', /plugged in/],
     ['connect ECONNREFUSED 192.168.0.10:35000', /WiFi network/],
     ['Timed out after 10000 ms connecting to the adapter at tcp:192.168.0.10:35000.', /WiFi network/],

@@ -5,7 +5,7 @@
  * original error text is always kept; a hint is only added when it is known.
  */
 const RESTART =
-  "Unplug the adapter for a few seconds and plug it back in, then restart the server (in Claude Desktop, turn the obd2-mcp extension off and on, or restart Claude Desktop).";
+  "Unplug the adapter for a few seconds and plug it back in, then ask Claude to reconnect (the reconnect tool); no restart is needed. If that fails, restart the server (in Claude Desktop, turn the obd2-mcp extension off and on).";
 
 const HINTS: Array<[RegExp, string]> = [
   [

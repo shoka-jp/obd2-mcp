@@ -45,6 +45,7 @@
     { "name": "read_diagnostic_report", "description": "Collect codes, freeze frame, live data and readiness in one evidence report." },
     { "name": "compare_diagnostic_reports", "description": "Compare two diagnostic reports to see what changed, without contacting the vehicle." },
     { "name": "format_diagnostic_report", "description": "Turn a diagnostic report into readable Markdown (English or Japanese) to share with a workshop." },
+    { "name": "reconnect", "description": "Reconnect to the adapter after it stopped answering, without restarting." },
     { "name": "read_battery_voltage", "description": "Read the voltage at the OBD-II port as measured by the adapter, with a rough battery guide." },
     { "name": "read_vin", "description": "Read the Vehicle Identification Number." },
     { "name": "read_ecu_info", "description": "List the control modules that answer, with their names, software calibration IDs and verification numbers." },

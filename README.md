@@ -157,7 +157,7 @@ Serial baud rate defaults to 38400; override with `OBD2MCP_BAUD=115200` if your 
 
 A malformed connection, port number or baud rate stops startup with a message naming the setting. Write an IPv6 address in brackets, for example `tcp:[fe80::1]:35000`.
 
-A WiFi adapter that does not accept the connection within 10 seconds returns a timeout error. Check that the computer is on the adapter's network, then restart the server before trying again.
+A WiFi adapter that does not accept the connection within 10 seconds returns a timeout error. Check that the computer is on the adapter's network, then ask Claude to reconnect (the `reconnect` tool); no restart is needed.
 
 If the port, pairing, permissions or vehicle replies cause trouble, see [connection troubleshooting](./docs/troubleshooting.md).
 
@@ -225,6 +225,7 @@ Protocol references: [ELM327 datasheet, “Talking to the Vehicle”](https://el
 | `read_ecu_info` | The control modules that answer (engine, transmission and others), each with its name, calibration IDs (software version) and calibration verification numbers (mode 09). Useful when a workshop asks for software versions, for example to check whether an update applies. CAN vehicles only (most cars from 2008 on); fields a module does not support are listed, never guessed. Does not read the VIN. |
 | `connection_status` | Adapter identity and port voltage if available. A connected adapter does not itself confirm communication with the vehicle. |
 | `find_adapter` | Find a USB or Bluetooth ELM327 adapter automatically: opens only adapter-like ports briefly and sends the identification command `ATZ`; never contacts the vehicle. |
+| `reconnect` | Reconnect to the current adapter after it stopped answering (timeout, unplugged, Bluetooth or WiFi dropped), without restarting the server or Claude Desktop. Sends nothing to the car. |
 | `use_adapter` | Connect this session to a found adapter (or back to mock) without editing settings or restarting. Checks the adapter first and keeps the old connection on failure; accepts only serial ports and local-network WiFi addresses. |
 | `list_serial_ports` | List this computer's serial ports and their `serial:` connection values to find a USB or Bluetooth adapter. Does not open a port; works in mock mode. |
 | `clear_dtcs` | Clear codes — **disabled for real adapters by default**; warns that freeze frame evidence is erased and readiness monitors reset |
