@@ -2,7 +2,7 @@ import { MOCK_SCENARIOS } from "./mock.js";
 import { VERSION } from "./version.js";
 
 const VALUE_OPTIONS = new Set(["--connection", "--lang", "--scenario"]);
-const FLAGS = new Set(["--demo", "--summary", "--list-ports", "--help", "-h", "--version", "-v"]);
+const FLAGS = new Set(["--demo", "--summary", "--list-ports", "--check", "--wifi", "--help", "-h", "--version", "-v"]);
 
 /**
  * Arguments this CLI does not recognize. Previously a typo such as --list-port
@@ -39,6 +39,10 @@ Usage:
   obd2-mcp --demo [--scenario <name>] [--summary [--lang en|ja]]
                                               Run the simulated vehicle demo and exit
   obd2-mcp --list-ports                       List serial ports with their connection values
+  obd2-mcp --check [--connection <spec>] [--wifi]
+                                              Test a real adapter and car (read-only) and print a
+                                              summary to paste into a setup report; without
+                                              --connection it finds the adapter (--wifi: WiFi too)
   obd2-mcp --help | --version
 
 Connection <spec> (or OBD2MCP_CONNECTION):
@@ -51,6 +55,8 @@ Environment:
   OBD2MCP_MOCK_SCENARIO  Mock scenario: ${MOCK_SCENARIOS.join(", ")} (default ${MOCK_SCENARIOS[0]});
                          --scenario selects one for --demo
   OBD2MCP_BAUD           Serial baud rate (default 38400)
+  OBD2MCP_UNITS          metric (default) or imperial
+  OBD2MCP_REPORT_DIR     Folder to keep real-vehicle reports for comparison (optional)
 
 Results are observations, not a diagnosis. Clearing codes on a real vehicle is disabled by default.
 Documentation: https://github.com/shoka-jp/obd2-mcp#readme`;
