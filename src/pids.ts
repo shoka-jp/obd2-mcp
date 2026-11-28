@@ -78,3 +78,73 @@ export const DEFAULT_PIDS = [
 
 /** Freeze frame subset (mode 02, frame 00). */
 export const FREEZE_PIDS = ["engine_load", "coolant_temp", "stft_b1", "ltft_b1", "intake_map", "rpm", "vehicle_speed"];
+
+/**
+ * Other names people and assistants use for the sensors, mapped to this
+ * server's names. Keys are normalised by normalisePidInput.
+ */
+const ALIASES: Record<string, string> = {
+  speed: "vehicle_speed", vss: "vehicle_speed", car_speed: "vehicle_speed", 車速: "vehicle_speed", 速度: "vehicle_speed",
+  engine_rpm: "rpm", engine_speed: "rpm", revs: "rpm", 回転数: "rpm", エンジン回転数: "rpm",
+  coolant: "coolant_temp", coolant_temperature: "coolant_temp", ect: "coolant_temp", engine_temp: "coolant_temp", engine_temperature: "coolant_temp", water_temp: "coolant_temp", 水温: "coolant_temp", 冷却水温: "coolant_temp",
+  iat: "intake_air_temp", intake_temp: "intake_air_temp", intake_air_temperature: "intake_air_temp", air_temp: "intake_air_temp", 吸気温: "intake_air_temp",
+  map: "intake_map", manifold_pressure: "intake_map", intake_pressure: "intake_map",
+  load: "engine_load", calculated_load: "engine_load", 負荷: "engine_load", エンジン負荷: "engine_load",
+  tps: "throttle", throttle_position: "throttle", スロットル: "throttle",
+  stft: "stft_b1", short_term_fuel_trim: "stft_b1", ltft: "ltft_b1", long_term_fuel_trim: "ltft_b1",
+  battery: "module_voltage", voltage: "module_voltage", battery_voltage: "module_voltage", control_module_voltage: "module_voltage", バッテリー電圧: "module_voltage",
+  fuel: "fuel_level", fuel_tank: "fuel_level", 燃料残量: "fuel_level",
+  oil: "oil_temp", oil_temperature: "oil_temp", engine_oil_temp: "oil_temp", 油温: "oil_temp",
+  ambient: "ambient_temp", outside_temp: "ambient_temp", ambient_air_temp: "ambient_temp", 外気温: "ambient_temp",
+  lambda: "commanded_lambda", afr: "commanded_lambda", equivalence_ratio: "commanded_lambda",
+  egr: "commanded_egr", purge: "evap_purge", evap: "evap_purge", pedal: "accelerator_pedal", accelerator: "accelerator_pedal",
+  fuel_consumption: "fuel_rate", fuel_flow: "fuel_rate", 燃料消費率: "fuel_rate",
+  hybrid_battery: "hybrid_battery_remaining", hv_battery: "hybrid_battery_remaining", soc: "hybrid_battery_remaining",
+  rail_pressure: "fuel_rail_pressure", cat_temp: "catalyst_temp_b1s1", catalyst_temp: "catalyst_temp_b1s1",
+  o2: "o2_b1s1_voltage", o2_voltage: "o2_b1s1_voltage", o2_sensor: "o2_b1s1_voltage",
+  timing: "timing_advance", ignition_timing: "timing_advance",
+  barometric_pressure: "baro", baro_pressure: "baro", runtime: "run_time", engine_run_time: "run_time",
+};
+
+function normalisePidInput(input: string): string {
+  return input.trim().toLowerCase().replace(/[\s-]+/g, "_");
+}
+
+function editDistance(a: string, b: string): number {
+  const row = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    let prev = row[0];
+    row[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const temp = row[j];
+      row[j] = Math.min(row[j] + 1, row[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = temp;
+    }
+  }
+  return row[b.length];
+}
+
+/**
+ * Resolve a sensor name as typed: this server's names, common other names
+ * ("speed", "coolant", "水温"), or the Mode 01 PID ("0C", "010C"). Unknown
+ * names get up to three suggestions instead of the whole list.
+ */
+export function resolvePidName(input: string): { name: string } | { suggestions: string[] } {
+  const key = normalisePidInput(input);
+  if (PID_BY_NAME.has(key)) return { name: key };
+  if (ALIASES[key]) return { name: ALIASES[key] };
+  const code = /^(?:01_?)?([0-9a-f]{2})$/i.exec(key.replace(/_/g, ""));
+  if (code && PID_BY_CODE.has(code[1].toUpperCase())) return { name: PID_BY_CODE.get(code[1].toUpperCase())!.name };
+  const scored = PIDS.map(p => ({
+    name: p.name,
+    score: p.name.includes(key) || (key.length >= 3 && key.includes(p.name)) ? 0 : editDistance(key, p.name),
+  }))
+    .filter(s => s.score <= Math.max(2, Math.floor(key.length / 3)))
+    .sort((a, b) => a.score - b.score || a.name.localeCompare(b.name));
+  return { suggestions: scored.slice(0, 3).map(s => s.name) };
+}
+
+/** The error text for a sensor name that could not be resolved. */
+export function unknownPidMessage(input: string, suggestions: string[]): string {
+  return `Unknown sensor name "${input}".${suggestions.length ? ` Did you mean: ${suggestions.join(", ")}?` : ""} The read_live_data description lists every name.`;
+}

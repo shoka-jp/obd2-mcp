@@ -67,7 +67,7 @@ test('unknown sensor names are rejected before anything is sent', async t => {
   const before = commands.length;
   const { response, data } = await call({ pids: ['rpm', 'boost'] });
   assert.equal(response.isError, true);
-  assert.match(data.error, /Unknown PID name: boost/);
+  assert.match(data.error, /Unknown sensor name "boost"\./);
   assert.equal(commands.length, before);
 });
 
@@ -113,4 +113,11 @@ test('reports MCP progress for each sample when the client asks for it', async t
   assert.equal(data.samples.length, 4);
   assert.deepEqual(progress.map(p => [p.progress, p.total]), [[1, 4], [2, 4], [3, 4], [4, 4]]);
   assert.match(progress[0].message, /Sample 1 of 4/);
+});
+
+test('other sensor names are accepted and mapped', async t => {
+  const { call } = await session(t);
+  const { response, data } = await call({ pids: ['speed', 'coolant'], seconds: 5, interval_seconds: 5 });
+  assert.notEqual(response.isError, true);
+  assert.deepEqual(Object.keys(data.summary).sort(), ['coolant_temp', 'vehicle_speed']);
 });
