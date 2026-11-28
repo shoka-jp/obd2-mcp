@@ -24,6 +24,12 @@ const MONITORS = [
   "oxygen_sensor",
   "oxygen_sensor_heater",
   "egr_system",
+  "nmhc_catalyst",
+  "nox_scr",
+  "boost_pressure",
+  "exhaust_gas_sensor",
+  "pm_filter",
+  "egr_vvt_system",
 ] as const;
 const MONITOR_STATES = new Set(["complete", "incomplete", "not_supported"]);
 const CODE = /^[PCBU][0-3][0-9A-F]{3}$/;

@@ -19,7 +19,6 @@ const HINTS: Array<[RegExp, string]> = [
     "Could not reach the WiFi adapter. Connect this computer to the adapter's own WiFi network (often named OBDII or WiFi_OBDII), then check the address, commonly tcp:192.168.0.10:35000. While connected to it, this computer may have no internet.",
   ],
   [/Adapter rejected AT|Invalid adapter identity/i, "The device on this port answered, but not like an ELM327 adapter. It may be the wrong port: ask to find the adapter again (find_adapter), or check list_serial_ports."],
-  [/Compression-ignition readiness/i, "Readiness monitors for diesel engines are not supported yet. Codes and live data can still be read."],
 ];
 
 export function errorHint(message: string): string | undefined {

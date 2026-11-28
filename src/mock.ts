@@ -18,6 +18,10 @@ interface MockState {
   freezeDtc: string | null;
   readinessIncomplete: number;
   continuousIncomplete: number;
+  /** Byte C of PID 01: which non-continuous monitors the engine has. */
+  readinessSupported: number;
+  /** A compression-ignition (diesel) engine: byte B bit 3, and diesel meanings for bytes C and D. */
+  diesel: boolean;
   /** live values by PID name */
   live: Record<string, number>;
   /** freeze frame values by PID name */
@@ -44,6 +48,8 @@ function defaultState(): MockState {
     freezeDtc: "P0420",
     readinessIncomplete: 0x04,
     continuousIncomplete: 0,
+    readinessSupported: 0xe5,
+    diesel: false,
     live: {
       rpm: 748,
       coolant_temp: 89,
@@ -95,7 +101,7 @@ function defaultState(): MockState {
   };
 }
 
-export const MOCK_SCENARIOS = ["catalyst", "healthy", "misfire", "lean", "evap", "cleared", "partial"] as const;
+export const MOCK_SCENARIOS = ["catalyst", "healthy", "misfire", "lean", "evap", "cleared", "partial", "diesel"] as const;
 export type MockScenario = (typeof MOCK_SCENARIOS)[number];
 
 function scenarioState(scenario: MockScenario): MockState {
@@ -147,6 +153,24 @@ function scenarioState(scenario: MockScenario): MockState {
     }
     // Only the engine answers, and only with its name.
     state.modules = [{ header: "7E8", name: "ECM-EngineControl", calibrationIds: [], cvns: [] }];
+  } else if (scenario === "diesel") {
+    // A diesel with a particulate filter that cannot regenerate on short trips.
+    state.diesel = true;
+    state.storedDtcs = ["P2463"];
+    state.permanentDtcs = ["P2463"];
+    state.freezeDtc = "P2463";
+    state.readinessSupported = 0xeb; // NMHC catalyst, NOx/SCR, boost, exhaust gas sensor, PM filter, EGR/VVT
+    state.readinessIncomplete = 0x40; // PM filter
+    state.vin = "JMZKF6W7A00000042";
+    for (const pid of ["o2_b1s1_voltage", "o2_b1s2_voltage", "stft_b1", "ltft_b1", "stft_b2", "ltft_b2", "evap_purge", "commanded_lambda"]) {
+      delete state.live[pid];
+      delete state.freeze[pid];
+    }
+    state.live.rpm = 820;
+    state.live.intake_map = 104;
+    state.live.catalyst_temp_b1s1 = 265;
+    state.freeze.rpm = 1650;
+    state.freeze.vehicle_speed = 42;
   } else if (scenario === "evap") {
     state.storedDtcs = ["P0456"];
     state.permanentDtcs = ["P0456"];
@@ -276,8 +300,8 @@ export class MockTransport implements Transport {
     // Mode 01 PID 01: MIL / DTC count / readiness
     if (cmd === "0101") {
       const a = (this.state.milOn ? 0x80 : 0) | (this.state.storedDtcs.length & 0x7f);
-      const b = 0x07 | this.state.continuousIncomplete; // spark ignition; continuous monitors
-      const c = 0xe5; // catalyst, evap, O2 sensor, O2 heater, EGR supported
+      const b = 0x07 | this.state.continuousIncomplete | (this.state.diesel ? 0x08 : 0); // continuous monitors; bit 3: diesel
+      const c = this.state.readinessSupported; // catalyst, evap, O2 sensor, O2 heater, EGR supported (petrol default)
       const d = this.state.readinessIncomplete;
       return `41 01 ${join([a, b, c, d])}\r`;
     }

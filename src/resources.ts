@@ -54,6 +54,7 @@ const SCENARIOS: Record<string, string> = {
   evap: "P0456 (small EVAP leak).",
   cleared: "Codes cleared recently: no stored codes and the light off, but a permanent P0420 and incomplete monitors.",
   partial: "P0128 with coolant at 72 °C, five unsupported sensors and no freeze frame.",
+  diesel: "A diesel with P2463 (particulate filter soot accumulation), the PM filter monitor incomplete, and diesel readiness monitors.",
 };
 
 const SCENARIO_NOTE = "Synthetic examples for trying the tools without a car, not diagnoses.";
