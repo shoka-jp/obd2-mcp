@@ -109,3 +109,20 @@ test('every PID encode stays in 0-255 and round-trips within one resolution step
     }
   }
 });
+
+test('sensor names: common other names, PID codes and suggestions', async () => {
+  const { resolvePidName, unknownPidMessage } = await import('../dist/pids.js');
+  for (const [input, name] of [
+    ['rpm', 'rpm'], [' RPM ', 'rpm'], ['speed', 'vehicle_speed'], ['Vehicle Speed', 'vehicle_speed'], ['coolant', 'coolant_temp'],
+    ['water-temp', 'coolant_temp'], ['battery', 'module_voltage'], ['水温', 'coolant_temp'], ['回転数', 'rpm'], ['010C', 'rpm'],
+    ['0D', 'vehicle_speed'], ['01 05', 'coolant_temp'], ['soc', 'hybrid_battery_remaining'], ['lambda', 'commanded_lambda'],
+  ]) {
+    assert.deepEqual(resolvePidName(input), { name }, input);
+  }
+  assert.deepEqual(resolvePidName('coolant_tmp'), { suggestions: ['coolant_temp'] });
+  assert.deepEqual(resolvePidName('fuel_presure').suggestions.slice(0, 1), ['fuel_pressure']);
+  assert.ok(resolvePidName('fuel').name === 'fuel_level');
+  assert.deepEqual(resolvePidName('zzzzzz'), { suggestions: [] });
+  assert.deepEqual(resolvePidName('boost'), { suggestions: [] }, 'boost is not guessed as manifold pressure');
+  assert.equal(unknownPidMessage('coolant_tmp', ['coolant_temp']), 'Unknown sensor name "coolant_tmp". Did you mean: coolant_temp? The read_live_data description lists every name.');
+});

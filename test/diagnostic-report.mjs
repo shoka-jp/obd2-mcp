@@ -78,7 +78,7 @@ test('report selects requested live sensors and keeps unknown names visible', as
     assert(Number.isFinite(report.sections.read_live_data.data.live_data.rpm.value));
     assert.equal(report.sections.read_live_data.data.live_data.rpm.unit, 'rpm');
     assert.equal(report.sections.read_live_data.data.live_data.coolant_temp.value, 89);
-    assert.match(report.sections.read_live_data.data.live_data.not_a_sensor.error, /Unknown PID name/);
+    assert.match(report.sections.read_live_data.data.live_data.not_a_sensor.error, /Unknown sensor name "not_a_sensor"/);
     assert.equal('value' in report.sections.read_live_data.data.live_data.not_a_sensor, false);
     assert.deepEqual(report.sections.read_dtcs.data.stored_dtcs, ['P0420']);
     assert.equal(report.sections.read_freeze_frame.data.freeze_frame.conditions.rpm.value, 2210);
@@ -150,4 +150,15 @@ test('a car without permanent code support keeps the report usable', async () =>
       assert.equal(report.sections.read_readiness.is_error, false, answer);
     } finally { await client.close(); await server.close(); }
   }
+});
+
+test('read_live_data maps other names and says which name it used', async () => {
+  const { client, server } = await session();
+  try {
+    const data = JSON.parse((await client.callTool({ name: 'read_live_data', arguments: { pids: ['speed', 'vehicle_speed', '水温', 'coolant_tmp'] } })).content[0].text);
+    assert.deepEqual(Object.keys(data.live_data), ['vehicle_speed', 'coolant_temp', 'coolant_tmp']);
+    assert.deepEqual(data.names_used, { speed: 'vehicle_speed', 水温: 'coolant_temp' });
+    assert.match(data.live_data.coolant_tmp.error, /Did you mean: coolant_temp\?/);
+    assert.doesNotMatch(data.live_data.coolant_tmp.error, /engine_load, coolant_temp, stft_b1/, 'no full list in every error');
+  } finally { await client.close(); await server.close(); }
 });

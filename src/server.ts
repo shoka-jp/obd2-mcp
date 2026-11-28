@@ -3,7 +3,7 @@ import { z } from "zod";
 import { Elm327, NoDataError } from "./elm327.js";
 import { parseDtcPayload, decodeDtcPair } from "./dtc.js";
 import { codeInfo } from "./dtc-info.js";
-import { PIDS, PID_BY_NAME, DEFAULT_PIDS, FREEZE_PIDS } from "./pids.js";
+import { PIDS, PID_BY_NAME, DEFAULT_PIDS, FREEZE_PIDS, resolvePidName, unknownPidMessage } from "./pids.js";
 import { discoverSupportedPids } from "./supported-pids.js";
 import { listSerialPorts } from "./ports.js";
 import { registerPrompts } from "./prompts.js";
@@ -358,14 +358,18 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
   );
 
   const readLiveData = async ({ pids }: { pids?: string[] }) => {
-    const wanted = (pids && pids.length > 0 ? pids : DEFAULT_PIDS).map(p => p.toLowerCase().trim());
     const values: Record<string, { value: number; unit: string } | { error: string }> = {};
-    for (const name of wanted) {
-      const def = PID_BY_NAME.get(name);
-      if (!def) {
-        values[name] = { error: `Unknown PID name. Available: ${PIDS.map(p => p.name).join(", ")}` };
+    const renamed: Record<string, string> = {};
+    for (const input of pids && pids.length > 0 ? pids : DEFAULT_PIDS) {
+      const resolved = resolvePidName(input);
+      if (!("name" in resolved)) {
+        values[input] = { error: unknownPidMessage(input, resolved.suggestions) };
         continue;
       }
+      const name = resolved.name;
+      if (name !== input.trim().toLowerCase()) renamed[input] = name;
+      if (name in values) continue;
+      const def = PID_BY_NAME.get(name)!;
       try {
         const bytes = await session.elm.obd(`01${def.pid}`, `41${def.pid}`);
         requireBytes(bytes, def.bytes, `01${def.pid}`);
@@ -374,7 +378,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
         values[name] = { error: err instanceof NoDataError ? "No data: the PID may be unsupported, the ignition may be off, or the vehicle may not have responded." : String(err instanceof Error ? err.message : err) };
       }
     }
-    return wrap({ live_data: values });
+    return wrap({ live_data: values, ...(Object.keys(renamed).length ? { names_used: renamed } : {}) });
   };
 
   server.registerTool(
@@ -401,11 +405,12 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
       annotations: READ_ONLY,
     },
     async ({ pids, seconds = 20, interval_seconds = 2 }, extra) => {
-      const names = [...new Set(pids.map(p => p.toLowerCase().trim()))];
-      const unknown = names.filter(name => !PID_BY_NAME.has(name));
+      const resolved = pids.map(p => ({ input: p, result: resolvePidName(p) }));
+      const unknown = resolved.filter(r => !("name" in r.result));
       if (unknown.length > 0) {
-        return fail(new Error(`Unknown PID name: ${unknown.join(", ")}. Available: ${PIDS.map(p => p.name).join(", ")}`));
+        return fail(new Error(unknown.map(r => unknownPidMessage(r.input, "suggestions" in r.result ? r.result.suggestions : [])).join(" ")));
       }
+      const names = [...new Set(resolved.map(r => ("name" in r.result ? r.result.name : r.input)))];
       const sleep = deps.sleep ?? ((ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms)));
       const now = deps.now ?? (() => Date.now());
       const count = Math.floor(seconds / interval_seconds) + 1;
