@@ -1,11 +1,5 @@
 # obd2-mcp
 
-**[See actual mock output and run the demo without an AI client](./docs/demo-results.md).**
-
-**New here? [Try the step-by-step mock demo — no car required](./docs/try-mock.md).**
-
-**Want to contribute?** [Find a first issue](https://github.com/shoka-jp/obd2-mcp/issues?q=is%3Aissue%20is%3Aopen%20label%3A%22good%20first%20issue%22) or read the [contribution guide](./CONTRIBUTING.md). Documentation, tests and questions are welcome in English or Japanese. [Share first-use feedback](https://github.com/shoka-jp/obd2-mcp/issues/new?template=first-experience.yml) (a public GitHub issue).
-
 **English** | [日本語](./README.ja.md)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
@@ -14,25 +8,28 @@
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.shoka--jp%2Fobd2--mcp-4b7bec)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.shoka-jp/obd2-mcp)
 [![Claude Desktop extension](https://img.shields.io/badge/Claude_Desktop-one--file_extension_%28.mcpb%29-d97757)](https://github.com/shoka-jp/obd2-mcp/releases/latest)
 
-An MCP server that lets AI assistants read your car's OBD-II data through cheap ELM327 adapters — trouble codes, live sensors, freeze frame, readiness monitors, and VIN.
+**Let Claude read your own car.** obd2-mcp is an MCP server that lets AI assistants read OBD-II data through cheap ELM327 adapters: trouble codes, the freeze frame, live sensors, readiness monitors, the car's own self-test results and the VIN.
+
+Ask Claude *"why is my check-engine light on?"* and it reads the actual codes from your actual car, pulls the freeze frame before anything gets erased, checks the fuel trims, and reasons about causes — instead of you transcribing scanner output by hand. It also checks a used car before you buy, gets a car ready for an emissions inspection, confirms a repair, and writes a report to hand to a workshop.
 
 ![Three steps: install with the Claude Desktop extension or npx, try the simulated car with the check_engine_light prompt, then plug in your adapter, turn the ignition on and ask Claude to connect. It starts with mock data, reads only by default, and code clearing is off for real cars.](docs/images/get-started-en.svg)
 
-**Try it without an AI client or car:** with Node.js 22 or 24 and npm installed, run this in a terminal. npm downloads the built package and its dependencies; Git and a local build are not needed.
+### Install
+
+- **Claude Desktop:** download `obd2-mcp-0.8.0.mcpb` from the [latest release](https://github.com/shoka-jp/obd2-mcp/releases/latest) and open it ([details](#claude-desktop-install-as-an-extension)).
+- **Claude Code:** `claude mcp add obd2 -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.8.0/obd2-mcp-0.8.0.tgz obd2-mcp` ([other MCP clients](#without-git-or-a-build)).
+
+It starts with a simulated car (a warm idling sedan with a stored P0420), so you can try everything before buying an adapter. Ask: *"Read my car's trouble codes and tell me what to check before I spend money."* When you have an adapter, plug it in, turn the ignition on and ask Claude to connect ([how](#connecting-a-real-car)).
+
+### Or try it in a terminal first
+
+No AI client and no car needed: with Node.js 22 or 24 and npm installed, run
 
 ```bash
 npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.8.0/obd2-mcp-0.8.0.tgz -- obd2-mcp --demo --summary
 ```
 
-The command uses the package attached to this repository's [v0.8.0 release](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.8.0). It prints simulated observations and exits. [See the output and what to check next](./docs/demo-results.md).
-
-**Example from the mock vehicle:** stored code `P0420`; freeze frame at 98 km/h and 2,210 rpm; current reading 0 km/h and 740 rpm. These are simulated observations, not a diagnosis. [See the captured results and their limits](./docs/demo-results.md#observed-output--実際に取得した結果).
-
-For the complete tool responses, remove `--summary`. Add `--lang ja` for the Japanese summary. To develop or connect an MCP client from source, follow the quick start below.
-
-Ask Claude *"why is my check-engine light on?"* and it reads the actual codes from your actual car, pulls the freeze frame before anything gets erased, checks the fuel trims, and reasons about causes — instead of you transcribing scanner output by hand.
-
-**No hardware? It still works.** A built-in mock vehicle (a warm idling sedan with a stored P0420, MIL on, and realistic live data) lets you try everything before buying an adapter.
+It downloads the package attached to the [v0.8.0 release](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.8.0) (no Git or build), prints simulated observations and exits: stored code `P0420`, a freeze frame at 98 km/h and 2,210 rpm, and current readings at 0 km/h and about 740 rpm. These are simulated observations, not a diagnosis. Add `--lang ja` for Japanese, or remove `--summary` for the complete tool responses. [See the output and what to check next](./docs/demo-results.md), or follow the [step-by-step mock demo](./docs/try-mock.md).
 
 ## Choose how to start
 
@@ -46,6 +43,8 @@ Ask Claude *"why is my check-engine light on?"* and it reads the actual codes fr
 | Change the code or contribute | [Build from source](#from-source) and the [contribution guide](./CONTRIBUTING.md) | Git and Node.js |
 
 Every path starts with the simulated vehicle, so you can check the setup before connecting a car. In your MCP client, the [guided prompts](#guided-prompts) such as `check_engine_light` are an easy first question.
+
+**Want to contribute?** [Find a first issue](https://github.com/shoka-jp/obd2-mcp/issues?q=is%3Aissue%20is%3Aopen%20label%3A%22good%20first%20issue%22) or read the [contribution guide](./CONTRIBUTING.md). Documentation, tests and questions are welcome in English or Japanese. [Share first-use feedback](https://github.com/shoka-jp/obd2-mcp/issues/new?template=first-experience.yml) (a public GitHub issue).
 
 obd2-mcp is listed in the [official MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.shoka-jp/obd2-mcp) as `io.github.shoka-jp/obd2-mcp`, so MCP clients and directories that read the registry can find each release.
 

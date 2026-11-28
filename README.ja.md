@@ -1,25 +1,5 @@
 # obd2-mcp
 
-**[実際の出力を見る・AIクライアントなしでデモを実行する](./docs/demo-results.md)**
-
-**開発に参加する：** [初めての方向けIssue](https://github.com/shoka-jp/obd2-mcp/issues?q=is%3Aissue%20is%3Aopen%20label%3A%22good%20first%20issue%22)から選べます。[貢献ガイド](./CONTRIBUTING.md)もご覧ください。ドキュメント修正・テスト・質問を日本語でも歓迎します。[感想・質問を送る](https://github.com/shoka-jp/obd2-mcp/issues/new?template=first-experience.yml)（GitHub上で公開されます）。
-
-![3ステップ：Claude Desktop拡張またはnpxでインストール、check_engine_lightプロンプトで模擬車両を試す、アダプタを挿してイグニッションをONにし、Claudeに接続を頼む。最初は模擬データで、既定は読み取りのみ、実車のコード消去は無効です。](docs/images/get-started-ja.svg)
-
-**車もAIクライアントも不要：** Node.js 22または24とnpmを用意し、ターミナルで次を実行してください。ビルド済みパッケージと依存ライブラリを取得するので、Gitの操作や手元でのビルド作業を省けます。
-
-```bash
-npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.8.0/obd2-mcp-0.8.0.tgz -- obd2-mcp --demo --summary --lang ja
-```
-
-このリポジトリの[v0.8.0リリース](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.8.0)に添付したパッケージを取得し、模擬データと確認手順を表示して終了します。[出力例と確認事項を見る](./docs/demo-results.md)。
-
-**模擬車両の結果例：** 記録コード `P0420`、記録時は時速98 km・2,210 rpm、現在値は時速0 km・740 rpm。模擬データであり、故障診断ではありません。[実際の取得結果と限界を見る](./docs/demo-results.md#observed-output--実際に取得した結果)。
-
-ツールの応答全体を見る場合は `--summary --lang ja` を外します。開発やソースからのMCPクライアント接続は、下のクイックスタートを参照してください。
-
-**初めての方へ：[車なしで試せるモック体験ガイド](./docs/try-mock.md#日本語)**
-
 [English](./README.md) | **日本語**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
@@ -28,11 +8,28 @@ npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.shoka--jp%2Fobd2--mcp-4b7bec)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.shoka-jp/obd2-mcp)
 [![Claude Desktop拡張機能](https://img.shields.io/badge/Claude_Desktop-1%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%81%AE%E6%8B%A1%E5%BC%B5%E6%A9%9F%E8%83%BD_%28.mcpb%29-d97757)](https://github.com/shoka-jp/obd2-mcp/releases/latest)
 
-安価なELM327アダプタ経由で、AIアシスタントが**あなたの車のOBD-IIデータを直接読める**ようにするMCPサーバーです。故障コード(DTC)、ライブセンサー、フリーズフレーム、レディネスモニタ、車台番号(VIN)に対応。
+**Claudeが、あなたの車のデータを直接読めるように。** obd2-mcpは、安価なELM327アダプタ経由で、AIアシスタントが車のOBD-IIデータを読めるようにするMCPサーバーです。故障コード（DTC）、フリーズフレーム、ライブセンサー、レディネスモニタ、車自身の自己診断の結果、車台番号（VIN）に対応しています。
 
-Claudeに「エンジン警告灯が点いたのはなぜ?」と聞くと、**実車から実際のコードを読み取り**、消える前にフリーズフレームを確保し、燃料補正を確認して原因を推論します — スキャナーの画面を手で書き写す必要はもうありません。
+Claudeに「エンジン警告灯が点いたのはなぜ？」と聞くと、**実車から実際のコードを読み取り**、消える前にフリーズフレームを確保し、燃料補正を確認して原因を推論します。スキャナーの画面を手で書き写す必要はありません。中古車を買う前の確認、車検（排出ガス検査）前の確認、修理後の確認、整備工場に渡すレポートの作成にも使えます。
 
-**アダプタがなくても動きます。** 内蔵のモック車両(暖機済みアイドリング中のセダン、P0420記録済み、警告灯点灯、リアルなライブデータ)で、アダプタを買う前にすべて試せます。
+![3ステップ：Claude Desktop拡張またはnpxでインストール、check_engine_lightプロンプトで模擬車両を試す、アダプタを挿してイグニッションをONにし、Claudeに接続を頼む。最初は模擬データで、既定は読み取りのみ、実車のコード消去は無効です。](docs/images/get-started-ja.svg)
+
+### インストール
+
+- **Claude Desktop：** [最新リリース](https://github.com/shoka-jp/obd2-mcp/releases/latest)から `obd2-mcp-0.8.0.mcpb` をダウンロードして開きます（[詳しく](#claude-desktop拡張機能としてインストール)）。
+- **Claude Code：** `claude mcp add obd2 -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.8.0/obd2-mcp-0.8.0.tgz obd2-mcp`（[ほかのMCPクライアント](#gitもビルドも使わない方法)）
+
+最初は模擬車両（暖機済みでアイドリング中、P0420を記録したセダン）につながるので、アダプタを買う前にすべて試せます。「車の故障コードを読んで、お金をかける前に確認すべきことを教えて」と聞いてみてください。アダプタを用意したら、車に挿してイグニッションをONにし、Claudeに接続を頼みます（[方法](#実車への接続)）。
+
+### まずターミナルで試す
+
+AIクライアントも車も不要です。Node.js 22または24とnpmを用意し、次を実行します。
+
+```bash
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.8.0/obd2-mcp-0.8.0.tgz -- obd2-mcp --demo --summary --lang ja
+```
+
+[v0.8.0リリース](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.8.0)に添付したパッケージを取得し（Gitやビルドは不要）、模擬データを表示して終了します。記録コード `P0420`、記録時は時速98 km・2,210 rpm、現在値は時速0 km・約740 rpm です。模擬データであり、故障診断ではありません。ツールの応答全体を見る場合は `--summary --lang ja` を外します。[出力例と確認事項を見る](./docs/demo-results.md)、または[車なしで試せるモック体験ガイド](./docs/try-mock.md#日本語)に沿って進めてください。
 
 ## 始め方を選ぶ
 
@@ -46,6 +43,8 @@ Claudeに「エンジン警告灯が点いたのはなぜ?」と聞くと、**�
 | コードを変更する・開発に参加する | [ソースからビルド](#ソースからビルドする方法)と[貢献ガイド](./CONTRIBUTING.md) | GitとNode.js |
 
 どの方法も最初は模擬車両で動くので、車につなぐ前に設定を確認できます。MCPクライアントでは、`check_engine_light` などの[ガイド付きプロンプト](#ガイド付きプロンプト)から始めると簡単です。
+
+**開発に参加する：** [初めての方向けIssue](https://github.com/shoka-jp/obd2-mcp/issues?q=is%3Aissue%20is%3Aopen%20label%3A%22good%20first%20issue%22)から選べます。[貢献ガイド](./CONTRIBUTING.md)もご覧ください。ドキュメント修正・テスト・質問を日本語でも歓迎します。[感想・質問を送る](https://github.com/shoka-jp/obd2-mcp/issues/new?template=first-experience.yml)（GitHub上で公開されます）。
 
 obd2-mcpは[公式MCPレジストリ](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.shoka-jp/obd2-mcp)に `io.github.shoka-jp/obd2-mcp` として掲載されており、レジストリを参照するMCPクライアントやディレクトリから各リリースを見つけられます。
 
