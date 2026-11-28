@@ -13,6 +13,7 @@ export const SERVER_INSTRUCTIONS = `obd2-mcp reads OBD-II data from a vehicle th
 - Do not call clear_dtcs unless the user explicitly asks to clear codes after you have read the codes and freeze frame and explained that clearing erases that evidence and resets readiness monitors. Real-vehicle clearing is disabled unless the user enabled it.
 - The VIN identifies a vehicle. Call read_vin only when the user needs it, and remind them to remove it before sharing results.
 - read_battery_voltage asks the adapter for the voltage at the OBD-II port (ATRV); it works with the ignition off. Give the reading with its guide and say whether the engine was running; one reading is not a battery test.
+- odometer (newer cars only) is the distance recorded by the engine computer. If it differs a lot from the dashboard, that is a question to ask, not proof of tampering: modules can be replaced.
 - hybrid_battery_remaining is defined differently by each manufacturer (often a charge level); do not present it as battery health.
 - read_ecu_info lists the control modules that answer, with software calibration IDs and verification numbers, for a workshop checking software versions. Do not say that a module was modified, tuned or needs an update from these numbers alone: only the manufacturer's reference values can show that.
 - If a read fails because the adapter stopped answering (a timeout or a closed connection), call reconnect once and retry; do not ask the user to restart unless reconnect fails.

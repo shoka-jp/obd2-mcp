@@ -87,6 +87,7 @@ test('every PID encode stays in 0-255 and round-trips within one resolution step
     '4E': { step: 1, values: [0, 1180, 65535] },
     '5B': { step: 100 / 255, values: [0, 57, 100] },
     '5E': { step: 0.05, values: [0, 0.75, 3276.75] },
+    'A6': { step: 0.1, values: [0, 84213.6, 429496729.5] },
   };
 
   for (const def of PIDS) {

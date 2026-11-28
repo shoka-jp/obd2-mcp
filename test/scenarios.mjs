@@ -55,6 +55,9 @@ test('cleared: no stored codes, but the permanent code and incomplete monitors r
     assert.deepEqual(readiness.incomplete_monitors, ['catalyst', 'evaporative_system', 'oxygen_sensor']);
     assert.equal(readiness.supported_count, 8);
     assert.equal(readiness.complete_count, 5);
+    // This drive: EVAP has not started; the catalyst and O2 sensor tests are still running.
+    assert.equal(readiness.this_drive_cycle.monitors.evaporative_system, 'not_enabled');
+    assert.deepEqual(readiness.this_drive_cycle.incomplete_monitors, ['catalyst', 'oxygen_sensor']);
     const live = await call(client, 'read_live_data', { pids: ['distance_with_mil'] });
     assert.equal(live.live_data.distance_with_mil.value, 0);
   } finally { await client.close(); await server.close(); }

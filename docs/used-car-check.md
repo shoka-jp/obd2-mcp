@@ -16,7 +16,7 @@ This project has not yet verified a real vehicle or adapter combination. The exa
 1. **Ask the seller for permission** to plug in an OBD-II adapter and read data. Only read; never clear codes on a car you do not own.
 2. With the car **parked**, plug the ELM327 adapter into the OBD-II port, usually under the dashboard on the driver's side. Turn the ignition on, or let the engine idle outdoors.
 3. In Claude Desktop, choose **used_car_check** from the obd2-mcp prompts in the attachment (+) menu. Optionally add what the seller said (for example "no warning lights, battery replaced last week") and your reply language.
-4. Claude asks you to confirm permission and then reads the diagnostic report, the permanent codes, and, if supported, the warm-ups and distance since codes were last cleared, the distance driven with the warning light on, and the engine run time. It gives a short summary first, then questions for the seller.
+4. Claude asks you to confirm permission and then reads the diagnostic report, the permanent codes, and, if supported, the warm-ups and distance since codes were last cleared, the distance driven with the warning light on, the engine run time, and the odometer recorded by the engine computer (newer cars). It gives a short summary first, then questions for the seller. If the odometer was read, compare it with the dashboard: a large difference is a question for the seller, not proof, because modules can be replaced.
 5. **After the test drive**, once parked, ask Claude to read again. It collects a second report and compares it with the first (`compare_diagnostic_reports`): a pending code that appears, or monitors that complete, are more evidence. One drive may not complete every monitor.
 6. Take the questions to the seller, and let a professional pre-purchase inspection check what a scan cannot see.
 
@@ -58,7 +58,7 @@ Useful questions for this result: when were the codes cleared or the battery rep
 1. OBD-IIアダプタを挿してデータを読むことについて、**売り手の了承を得ます**。読むだけにし、自分の車ではないのでコードは絶対に消しません。
 2. 車を**停車**させ、ELM327アダプタをOBD-IIポート（多くは運転席側のダッシュボード下）に挿します。イグニッションをオンにするか、屋外でアイドリングします。
 3. Claude Desktopの添付（＋）メニューから、obd2-mcpのプロンプト **used_car_check** を選びます。売り手の説明（例：「警告灯なし、先週バッテリー交換」）と返答言語は任意で入力できます。
-4. Claudeは了承を確認したあと、整備相談レポート、消去しても残るコード、対応していれば前回のコード消去からの暖機回数と走行距離、警告灯点灯後の走行距離、エンジン稼働時間を読みます。最初に短い要約を示し、そのあとに売り手への質問をまとめます。
+4. Claudeは了承を確認したあと、整備相談レポート、消去しても残るコード、対応していれば前回のコード消去からの暖機回数と走行距離、警告灯点灯後の走行距離、エンジン稼働時間、エンジンコンピューターが記録した走行距離（新しい車のみ）を読みます。最初に短い要約を示し、そのあとに売り手への質問をまとめます。走行距離が読めた場合はメーターの表示と比べてください。大きな差は売り手に聞くべきことですが、部品の交換でも差は出るため、改ざんの証拠ではありません。
 5. **試乗のあと**、停車してからもう一度読んでもらいます。2回目のレポートを集め、1回目と比べます（`compare_diagnostic_reports`）。保留中のコードが出たり、未完了だったモニターが完了したりすれば、判断材料が増えます。1回の走行ですべてのモニターが完了するとは限りません。
 6. まとめた質問を売り手に確認し、スキャンでは分からない部分はプロの購入前点検で見てもらいます。
 

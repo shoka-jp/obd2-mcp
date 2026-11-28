@@ -259,3 +259,33 @@ test('adapter timeout prevents later commands using a stale response', async () 
     await assert.rejects(t.sendRaw('010D', 20), /unusable/);
   } finally { await t.close(); await new Promise(resolve => listener.close(resolve)); }
 });
+
+test('readiness adds the current drive cycle from PID 41 when the car answers it', async () => {
+  // PID 41: B misfire/fuel/components enabled, none incomplete; C catalyst, O2, O2 heater, EGR enabled (EVAP not yet); D catalyst still running.
+  const { client, server } = await clientFor({ '0101': '41 01 00 07 E5 04', '0141': '41 41 00 07 E1 01' });
+  try {
+    const data = JSON.parse((await client.callTool({ name: 'read_readiness', arguments: {} })).content[0].text);
+    assert.equal(data.readiness_monitors.evaporative_system, 'incomplete');
+    assert.deepEqual(data.this_drive_cycle.monitors, {
+      misfire: 'complete', fuel_system: 'complete', components: 'complete',
+      catalyst: 'incomplete', evaporative_system: 'not_enabled',
+      oxygen_sensor: 'complete', oxygen_sensor_heater: 'complete', egr_system: 'complete',
+    });
+    assert.equal(data.this_drive_cycle.enabled_count, 7);
+    assert.equal(data.this_drive_cycle.complete_count, 6);
+    assert.deepEqual(data.this_drive_cycle.incomplete_monitors, ['catalyst']);
+    assert.equal('this_drive_cycle_error' in data, false);
+  } finally { await client.close(); await server.close(); }
+});
+
+test('a car without PID 41 still returns readiness, with the drive cycle unavailable', async () => {
+  const { client, server } = await clientFor({ '0101': '41 01 00 07 E5 04', '0141': 'NO DATA' });
+  try {
+    const result = await client.callTool({ name: 'read_readiness', arguments: {} });
+    assert.notEqual(result.isError, true);
+    const data = JSON.parse(result.content[0].text);
+    assert.equal(data.supported_count, 8);
+    assert.equal(data.this_drive_cycle, null);
+    assert.match(data.this_drive_cycle_error, /PID 41/);
+  } finally { await client.close(); await server.close(); }
+});

@@ -84,6 +84,7 @@ function defaultState(): MockState {
       time_with_mil: 95,
       time_since_clear: 1180,
       fuel_rate: 0.75,
+      odometer: 84213.6,
     },
     freeze: {
       engine_load: 34.5,
@@ -286,11 +287,15 @@ export class MockTransport implements Transport {
       return "44\r";
     }
     // Mode 01 support bitmaps: advertise exactly the implemented mock commands.
-    if (["0100", "0120", "0140"].includes(cmd)) {
+    if (/^01(00|20|40|60|80|A0)$/.test(cmd)) {
       const base = parseInt(cmd.slice(2), 16);
       const bytes = [0, 0, 0, 0];
-      const supported = [0x01, 0x20, 0x40, ...[...PID_BY_CODE.values()]
-        .filter(def => def.name in this.state.live).map(def => parseInt(def.pid, 16))];
+      const implemented = [0x01, 0x41, ...[...PID_BY_CODE.values()].filter(def => def.name in this.state.live).map(def => parseInt(def.pid, 16))];
+      const highest = Math.max(...implemented);
+      // Each range advertises the next support query only if something lies beyond it.
+      const continuation = [0x20, 0x40, 0x60, 0x80, 0xa0, 0xc0].filter(pid => pid < highest);
+      if (base > 0 && !continuation.includes(base)) return "NO DATA\r";
+      const supported = [...implemented, ...continuation];
       for (const pid of supported) {
         const bit = pid - base - 1;
         if (bit >= 0 && bit < 32) bytes[Math.floor(bit / 8)] |= 0x80 >> (bit % 8);
@@ -304,6 +309,14 @@ export class MockTransport implements Transport {
       const c = this.state.readinessSupported; // catalyst, evap, O2 sensor, O2 heater, EGR supported (petrol default)
       const d = this.state.readinessIncomplete;
       return `41 01 ${join([a, b, c, d])}\r`;
+    }
+    // Mode 01 PID 41: monitor status this drive cycle (byte A reserved). The EVAP
+    // test has not been enabled yet on this drive and the catalyst test is still running.
+    if (cmd === "0141") {
+      const b = 0x07 | this.state.continuousIncomplete | (this.state.diesel ? 0x08 : 0);
+      const c = this.state.readinessSupported & ~0x04;
+      const d = c & (0x01 | this.state.readinessIncomplete);
+      return `41 41 ${join([0, b, c, d])}\r`;
     }
     // Mode 09 PID 02: VIN (ISO-TP multi-frame)
     if (cmd === "0902") {

@@ -64,7 +64,7 @@ export async function runCheck(target: CheckTarget, now: () => number = () => Da
       if (typeof d.battery_voltage === "string") facts.voltage = scrub(d.battery_voltage);
       return "OK";
     });
-    await call("Supported sensors (0100, 0120, 0140)", "read_supported_pids", d => {
+    await call("Supported sensors (0100 onwards)", "read_supported_pids", d => {
       const supported = Array.isArray(d.supported_sensor_names) ? d.supported_sensor_names.length : 0;
       const unknown = Array.isArray(d.unknown_sensor_names) ? d.unknown_sensor_names.length : 0;
       return `OK: ${supported} supported${unknown ? `, ${unknown} unknown` : ""}`;
