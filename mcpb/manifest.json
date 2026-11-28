@@ -26,7 +26,8 @@
       "env": {
         "OBD2MCP_CONNECTION": "${user_config.connection}",
         "OBD2MCP_MOCK_SCENARIO": "${user_config.mock_scenario}",
-        "OBD2MCP_BAUD": "${user_config.baud}"
+        "OBD2MCP_BAUD": "${user_config.baud}",
+        "OBD2MCP_REPORT_DIR": "${user_config.report_folder}"
       }
     }
   },
@@ -80,6 +81,13 @@
       "default": 38400,
       "min": 1200,
       "max": 4000000,
+      "required": false
+    },
+    "report_folder": {
+      "type": "directory",
+      "title": "Report history folder",
+      "description": "Optional. Choose a folder to keep diagnostic reports from your real car, so Claude can compare them across days (for example before and after a repair). Reports contain no VIN; reports from the simulated car are not saved. Leave empty to keep reports only until Claude Desktop restarts.",
+      "default": "",
       "required": false
     }
   }

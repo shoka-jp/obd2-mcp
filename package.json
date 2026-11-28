@@ -22,7 +22,7 @@
     "start": "node dist/index.js",
     "demo": "npm run build && node dist/index.js --demo --summary",
     "demo:ja": "npm run build && node dist/index.js --demo --summary --lang ja",
-    "test": "npm run build && node --test test/adapter.mjs test/cli.mjs test/connection.mjs test/transport.mjs test/dtc.mjs test/code-info.mjs test/hints.mjs test/permanent-dtcs.mjs test/pids.mjs test/safety.mjs test/scenarios.mjs test/demo.mjs test/diagnostic-report.mjs test/compare.mjs test/report-text.mjs test/ecu-info.mjs test/battery-voltage.mjs test/reconnect.mjs test/supported-pids.mjs test/watch-live-data.mjs test/ports.mjs test/prompts.mjs test/resources.mjs && node test/smoke.mjs",
+    "test": "npm run build && node --test test/adapter.mjs test/cli.mjs test/connection.mjs test/transport.mjs test/dtc.mjs test/code-info.mjs test/hints.mjs test/permanent-dtcs.mjs test/pids.mjs test/safety.mjs test/scenarios.mjs test/demo.mjs test/diagnostic-report.mjs test/compare.mjs test/report-text.mjs test/ecu-info.mjs test/battery-voltage.mjs test/reconnect.mjs test/history.mjs test/supported-pids.mjs test/watch-live-data.mjs test/ports.mjs test/prompts.mjs test/resources.mjs && node test/smoke.mjs",
     "test:package": "node test/package.mjs",
     "build:mcpb": "npm run build && node scripts/build-mcpb.mjs",
     "prepack": "npm run build"
