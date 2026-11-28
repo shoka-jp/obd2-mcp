@@ -16,8 +16,8 @@ Ask Claude *"why is my check-engine light on?"* and it reads the actual codes fr
 
 ### Install
 
-- **Claude Desktop:** download `obd2-mcp-0.8.0.mcpb` from the [latest release](https://github.com/shoka-jp/obd2-mcp/releases/latest) and open it ([details](#claude-desktop-install-as-an-extension)).
-- **Claude Code:** `claude mcp add obd2 -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.8.0/obd2-mcp-0.8.0.tgz obd2-mcp` ([other MCP clients](#without-git-or-a-build)).
+- **Claude Desktop:** download `obd2-mcp-0.9.0.mcpb` from the [latest release](https://github.com/shoka-jp/obd2-mcp/releases/latest) and open it ([details](#claude-desktop-install-as-an-extension)).
+- **Claude Code:** `claude mcp add obd2 -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.9.0/obd2-mcp-0.9.0.tgz obd2-mcp` ([other MCP clients](#without-git-or-a-build)).
 
 It starts with a simulated car (a warm idling sedan with a stored P0420), so you can try everything before buying an adapter. Ask: *"Read my car's trouble codes and tell me what to check before I spend money."* When you have an adapter, plug it in, turn the ignition on and ask Claude to connect ([how](#connecting-a-real-car)).
 
@@ -26,10 +26,10 @@ It starts with a simulated car (a warm idling sedan with a stored P0420), so you
 No AI client and no car needed: with Node.js 22 or 24 and npm installed, run
 
 ```bash
-npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.8.0/obd2-mcp-0.8.0.tgz -- obd2-mcp --demo --summary
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.9.0/obd2-mcp-0.9.0.tgz -- obd2-mcp --demo --summary
 ```
 
-It downloads the package attached to the [v0.8.0 release](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.8.0) (no Git or build), prints simulated observations and exits: stored code `P0420`, a freeze frame at 98 km/h and 2,210 rpm, and current readings at 0 km/h and about 740 rpm. These are simulated observations, not a diagnosis. Add `--lang ja` for Japanese, or remove `--summary` for the complete tool responses. [See the output and what to check next](./docs/demo-results.md), or follow the [step-by-step mock demo](./docs/try-mock.md).
+It downloads the package attached to the [v0.9.0 release](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.9.0) (no Git or build), prints simulated observations and exits: stored code `P0420`, a freeze frame at 98 km/h and 2,210 rpm, and current readings at 0 km/h and about 740 rpm. These are simulated observations, not a diagnosis. Add `--lang ja` for Japanese, or remove `--summary` for the complete tool responses. [See the output and what to check next](./docs/demo-results.md), or follow the [step-by-step mock demo](./docs/try-mock.md).
 
 ## Choose how to start
 
@@ -62,12 +62,12 @@ Each [GitHub release](https://github.com/shoka-jp/obd2-mcp/releases/latest) from
 
 ### Without Git or a build
 
-With Node.js 22 or 24 and npm installed, an MCP client can start the v0.8.0 release package directly. First run the demo command near the top of this page once: it downloads the package into npm's cache, so the client's first start does not wait for the download (about 40 seconds in a Windows test).
+With Node.js 22 or 24 and npm installed, an MCP client can start the v0.9.0 release package directly. First run the demo command near the top of this page once: it downloads the package into npm's cache, so the client's first start does not wait for the download (about 40 seconds in a Windows test).
 
 **Claude Code:**
 
 ```bash
-claude mcp add obd2 -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.8.0/obd2-mcp-0.8.0.tgz obd2-mcp
+claude mcp add obd2 -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.9.0/obd2-mcp-0.9.0.tgz obd2-mcp
 ```
 
 On native Windows, put `cmd /c` before `npx`.
@@ -79,13 +79,13 @@ On native Windows, put `cmd /c` before `npx`.
   "mcpServers": {
     "obd2": {
       "command": "npx",
-      "args": ["-y", "--package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.8.0/obd2-mcp-0.8.0.tgz", "obd2-mcp"]
+      "args": ["-y", "--package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.9.0/obd2-mcp-0.9.0.tgz", "obd2-mcp"]
     }
   }
 }
 ```
 
-On Windows, use `"command": "cmd"` and start `args` with `"/c", "npx"`. If Claude Desktop cannot find `npx`, use its full path (`which npx` on macOS/Linux, `where npx` on Windows). For a real adapter, add `"env": {"OBD2MCP_CONNECTION": "serial:COM3"}`; see [Connecting a real car](#connecting-a-real-car). The release URL always refers to v0.8.0; change it to upgrade.
+On Windows, use `"command": "cmd"` and start `args` with `"/c", "npx"`. If Claude Desktop cannot find `npx`, use its full path (`which npx` on macOS/Linux, `where npx` on Windows). For a real adapter, add `"env": {"OBD2MCP_CONNECTION": "serial:COM3"}`; see [Connecting a real car](#connecting-a-real-car). The release URL always refers to v0.9.0; change it to upgrade.
 
 ### From source
 
