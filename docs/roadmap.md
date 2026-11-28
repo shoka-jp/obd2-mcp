@@ -24,7 +24,7 @@ The report uses sequential reads and does not request VIN or clear codes; it is 
 
 - **Supported PID discovery:** available since v0.3.0 for `0100`, `0120` and `0140`, with explicit unknown states and partial results. Next, collect reproducible real-adapter evidence before considering broader ranges or automatic sensor selection.
 - **Evidence from real setups:** document reproducible, privacy-reviewed reports by operating system, connection type, adapter and vehicle context. Reports come in through the [real setup report](https://github.com/shoka-jp/obd2-mcp/issues/new?template=hardware-report.yml) form and are listed in [reported setups](./compatibility.md). Mark only combinations actually tested; mock coverage is not hardware validation.
-- **Connection guidance:** improve troubleshooting for pairing, port selection, timeouts and reconnects based on reproducible reports. Preserve the existing advice to restart after a timeout or disconnect until recovery is implemented and tested.
+- **Connection guidance:** improve troubleshooting for pairing, port selection, timeouts and reconnects based on reproducible reports. After a timeout or disconnect, the `reconnect` tool reopens the connection without a restart (tested with the mock and a local TCP adapter); collect real-adapter reports of how well it recovers.
 
 ### 3. Expand diagnostic evidence carefully
 

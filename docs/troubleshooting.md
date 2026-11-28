@@ -46,7 +46,7 @@ On Linux systems without `udevadm` (some containers, minimal installs and WSL se
 
 ### After a timeout or disconnect
 
-The server does not reconnect automatically yet. Restart the MCP server (or the client) before trying again.
+Ask Claude to reconnect (*"Reconnect to the adapter"*). The `reconnect` tool closes the connection, opens it again and initializes the adapter, without restarting anything; nothing is sent to the car. If the adapter was unplugged, plug it back in first; for Bluetooth, check that it is still paired; for WiFi, that the computer is still on the adapter's network. If reconnecting fails, restart the MCP server (in Claude Desktop, turn the obd2-mcp extension off and on).
 
 ### Report what you found
 
@@ -96,7 +96,7 @@ Open a [real setup report](https://github.com/shoka-jp/obd2-mcp/issues/new?templ
 
 ### タイムアウトや切断のあと
 
-現在は自動で再接続しません。MCPサーバー（またはクライアント）を再起動してから再度お試しください。
+Claudeに「アダプタに再接続して」と頼んでください。`reconnect` ツールが接続を閉じて開き直し、アダプタを初期化します。再起動は不要で、車には何も送りません。アダプタを抜いた場合は挿し直してから、Bluetoothはペアリングが残っているか、WiFiはPCがアダプタのネットワークにつながっているかを確認してください。再接続に失敗したら、MCPサーバーを再起動します（Claude Desktopでは拡張機能をオフにしてからオンにします）。
 
 ### 結果を報告する
 

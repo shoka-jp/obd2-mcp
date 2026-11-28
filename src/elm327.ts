@@ -148,6 +148,19 @@ export class Elm327 {
     await this.transport.close();
     this.initialized = false;
   }
+
+  /**
+   * Close the connection and open it again, then initialize the adapter as at
+   * start-up (ATZ …). For an adapter that stopped answering or was unplugged
+   * and plugged back in. Nothing is sent to the vehicle.
+   */
+  async reconnect(): Promise<string> {
+    return this.exclusive(async () => {
+      await this.transport.close();
+      this.initialized = false;
+      return this.init();
+    });
+  }
 }
 
 /** Split a raw adapter response into trimmed, useful lines (echo and noise removed). */
