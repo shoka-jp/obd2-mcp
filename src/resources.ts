@@ -4,6 +4,7 @@ import { PIDS, PID_BY_NAME, DEFAULT_PIDS, FREEZE_PIDS } from "./pids.js";
 import { MOCK_SCENARIOS } from "./mock.js";
 import { describeDtc } from "./dtc-info.js";
 import { renderReport } from "./report-text.js";
+import { unitSystem } from "./units.js";
 
 /**
  * MCP resources: reference material a user can attach to a conversation
@@ -151,7 +152,7 @@ export function registerResources(server: McpServer, record: SessionRecord): voi
           uri: u.href,
           mimeType: "text/markdown",
           text: record.latestReport
-            ? renderReport(record.latestReport, lang)
+            ? renderReport(record.latestReport, lang, unitSystem(process.env))
             : lang === "ja"
               ? "まだ診断レポートがありません。先にClaudeにレポートの収集（read_diagnostic_report）を頼んでください。\n"
               : "No diagnostic report has been collected since the server started. Ask Claude to collect one (read_diagnostic_report) first.\n",

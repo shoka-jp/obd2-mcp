@@ -1,3 +1,4 @@
+import { displayValue, unitSystem } from "./units.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { Elm327 } from "./elm327.js";
@@ -46,6 +47,12 @@ export async function runDemo(summary = false, lang: "en" | "ja" = "en", scenari
       const distance = sinceClear.distance_since_clear?.value;
       const hasSinceClear = typeof warmups === "number" && typeof distance === "number";
       const mentionsP0420 = codes.stored_dtcs.includes("P0420") || (permanent ?? []).includes("P0420");
+      // OBD2MCP_UNITS=imperial shows US units, like the readable report.
+      const system = unitSystem(process.env);
+      const show = (value: number, unit: string) => {
+        const d = displayValue(value, unit, system);
+        return `${d.value} ${d.unit}`;
+      };
       if (lang === "ja") {
         console.log("模擬デモ — 実車には接続せず、コードも消去していません");
         console.log(`模擬シナリオ: ${scenario}`);
@@ -54,9 +61,9 @@ export async function runDemo(summary = false, lang: "en" | "ja" = "en", scenari
         console.log(`消去しても残るコード: ${permanent === null ? "不明（応答なし）" : permanent.join(", ") || "なし"}`);
         console.log(`フリーズフレームのコード: ${frame?.dtc ?? "なし"}`);
         console.log(`未完了のレディネスモニター: ${incomplete.join(", ") || "なし"}`);
-        if (hasSinceClear) console.log(`前回のコード消去から: 暖機${warmups}回・${distance} km`);
+        if (hasSinceClear) console.log(`前回のコード消去から: 暖機${warmups}回・${show(distance, "km")}`);
         console.log(`現在のエンジン回転数: ${live.rpm.value} ${live.rpm.unit}`);
-        console.log(`現在の冷却水温: ${live.coolant_temp.value} ${live.coolant_temp.unit}`);
+        console.log(`現在の冷却水温: ${show(live.coolant_temp.value, live.coolant_temp.unit)}`);
         if (mentionsP0420) console.log("P0420の一般的な意味: バンク1の触媒システム効率が基準を下回ったことを示すコード。");
         if (clearedSigns) console.log("記録済みのコードはないのに、消去しても残るコードがあります。最近コードが消去され、修理がまだ確認されていない可能性があります。証拠ではなく、理由を確認するための材料です（docs/used-car-check.md）。");
         console.log("これは模擬データであり、診断結果ではありません。コードだけで故障部品は特定できません。");
@@ -70,9 +77,9 @@ export async function runDemo(summary = false, lang: "en" | "ja" = "en", scenari
         console.log(`Permanent codes: ${permanent === null ? "unknown (no answer)" : permanent.join(", ") || "none"}`);
         console.log(`Freeze frame: ${frame?.dtc ?? "none"}`);
         console.log(`Incomplete readiness monitors: ${incomplete.join(", ") || "none"}`);
-        if (hasSinceClear) console.log(`Since codes were last cleared: ${warmups} warm-up${warmups === 1 ? "" : "s"}, ${distance} km`);
+        if (hasSinceClear) console.log(`Since codes were last cleared: ${warmups} warm-up${warmups === 1 ? "" : "s"}, ${show(distance, "km")}`);
         console.log(`Current engine speed: ${live.rpm.value} ${live.rpm.unit}`);
-        console.log(`Current coolant temperature: ${live.coolant_temp.value} ${live.coolant_temp.unit}`);
+        console.log(`Current coolant temperature: ${show(live.coolant_temp.value, live.coolant_temp.unit)}`);
         if (mentionsP0420) console.log("P0420 generally indicates catalyst system efficiency below the threshold on bank 1.");
         if (clearedSigns) console.log("No stored codes, but a permanent code remains: codes were probably cleared recently and the fault is not yet confirmed fixed. This is a reason to ask why, not proof (see docs/used-car-check.md).");
         console.log("These are mock observations, not a diagnosis.");

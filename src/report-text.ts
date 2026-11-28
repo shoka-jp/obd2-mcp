@@ -1,5 +1,6 @@
 import { PID_BY_NAME } from "./pids.js";
 import { VERSION } from "./version.js";
+import { displayValue, type UnitSystem } from "./units.js";
 
 /**
  * A diagnostic report as readable Markdown, in English or Japanese, to save or
@@ -156,16 +157,17 @@ function formatTime(value: unknown): string | null {
 }
 
 function unit(u: string): string {
-  return u === "degC" ? "°C" : u === "count" || u === "lambda" ? "" : u;
+  return u === "degC" ? "°C" : u === "degF" ? "°F" : u === "count" || u === "lambda" ? "" : u;
 }
 
-function value(v: number, u: string): string {
-  const text = Number.isInteger(v) ? String(v) : String(Math.round(v * 100) / 100);
-  const shown = unit(u);
-  return shown ? (shown === "%" || shown === "°C" ? `${text}${shown}` : `${text} ${shown}`) : text;
+function value(v: number, u: string, system: UnitSystem): string {
+  const converted = displayValue(v, u, system);
+  const text = String(converted.value);
+  const shown = unit(converted.unit);
+  return shown ? (shown === "%" || shown === "°C" || shown === "°F" ? `${text}${shown}` : `${text} ${shown}`) : text;
 }
 
-export function renderReport(report: Record<string, unknown>, lang: ReportLanguage = "en"): string {
+export function renderReport(report: Record<string, unknown>, lang: ReportLanguage = "en", system: UnitSystem = "metric"): string {
   const t = T[lang];
   const lines: string[] = [`# ${t.title}`, ""];
   if (report.simulated === true) lines.push(t.simulated, "");
@@ -215,7 +217,7 @@ export function renderReport(report: Record<string, unknown>, lang: ReportLangua
     const frame = freeze.data.freeze_frame;
     const code = typeof frame.dtc === "string" && CODE.test(frame.dtc) ? frame.dtc : t.unavailable;
     lines.push(`- ${t.freezeCode}${sep}${code}`, "");
-    lines.push(...table(isObject(frame.conditions) ? frame.conditions : {}, lang));
+    lines.push(...table(isObject(frame.conditions) ? frame.conditions : {}, lang, system));
   }
   lines.push("");
 
@@ -223,7 +225,7 @@ export function renderReport(report: Record<string, unknown>, lang: ReportLangua
   lines.push(`## ${t.liveHeading}`, "");
   const live = section(report, "read_live_data");
   if (!live.ok) lines.push(failure(live));
-  else lines.push(...table(isObject(live.data.live_data) ? live.data.live_data : {}, lang));
+  else lines.push(...table(isObject(live.data.live_data) ? live.data.live_data : {}, lang, system));
   lines.push("");
 
   // Readiness
@@ -240,14 +242,14 @@ export function renderReport(report: Record<string, unknown>, lang: ReportLangua
   return lines.join("\n");
 }
 
-function table(readings: Record<string, unknown>, lang: ReportLanguage): string[] {
+function table(readings: Record<string, unknown>, lang: ReportLanguage, system: UnitSystem): string[] {
   const t = T[lang];
   const rows: string[] = [`| ${t.sensor} | ${t.value} |`, "|---|---|"];
   for (const [name, entry] of Object.entries(readings)) {
     const def = PID_BY_NAME.get(name);
     if (!def) continue;
     const label = lang === "ja" ? SENSORS_JA[name] ?? def.desc : def.desc;
-    const shown = isObject(entry) && typeof entry.value === "number" && Number.isFinite(entry.value) ? value(entry.value, def.unit) : t.failed;
+    const shown = isObject(entry) && typeof entry.value === "number" && Number.isFinite(entry.value) ? value(entry.value, def.unit, system) : t.failed;
     rows.push(`| ${label} | ${shown} |`);
   }
   return rows.length > 2 ? rows : [t.none];

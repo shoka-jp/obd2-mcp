@@ -153,6 +153,8 @@ To set a connection permanently, use the environment variable or CLI flag:
 
 **Find the serial port name.** Ask your MCP client to run `list_serial_ports`, or run `node dist/index.js --list-ports` in a terminal. Both list the ports the operating system reports, with the exact `serial:` value to use, without opening a port or contacting the vehicle. If you are unsure which entry is the adapter, unplug or unpair it and list again. A known USB-serial chip (FTDI, CH340, PL2303 or CP210x) is a hint, not proof that the port is an OBD-II adapter. Listing requires the optional `serialport` dependency; WiFi adapters are not listed.
 
+**Units:** answers and the readable report use metric units by default; set `OBD2MCP_UNITS=imperial` (Claude Desktop: *Units* = `imperial`) for °F, mph, miles and psi. Tool data itself stays metric, so reports and comparisons stay consistent.
+
 Serial baud rate defaults to 38400; override with `OBD2MCP_BAUD=115200` if your adapter needs it. Bluetooth adapters must first be paired at the OS level so they expose a serial port.
 
 A malformed connection, port number or baud rate stops startup with a message naming the setting. Write an IPv6 address in brackets, for example `tcp:[fe80::1]:35000`.
