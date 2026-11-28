@@ -16,8 +16,8 @@ Claudeに「エンジン警告灯が点いたのはなぜ？」と聞くと、**
 
 ### インストール
 
-- **Claude Desktop：** [最新リリース](https://github.com/shoka-jp/obd2-mcp/releases/latest)から `obd2-mcp-0.8.0.mcpb` をダウンロードして開きます（[詳しく](#claude-desktop拡張機能としてインストール)）。
-- **Claude Code：** `claude mcp add obd2 -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.8.0/obd2-mcp-0.8.0.tgz obd2-mcp`（[ほかのMCPクライアント](#gitもビルドも使わない方法)）
+- **Claude Desktop：** [最新リリース](https://github.com/shoka-jp/obd2-mcp/releases/latest)から `obd2-mcp-0.9.0.mcpb` をダウンロードして開きます（[詳しく](#claude-desktop拡張機能としてインストール)）。
+- **Claude Code：** `claude mcp add obd2 -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.9.0/obd2-mcp-0.9.0.tgz obd2-mcp`（[ほかのMCPクライアント](#gitもビルドも使わない方法)）
 
 最初は模擬車両（暖機済みでアイドリング中、P0420を記録したセダン）につながるので、アダプタを買う前にすべて試せます。「車の故障コードを読んで、お金をかける前に確認すべきことを教えて」と聞いてみてください。アダプタを用意したら、車に挿してイグニッションをONにし、Claudeに接続を頼みます（[方法](#実車への接続)）。
 
@@ -26,10 +26,10 @@ Claudeに「エンジン警告灯が点いたのはなぜ？」と聞くと、**
 AIクライアントも車も不要です。Node.js 22または24とnpmを用意し、次を実行します。
 
 ```bash
-npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.8.0/obd2-mcp-0.8.0.tgz -- obd2-mcp --demo --summary --lang ja
+npm exec --yes --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.9.0/obd2-mcp-0.9.0.tgz -- obd2-mcp --demo --summary --lang ja
 ```
 
-[v0.8.0リリース](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.8.0)に添付したパッケージを取得し（Gitやビルドは不要）、模擬データを表示して終了します。記録コード `P0420`、記録時は時速98 km・2,210 rpm、現在値は時速0 km・約740 rpm です。模擬データであり、故障診断ではありません。ツールの応答全体を見る場合は `--summary --lang ja` を外します。[出力例と確認事項を見る](./docs/demo-results.md)、または[車なしで試せるモック体験ガイド](./docs/try-mock.md#日本語)に沿って進めてください。
+[v0.9.0リリース](https://github.com/shoka-jp/obd2-mcp/releases/tag/v0.9.0)に添付したパッケージを取得し（Gitやビルドは不要）、模擬データを表示して終了します。記録コード `P0420`、記録時は時速98 km・2,210 rpm、現在値は時速0 km・約740 rpm です。模擬データであり、故障診断ではありません。ツールの応答全体を見る場合は `--summary --lang ja` を外します。[出力例と確認事項を見る](./docs/demo-results.md)、または[車なしで試せるモック体験ガイド](./docs/try-mock.md#日本語)に沿って進めてください。
 
 ## 始め方を選ぶ
 
@@ -62,12 +62,12 @@ v0.4.0以降の各[GitHubリリース](https://github.com/shoka-jp/obd2-mcp/rele
 
 ### Gitもビルドも使わない方法
 
-Node.js 22または24とnpmがあれば、MCPクライアントからv0.8.0のリリースパッケージを直接起動できます。先にこのページ冒頭のデモコマンドを1回実行してください。パッケージがnpmのキャッシュに保存され、クライアントの初回起動でダウンロードを待たずに済みます（Windowsでの確認では約40秒かかりました）。
+Node.js 22または24とnpmがあれば、MCPクライアントからv0.9.0のリリースパッケージを直接起動できます。先にこのページ冒頭のデモコマンドを1回実行してください。パッケージがnpmのキャッシュに保存され、クライアントの初回起動でダウンロードを待たずに済みます（Windowsでの確認では約40秒かかりました）。
 
 **Claude Code:**
 
 ```bash
-claude mcp add obd2 -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.8.0/obd2-mcp-0.8.0.tgz obd2-mcp
+claude mcp add obd2 -- npx -y --package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.9.0/obd2-mcp-0.9.0.tgz obd2-mcp
 ```
 
 Windows（WSLではない環境）では `npx` の前に `cmd /c` を付けます。
@@ -79,13 +79,13 @@ Windows（WSLではない環境）では `npx` の前に `cmd /c` を付けま�
   "mcpServers": {
     "obd2": {
       "command": "npx",
-      "args": ["-y", "--package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.8.0/obd2-mcp-0.8.0.tgz", "obd2-mcp"]
+      "args": ["-y", "--package=https://github.com/shoka-jp/obd2-mcp/releases/download/v0.9.0/obd2-mcp-0.9.0.tgz", "obd2-mcp"]
     }
   }
 }
 ```
 
-Windowsでは `"command": "cmd"` とし、`args` の先頭に `"/c", "npx"` を加えます。Claude Desktopが `npx` を見つけられない場合は、フルパス（macOS/Linuxは `which npx`、Windowsは `where npx` で確認）を指定してください。実車のアダプタを使う場合は `"env": {"OBD2MCP_CONNECTION": "serial:COM3"}` を追加します（[実車への接続](#実車への接続)を参照）。URLはv0.8.0を指しているため、更新するときはURLを変更してください。
+Windowsでは `"command": "cmd"` とし、`args` の先頭に `"/c", "npx"` を加えます。Claude Desktopが `npx` を見つけられない場合は、フルパス（macOS/Linuxは `which npx`、Windowsは `where npx` で確認）を指定してください。実車のアダプタを使う場合は `"env": {"OBD2MCP_CONNECTION": "serial:COM3"}` を追加します（[実車への接続](#実車への接続)を参照）。URLはv0.9.0を指しているため、更新するときはURLを変更してください。
 
 ### ソースからビルドする方法
 

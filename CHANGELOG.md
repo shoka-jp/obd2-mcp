@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-28
+
+Read more from the car and use it more easily: the car's own self-test results (Mode 06) with misfire counts per cylinder, the odometer and drive-cycle progress, control-module software versions and battery voltage; reports in readable English or Japanese, kept across days, in metric or US units; reconnecting without a restart, WiFi adapters found automatically, diesel readiness, and a compatibility check from the terminal.
+
 ### Changed
 
 - Smaller results, so conversations use fewer tokens: tool results are compact JSON instead of indented; the diagnostic report says once whether it is simulated instead of in every section (about half the size); `read_supported_pids` returns `supported_sensor_names`, `not_advertised_sensor_names` and `unknown_sensor_names` instead of an object per sensor (about a quarter of the size); `watch_live_data` and `read_diagnostic_report` no longer repeat the list of sensor names in their descriptions. Resources and saved reports stay indented for people to read.
