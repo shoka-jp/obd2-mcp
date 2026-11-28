@@ -90,6 +90,11 @@ export async function runCheck(target: CheckTarget, now: () => number = () => Da
       const modules = Array.isArray(d.modules) ? d.modules : [];
       return `OK: ${modules.length} module${modules.length === 1 ? "" : "s"}`;
     });
+    await call("Monitor tests (06 with headers)", "read_monitor_tests", d => {
+      if (d.supported !== true) return typeof d.note === "string" ? `not supported: ${scrub(d.note).slice(0, 80)}` : "not supported";
+      const c = (d.counts ?? {}) as Record<string, unknown>;
+      return `OK: ${c.pass} pass, ${c.fail} fail, ${c.not_run} not run${Array.isArray(d.misfire_counts) ? `, misfire counts for ${d.misfire_counts.length} cylinders` : ""}`;
+    });
   } finally {
     await client.close();
     await server.close();

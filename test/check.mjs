@@ -25,10 +25,11 @@ test('a check of the simulated car: every step, read-only, marked simulated', as
   assert.match(text, /- Adapter: ELM327 v1\.5/);
   assert.match(text, /- Protocol: ISO 15765-4 CAN \(11-bit ID, 500 kbaud\)/);
   assert.match(text, /\*\*Simulated vehicle: this is not a real setup\.\*\*/);
-  for (const step of ['Adapter answers', 'Supported sensors', 'Trouble codes', 'Permanent codes', 'Freeze frame', 'Readiness', 'Control modules']) {
+  for (const step of ['Adapter answers', 'Supported sensors', 'Trouble codes', 'Permanent codes', 'Freeze frame', 'Readiness', 'Control modules', 'Monitor tests']) {
     assert.match(text, new RegExp(`\\| ${step}[^|]*\\| OK`), step);
   }
   assert.ok(text.includes(REPORT_FORM));
+  assert.match(text, /\| Monitor tests \(06 with headers\) \| OK: 6 pass, 1 fail, 0 not run, misfire counts for 4 cylinders \|/);
   assert(!sent.includes('0902'), 'no VIN');
   assert(!sent.includes('04'), 'no clearing');
   assert.doesNotMatch(text, /1HGFC2F59GA000042|mock:catalyst/);
