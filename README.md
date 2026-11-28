@@ -165,6 +165,8 @@ If the port, pairing, permissions or vehicle replies cause trouble, see [connect
 
 **Tried it with a real car?** Please [report your setup](https://github.com/shoka-jp/obd2-mcp/issues/new?template=hardware-report.yml), whether it worked or not. Reports are listed in [reported setups](./docs/compatibility.md); none have been verified by the project yet.
 
+**Quick compatibility check:** with the adapter plugged in and the ignition on, run `obd2-mcp --check` (with the release package: `npm exec --yes --package=<release .tgz URL> -- obd2-mcp --check`; add `--wifi` for a WiFi adapter, or `--connection serial:COM3`). It finds the adapter, runs the read-only reads one by one and prints a summary to paste into the report: adapter, protocol, voltage and a pass/fail line per step, without the VIN, port names or addresses.
+
 Claude Code example with a real adapter:
 
 ```bash

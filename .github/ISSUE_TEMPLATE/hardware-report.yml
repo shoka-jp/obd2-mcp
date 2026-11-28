@@ -88,6 +88,14 @@ body:
     validations:
       required: true
   - type: textarea
+    id: check
+    attributes:
+      label: "Output of obd2-mcp --check (optional, v0.9.0+) / obd2-mcp --check の出力（任意）"
+      description: "Run `obd2-mcp --check` in a terminal with the adapter plugged in and the ignition on (add `--wifi` for a WiFi adapter). It is read-only and leaves out the VIN, port names and addresses. / アダプタを挿してイグニッションONで `obd2-mcp --check` を実行（WiFiは `--wifi` を追加）。読み取りのみで、車台番号やポート名・アドレスは含みません。"
+      render: markdown
+    validations:
+      required: false
+  - type: textarea
     id: details
     attributes:
       label: "What worked and what did not / 動いたこと・動かなかったこと"

@@ -6,6 +6,8 @@ import { buildServer } from "./server.js";
 import { runDemo } from "./demo.js";
 import { MOCK_SCENARIOS, type MockScenario } from "./mock.js";
 import { formatPortList, listSerialPorts } from "./ports.js";
+import { runCheck } from "./check.js";
+import { findAdapters } from "./discover.js";
 import { helpText, unknownArgumentError, unknownArguments } from "./cli.js";
 import { VERSION } from "./version.js";
 
@@ -27,6 +29,13 @@ async function main(): Promise<void> {
     console.log(formatPortList(await listSerialPorts()));
     return;
   }
+  if (process.argv.includes("--check")) {
+    const others = ["--demo", "--summary", "--lang", "--scenario"].filter(flag => process.argv.includes(flag));
+    if (others.length) throw new Error(`--check cannot be combined with ${others.join(", ")}`);
+    await check();
+    return;
+  }
+  if (process.argv.includes("--wifi")) throw new Error("--wifi requires --check");
   const langIndex = process.argv.indexOf("--lang");
   let lang: "en" | "ja" = "en";
   if (langIndex !== -1) {
@@ -57,6 +66,36 @@ async function main(): Promise<void> {
   const stdio = new StdioServerTransport();
   await server.connect(stdio);
   console.error(`obd2-mcp ready — connection: ${transport.describe()}`);
+}
+
+/** obd2-mcp --check: use the given connection, or find the adapter, then run the read-only check. */
+async function check(): Promise<void> {
+  const given = process.argv.includes("--connection") || (process.env.OBD2MCP_CONNECTION?.trim() ?? "") !== "";
+  if (given) {
+    const { transport, mock } = parseConnection(process.argv, process.env);
+    const kind = transport.describe().split(":")[0];
+    console.error("Checking the adapter (read-only; no VIN, no clearing)…");
+    console.log(await runCheck({ transport, mock, kind, how: process.argv.includes("--connection") ? "--connection" : "OBD2MCP_CONNECTION" }));
+    return;
+  }
+  const wifi = process.argv.includes("--wifi");
+  console.error(`Looking for the adapter${wifi ? " (USB, Bluetooth and WiFi)" : " (USB and Bluetooth)"}…`);
+  const result = await findAdapters({ wifi });
+  const found = result.found[0];
+  if (!found) {
+    console.log([
+      "No adapter answered.",
+      "- Plug the adapter into the car and turn the ignition on.",
+      "- Bluetooth: pair it in the operating system settings first. WiFi: join its network and add --wifi.",
+      "- Or give the connection: obd2-mcp --check --connection serial:COM3 (see obd2-mcp --list-ports).",
+    ].join("\n"));
+    process.exitCode = 1;
+    return;
+  }
+  const env = { ...process.env, ...(found.baud ? { OBD2MCP_BAUD: String(found.baud) } : {}) };
+  const { transport, mock } = parseConnection(["--connection", found.connection], env);
+  console.error("Found an adapter. Checking it (read-only; no VIN, no clearing)…");
+  console.log(await runCheck({ transport, mock, kind: found.connection.split(":")[0], how: "found automatically" }));
 }
 
 main().catch(err => {

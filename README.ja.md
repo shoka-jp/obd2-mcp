@@ -192,6 +192,8 @@ WiFiアダプターに10秒以内に接続できない場合はタイムアウ�
 
 **実車で試しましたか？** 動いた場合も動かなかった場合も、[動作報告](https://github.com/shoka-jp/obd2-mcp/issues/new?template=hardware-report.yml)をお願いします。報告は[動作報告のあった環境](./docs/compatibility.md#日本語)に掲載します（現時点でプロジェクトとして検証済みの環境はありません）。
 
+**かんたん互換性チェック：** アダプタを挿してイグニッションをONにし、`obd2-mcp --check` を実行します（リリースパッケージなら `npm exec --yes --package=<リリースの.tgzのURL> -- obd2-mcp --check`。WiFiアダプタは `--wifi`、接続先を指定するなら `--connection serial:COM3` を追加）。アダプタを探し、読み取り専用の確認を1つずつ行い、報告に貼り付けられる要約（アダプタ、通信方式、電圧、手順ごとの結果）を表示します。車台番号、ポート名、アドレスは含みません。
+
 実車接続でのClaude Code登録例:
 
 ```bash
