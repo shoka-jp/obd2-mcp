@@ -52,7 +52,7 @@ const LOCAL_READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotent
 
 /** Replaceable pieces, so tests can run adapter discovery and switching without hardware. */
 export interface ServerDeps {
-  findAdapters?: () => Promise<FindAdapterResult>;
+  findAdapters?: (options: { wifi: boolean }) => Promise<FindAdapterResult>;
   connect?: (connection: string, baud?: number) => { transport: Transport; mock: boolean };
   /** Waiting between watch_live_data samples; tests replace it to run instantly. */
   sleep?: (ms: number) => Promise<void>;
@@ -183,19 +183,22 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
     {
       title: "Find my OBD-II adapter",
       description:
-        "Find a USB or Bluetooth ELM327 adapter automatically, so the user does not need to know a port name. Only ports that look like an adapter (a known USB-serial chip, or a Bluetooth serial port) are opened, briefly, to send the adapter's identification command (ATZ); nothing is sent to the vehicle. Takes a few seconds per port. A Bluetooth adapter must be paired in the operating system first, and the adapter must be plugged into the car with the ignition on. WiFi adapters are not found this way: after the user joins the adapter's WiFi network, use use_adapter with tcp:192.168.0.10:35000 (or the address in its manual). If an adapter is found, ask the user before calling use_adapter with its connection value.",
-      inputSchema: {},
+        "Find a USB, Bluetooth or WiFi ELM327 adapter automatically, so the user does not need to know a port name. Only ports that look like an adapter (a known USB-serial chip, or a Bluetooth serial port) are opened, briefly, to send the adapter's identification command (ATZ); nothing is sent to the vehicle. Takes a few seconds per port. A Bluetooth adapter must be paired in the operating system first, and the adapter must be plugged into the car with the ignition on. For a WiFi adapter, first have the user join the adapter's WiFi network, then call this with include_wifi true to also try the usual factory addresses; if it is not found, use use_adapter with the address in its manual. If an adapter is found, ask the user before calling use_adapter with its connection value.",
+      inputSchema: {
+        include_wifi: z.boolean().optional().describe("Also try the usual WiFi adapter addresses (192.168.0.10:35000, 192.168.0.74:23). Only after the user has joined the adapter's WiFi network."),
+      },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
-    async () => {
+    async ({ include_wifi }) => {
       try {
-        const result = await (deps.findAdapters ?? (() => findAdapters()))();
+        const wifi = include_wifi === true;
+        const result = await (deps.findAdapters ?? (options => findAdapters(options)))({ wifi });
         const first = result.found[0];
         const next_step = first
           ? `Found ${result.found.length} adapter(s). Ask the user, then call use_adapter with connection ${first.connection}${first.baud && first.baud !== 38400 ? ` and baud ${first.baud}` : ""}.`
           : result.checked.length > 0
-            ? "No adapter answered. Check that it is plugged into the car, the ignition is ON, and (for Bluetooth) that it is paired and nearby; then try again."
-            : "No port looks like an OBD-II adapter. Plug in the USB adapter, or pair the Bluetooth adapter in the operating system settings, then try again. WiFi adapters use tcp:<host>:<port>. A Bluetooth LE-only adapter (often sold for iPhone) never appears as a port on a computer and cannot be used; see docs/adapters.md.";
+            ? `No adapter answered. Check that it is plugged into the car, the ignition is ON, and (for Bluetooth) that it is paired and nearby${wifi ? "; for WiFi, that this computer is on the adapter's network and the address is in its manual" : ""}; then try again.`
+            : "No port looks like an OBD-II adapter. Plug in the USB adapter, or pair the Bluetooth adapter in the operating system settings, then try again. For a WiFi adapter, have the user join its WiFi network and call find_adapter with include_wifi true. A Bluetooth LE-only adapter (often sold for iPhone) never appears as a port on a computer and cannot be used; see docs/adapters.md.";
         const payload = { ...result, current_connection: session.elm.describe(), next_step };
         return { content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }] };
       } catch (err) {
