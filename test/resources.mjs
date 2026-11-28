@@ -29,7 +29,7 @@ test('static resources and templates are listed with titles', async t => {
   const { resources } = await client.listResources();
   assert.deepEqual(resources.map(r => r.uri).sort(), [
     'obd2://guide/adapters', 'obd2://guide/troubleshooting', 'obd2://guide/used-car-check',
-    'obd2://report/latest', 'obd2://scenarios', 'obd2://sensors',
+    'obd2://report/latest', 'obd2://report/latest.ja.md', 'obd2://report/latest.md', 'obd2://scenarios', 'obd2://sensors',
   ]);
   for (const resource of resources) {
     assert.ok(resource.title, resource.uri);

@@ -9,6 +9,7 @@ import { listSerialPorts } from "./ports.js";
 import { registerPrompts } from "./prompts.js";
 import { registerResources, KEPT_REPORTS, type SessionRecord } from "./resources.js";
 import { compareReports, parseSavedReport, MAX_SAVED_REPORT_CHARS } from "./compare.js";
+import { renderReport } from "./report-text.js";
 import {
   CAN_PROTOCOLS,
   calibrationIds,
@@ -606,6 +607,29 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
       }
       const result = compareReports(earlierInput, laterEntry);
       return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+    }
+  );
+
+  server.registerTool(
+    "format_diagnostic_report",
+    {
+      title: "Format a diagnostic report to share",
+      description: `Turn a read_diagnostic_report from this session into readable Markdown, in English or Japanese, for the user to save or hand to a workshop: warning light, stored, pending and permanent codes, the freeze frame kept apart from live data, and readiness monitors, with unavailable values and errors shown as such. No VIN and no adapter port or address. Does not contact the vehicle. Show the text to the user as it is; add symptoms or questions outside it, not inside. Defaults to the latest report; report_number selects another (the last ${KEPT_REPORTS} are kept).`,
+      inputSchema: {
+        report_number: z.number().int().min(1).optional().describe("session_report_number; default: the latest report"),
+        language: z.enum(["en", "ja"]).optional().describe("en (default) or ja"),
+      },
+      annotations: LOCAL_READ_ONLY,
+    },
+    async ({ report_number, language }) => {
+      const entry = report_number !== undefined ? record.reports.find(r => r.number === report_number) : record.reports.at(-1);
+      if (!entry) {
+        const kept = record.reports.map(r => r.number);
+        return fail(new Error(kept.length
+          ? `Report ${report_number} is not available. Reports kept in this session: ${kept.join(", ")}.`
+          : "No report has been collected in this session yet. Call read_diagnostic_report first."));
+      }
+      return { content: [{ type: "text" as const, text: renderReport(entry.report, language ?? "en") }] };
     }
   );
 

@@ -17,7 +17,7 @@ The report uses sequential reads and does not request VIN or clear codes; it is 
 ### 1. Make the report easy to try and trust
 
 - **Release verification:** follow the [release checklist](./releasing.md) for each package and document the verified install path.
-- **Clearer handover:** explore an easy-to-read, shareable report that preserves unavailable values, errors, timestamps and the difference between freeze-frame and live readings. Keep the structured MCP response usable.
+- **Clearer handover:** a readable report in English or Japanese (`format_diagnostic_report`, `obd2://report/latest.md`) keeps unavailable values, errors, timestamps and the freeze frame apart from live readings, next to the structured MCP response. Next, improve it from workshop feedback.
 - **More useful simulations:** an EVAP example (`evap`, P0456) has been available since v0.4.0, a recently cleared car (`cleared`) since v0.6.0, and a car with unsupported sensors and no freeze frame (`partial`) since v0.6.1. Next, base new scenarios on real-vehicle reports, with expected observations and limitations. Simulated outcomes must stay clearly labeled.
 
 ### 2. Reduce uncertainty when connecting a real adapter

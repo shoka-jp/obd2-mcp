@@ -3,6 +3,7 @@ import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mc
 import { PIDS, PID_BY_NAME, DEFAULT_PIDS, FREEZE_PIDS } from "./pids.js";
 import { MOCK_SCENARIOS } from "./mock.js";
 import { describeDtc } from "./dtc-info.js";
+import { renderReport } from "./report-text.js";
 
 /**
  * MCP resources: reference material a user can attach to a conversation
@@ -131,6 +132,32 @@ export function registerResources(server: McpServer, record: SessionRecord): voi
       note: "No diagnostic report has been collected since the server started. Ask Claude to collect one (read_diagnostic_report) first.",
     })
   );
+
+  for (const [lang, uri, title] of [
+    ["en", "obd2://report/latest.md", "Latest diagnostic report (readable, English)"],
+    ["ja", "obd2://report/latest.ja.md", "Latest diagnostic report (readable, Japanese)"],
+  ] as const) {
+    server.registerResource(
+      `latest-report-${lang}`,
+      uri,
+      {
+        title,
+        description: "The most recent read_diagnostic_report as readable Markdown to save or hand to a workshop: codes, freeze frame, live data and readiness, with unavailable values and errors kept visible. No VIN and no adapter port or address.",
+        mimeType: "text/markdown",
+      },
+      async u => ({
+        contents: [{
+          uri: u.href,
+          mimeType: "text/markdown",
+          text: record.latestReport
+            ? renderReport(record.latestReport, lang)
+            : lang === "ja"
+              ? "まだ診断レポートがありません。先にClaudeにレポートの収集（read_diagnostic_report）を頼んでください。\n"
+              : "No diagnostic report has been collected since the server started. Ask Claude to collect one (read_diagnostic_report) first.\n",
+        }],
+      })
+    );
+  }
 
   server.registerResource(
     "session-report",
