@@ -1,0 +1,77 @@
+name: Publish to npm
+
+# Publish a release's package to the npm registry with npm trusted publishing
+# (GitHub OIDC): no npm token is stored in this repository, and npm adds a
+# provenance statement that links the package to this workflow run.
+#
+# Off until the maintainer has published the first version by hand, added this
+# workflow as the package's trusted publisher on npmjs.com, and set the
+# repository variable NPM_PUBLISH to "true". See docs/releasing.md.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to publish, for example v0.9.0"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: vars.NPM_PUBLISH == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+      # Trusted publishing needs npm 11.5.1 or later, which comes with Node.js 24.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 24
+      - name: Check that package.json matches the tag
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "v$version" != "$TAG" ]; then
+            echo "::error::package.json version $version does not match tag $TAG"
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm test
+      - name: Skip a version that is already on npm
+        run: |
+          if npm view "obd2-mcp@$VERSION" version >/dev/null 2>&1; then
+            echo "obd2-mcp@$VERSION is already on npm; nothing to publish."
+            echo "ALREADY_PUBLISHED=true" >> "$GITHUB_ENV"
+          fi
+      - name: Publish
+        if: env.ALREADY_PUBLISHED != 'true'
+        run: npm publish --access public
+      - name: Confirm the published version
+        if: env.ALREADY_PUBLISHED != 'true'
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            if [ "$(npm view "obd2-mcp@$VERSION" version 2>/dev/null)" = "$VERSION" ]; then
+              echo "obd2-mcp@$VERSION is on npm."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::obd2-mcp@$VERSION was published but is not visible yet"
+          exit 1
