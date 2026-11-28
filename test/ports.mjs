@@ -6,6 +6,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Elm327 } from '../dist/elm327.js';
 import { MockTransport } from '../dist/mock.js';
+import { adapterCandidates } from '../dist/discover.js';
 import { formatPortList, listSerialPorts, SERIALPORT_MISSING } from '../dist/ports.js';
 import { buildServer } from '../dist/server.js';
 
@@ -41,11 +42,34 @@ test('a missing optional serialport package gives an actionable error', async ()
   await assert.rejects(listSerialPorts(async () => { throw new Error('Cannot find package'); }), { message: SERIALPORT_MISSING });
 });
 
-test('a missing udevadm on Linux keeps the original error and explains how to specify a port directly', async () => {
+test('without udevadm on Linux, adapter-like device files are listed instead', async () => {
   const failing = async () => ({
     SerialPort: { list: async () => { throw new Error('spawn udevadm ENOENT'); } },
   });
-  await assert.rejects(listSerialPorts(failing), error => {
+  const ports = await listSerialPorts(failing, {
+    platform: 'linux',
+    readDir: async () => ['null', 'ttyS0', 'ttyUSB1', 'rfcomm0', 'ttyACM0', 'ttyUSB0', 'tty1'],
+  });
+  assert.deepEqual(ports.map(p => p.connection), ['serial:/dev/rfcomm0', 'serial:/dev/ttyACM0', 'serial:/dev/ttyUSB0', 'serial:/dev/ttyUSB1']);
+  assert.match(ports[0].description, /^Bluetooth serial device \(found in \/dev; udevadm unavailable\)$/);
+  assert.match(ports[2].description, /^USB serial device/);
+  assert.equal(ports[2].vendor_id, null);
+  // find_adapter checks them: USB device names as USB, rfcomm as Bluetooth.
+  const { candidates, skipped } = adapterCandidates(ports);
+  assert.deepEqual(candidates.map(c => [c.port.path, c.usb]), [['/dev/rfcomm0', false], ['/dev/ttyACM0', true], ['/dev/ttyUSB0', true], ['/dev/ttyUSB1', true]]);
+  assert.deepEqual(skipped, []);
+});
+
+test('a missing udevadm keeps the original error and explains how to specify a port when the fallback is not possible', async () => {
+  const failing = async () => ({
+    SerialPort: { list: async () => { throw new Error('spawn udevadm ENOENT'); } },
+  });
+  const unreadable = { platform: 'linux', readDir: async () => { throw new Error('EACCES'); } };
+  await assert.rejects(listSerialPorts(failing, unreadable), error => {
+    assert.ok(error.message.includes('spawn udevadm ENOENT'), 'original error text is kept');
+    return true;
+  });
+  await assert.rejects(listSerialPorts(failing, { platform: 'darwin' }), error => {
     assert.ok(error.message.includes('spawn udevadm ENOENT'), 'original error text is kept');
     assert.match(error.message, /udevadm/);
     assert.match(error.message, /\/dev\/ttyUSB\*/);

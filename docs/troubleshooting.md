@@ -16,7 +16,7 @@ The easiest way is to ask Claude to connect to your adapter: it runs `find_adapt
 
 If listing fails because the optional `serialport` package is missing, reinstall where npm can install it, or use a WiFi adapter (`tcp:<host>:<port>`).
 
-On Linux systems without `udevadm` (some containers, minimal installs and WSL setups), listing fails with `spawn udevadm ENOENT`; check `ls /dev/ttyUSB* /dev/ttyACM* /dev/rfcomm*` and set `serial:<path>` directly.
+On Linux systems without `udevadm` (some containers, minimal installs and WSL setups), obd2-mcp looks for `/dev/ttyUSB*`, `/dev/ttyACM*` and `/dev/rfcomm*` directly, so listing and `find_adapter` still work, without the port descriptions. If even that is not possible, the error keeps the original `spawn udevadm ENOENT` text; check `ls /dev/ttyUSB* /dev/ttyACM* /dev/rfcomm*` and set `serial:<path>` directly.
 
 ### Bluetooth adapters
 
@@ -66,7 +66,7 @@ Open a [real setup report](https://github.com/shoka-jp/obd2-mcp/issues/new?templ
 
 任意依存の `serialport` がないため一覧表示できない場合は、npmがインストールできる環境で入れ直すか、WiFiアダプタ（`tcp:<ホスト>:<ポート>`）を使ってください。
 
-`udevadm` がないLinux環境（一部のコンテナ、最小構成、WSLなど）では `spawn udevadm ENOENT` で一覧取得に失敗しますが、`ls /dev/ttyUSB* /dev/ttyACM* /dev/rfcomm*` でデバイスを確認して `serial:<パス>` を直接指定できます。
+`udevadm` がないLinux環境（一部のコンテナ、最小構成、WSLなど）では、obd2-mcpが `/dev/ttyUSB*`、`/dev/ttyACM*`、`/dev/rfcomm*` を直接探すので、ポート一覧と `find_adapter` はポートの説明なしで使えます。それもできない場合は元の `spawn udevadm ENOENT` を含むエラーになるので、`ls /dev/ttyUSB* /dev/ttyACM* /dev/rfcomm*` でデバイスを確認し、`serial:<パス>` を直接指定してください。
 
 ### Bluetoothアダプタ
 
