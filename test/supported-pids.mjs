@@ -40,10 +40,12 @@ test('mock discovery advertises implemented sensors using only support queries',
   assert.equal(data.mode, '01');
   assert.equal(data.pid_range, '01-60');
   assert(Number.isFinite(Date.parse(data.collected_at)));
-  assert.deepEqual(data.supported_sensor_names, mockPidNames());
-  assert(data.sensors.every(sensor => sensor.support === 'supported'));
+  // The catalyst car is a port-injected petrol car without EGR or a hybrid battery.
+  const absent = ['fuel_pressure', 'fuel_rail_pressure', 'commanded_egr', 'hybrid_battery_remaining'];
+  assert.deepEqual(data.supported_sensor_names, mockPidNames().filter(name => !absent.includes(name)));
+  assert.deepEqual(data.sensors.filter(sensor => sensor.support !== 'supported').map(sensor => [sensor.name, sensor.support]), absent.map(name => [name, 'not_advertised']));
   assert.deepEqual(commands.filter(command => !command.startsWith('AT')), ['0100', '0120', '0140']);
-  assert.deepEqual(data.blocks[2].supported_pids, ['42', '46', '5C']);
+  assert.deepEqual(data.blocks[2].supported_pids, ['42', '43', '44', '45', '46', '49', '4D', '4E', '5C', '5E']);
   const live = await client.callTool({ name: 'read_live_data', arguments: { pids: data.supported_sensor_names } });
   const values = JSON.parse(live.content[0].text).live_data;
   assert(data.supported_sensor_names.every(name => Number.isFinite(values[name].value)));

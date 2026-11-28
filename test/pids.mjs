@@ -22,6 +22,18 @@ test('parse converts explicit Mode 01 byte fixtures accurately', () => {
     ['21', 'distance_with_mil', '00 80', 128],
     ['30', 'warmups_since_clear', '12', 18],
     ['31', 'distance_since_clear', '01 5E', 350],
+    ['0A', 'fuel_pressure', '64', 300],
+    ['23', 'fuel_rail_pressure', '01 F4', 5000],
+    ['2C', 'commanded_egr', 'FF', 100],
+    ['2E', 'evap_purge', '00', 0],
+    ['43', 'absolute_load', '00 FF', 100],
+    ['44', 'commanded_lambda', '80 00', 1],
+    ['45', 'relative_throttle', 'FF', 100],
+    ['49', 'accelerator_pedal', '00', 0],
+    ['4D', 'time_with_mil', '00 5F', 95],
+    ['4E', 'time_since_clear', '04 9C', 1180],
+    ['5B', 'hybrid_battery_remaining', 'FF', 100],
+    ['5E', 'fuel_rate', '00 0F', 0.75],
   ];
 
   for (const [code, name, bytesHex, expected] of cases) {
@@ -63,6 +75,18 @@ test('every PID encode stays in 0-255 and round-trips within one resolution step
     '42': { step: 0.001, values: [0, 12.5, 14.32, 65.535] },
     '46': { step: 1, values: [-40, 26, 80] },
     '5C': { step: 1, values: [-40, 96, 150] },
+    '0A': { step: 3, values: [0, 300, 765] },
+    '23': { step: 10, values: [0, 5000, 655350] },
+    '2C': { step: 100 / 255, values: [0, 12, 100] },
+    '2E': { step: 100 / 255, values: [0, 12.2, 100] },
+    '43': { step: 100 / 255, values: [0, 21.2, 25700] },
+    '44': { step: 2 / 65536, values: [0, 0.8, 1, 1.999] },
+    '45': { step: 100 / 255, values: [0, 3.1, 100] },
+    '49': { step: 100 / 255, values: [0, 18, 100] },
+    '4D': { step: 1, values: [0, 95, 65535] },
+    '4E': { step: 1, values: [0, 1180, 65535] },
+    '5B': { step: 100 / 255, values: [0, 57, 100] },
+    '5E': { step: 0.05, values: [0, 0.75, 3276.75] },
   };
 
   for (const def of PIDS) {

@@ -54,6 +54,18 @@ const SENSORS_JA: Record<string, string> = {
   module_voltage: "制御ユニット電圧",
   ambient_temp: "外気温",
   oil_temp: "エンジン油温",
+  fuel_pressure: "燃圧（ゲージ圧）",
+  fuel_rail_pressure: "燃料レール圧（ゲージ圧）",
+  commanded_egr: "EGR指令値",
+  evap_purge: "EVAPパージ指令値",
+  absolute_load: "絶対負荷",
+  commanded_lambda: "目標空燃比（λ）",
+  relative_throttle: "相対スロットル開度",
+  accelerator_pedal: "アクセル開度（D）",
+  time_with_mil: "警告灯点灯中の運転時間",
+  time_since_clear: "コード消去後の経過時間",
+  hybrid_battery_remaining: "ハイブリッドバッテリー残量（意味はメーカーによる）",
+  fuel_rate: "燃料消費率",
 };
 
 const T = {
@@ -138,7 +150,7 @@ function formatTime(value: unknown): string | null {
 }
 
 function unit(u: string): string {
-  return u === "degC" ? "°C" : u === "count" ? "" : u;
+  return u === "degC" ? "°C" : u === "count" || u === "lambda" ? "" : u;
 }
 
 function value(v: number, u: string): string {
