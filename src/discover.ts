@@ -1,5 +1,5 @@
 import { listSerialPorts, type SerialPortSummary } from "./ports.js";
-import { SerialTransport } from "./transport.js";
+import { SerialTransport, TcpTransport } from "./transport.js";
 import type { Transport } from "./transport.js";
 
 /**
@@ -34,9 +34,24 @@ export interface DiscoverDeps {
   list?: () => Promise<SerialPortSummary[]>;
   /** Creates the transport used for one probe; tests replace it. */
   open?: (path: string, baud: number) => Transport;
+  /** Creates the transport for one WiFi address; tests replace it. */
+  openTcp?: (host: string, port: number) => Transport;
   baud?: number;
   timeoutMs?: number;
+  /** Also try the usual WiFi adapter addresses (only when the computer has joined the adapter's network). */
+  wifi?: boolean;
+  /** WiFi addresses to try; defaults to WIFI_ADDRESSES. */
+  wifiAddresses?: Array<{ host: string; port: number }>;
 }
+
+/**
+ * Factory addresses of common WiFi ELM327 adapters: most clones use
+ * 192.168.0.10:35000; OBDLink MX WiFi uses 192.168.0.74:23.
+ */
+export const WIFI_ADDRESSES = [
+  { host: "192.168.0.10", port: 35000 },
+  { host: "192.168.0.74", port: 23 },
+];
 
 const IDENTITY = /ELM\s?327[^\r\n>]*|OBDLink[^\r\n>]*|STN\d{4}[^\r\n>]*|v-?Link[^\r\n>]*/i;
 const NOT_AN_ADAPTER = /incoming|debug-console|wlan-debug|modem|^\/dev\/ttyS\d+$/i;
@@ -77,11 +92,10 @@ function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promi
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
-/** Open one port at one baud rate, send ATZ and read the identity. Always closes the port. */
-async function probe(path: string, baud: number, open: (path: string, baud: number) => Transport, timeoutMs: number) {
-  const transport = open(path, baud);
+/** Open one connection, send ATZ and read the identity. Always closes the connection. */
+async function probe(name: string, transport: Transport, timeoutMs: number, openTimeoutMs = timeoutMs + 4000) {
   try {
-    await withTimeout(transport.open(), timeoutMs + 4000, `Opening ${path} took too long`);
+    await withTimeout(transport.open(), openTimeoutMs, `Opening ${name} took too long`);
     const reply = await transport.sendRaw("ATZ", timeoutMs);
     const identity = IDENTITY.exec(reply)?.[0].trim();
     return identity ? { status: "elm327_found" as const, adapter: identity } : { status: "not_elm327" as const, detail: reply.trim().slice(0, 80) };
@@ -105,12 +119,22 @@ export async function findAdapters(deps: DiscoverDeps = {}): Promise<FindAdapter
     const bauds = usb ? [baud, ...USB_BAUDS.filter(b => b !== baud)] : [baud];
     let result: ProbeResult = { connection: port.connection, description: port.description, reason, status: "no_answer" };
     for (const rate of bauds) {
-      const outcome = await probe(port.path, rate, open, timeoutMs);
+      const outcome = await probe(port.path, open(port.path, rate), timeoutMs);
       result = { connection: port.connection, description: port.description, reason, ...outcome, ...(outcome.status === "elm327_found" ? { baud: rate } : {}) };
       // Only a silent port is worth retrying at another speed.
       if (outcome.status !== "no_answer") break;
     }
     checked.push(result);
+  }
+  if (deps.wifi) {
+    const openTcp = deps.openTcp ?? ((host: string, port: number) => new TcpTransport(host, port, 2000));
+    for (const { host, port } of deps.wifiAddresses ?? WIFI_ADDRESSES) {
+      const connection = `tcp:${host}:${port}`;
+      const outcome = await probe(connection, openTcp(host, port), timeoutMs, 3000);
+      // An address nobody answers on is not worth listing as an error.
+      const status = outcome.status === "error" && /ECONNREFUSED|EHOSTUNREACH|ENETUNREACH|ETIMEDOUT|took too long|Timed out/i.test(outcome.detail ?? "") ? "no_answer" : outcome.status;
+      checked.push({ connection, description: "Common WiFi adapter address", reason: "WiFi adapter factory address", ...outcome, status });
+    }
   }
   return {
     found: checked.filter(result => result.status === "elm327_found"),

@@ -34,7 +34,7 @@ On Linux systems without `udevadm` (some containers, minimal installs and WSL se
 ### WiFi adapters
 
 - The computer must join the adapter's WiFi network. It often has no internet access while connected.
-- Many adapters use `tcp:192.168.0.10:35000`; check the adapter's manual for its address and port.
+- Then ask Claude to connect: `find_adapter` with `include_wifi` tries the usual factory addresses (`192.168.0.10:35000`, and `192.168.0.74:23` for OBDLink MX WiFi) with the identification command only. If yours uses another address, check the adapter's manual.
 - A connection that is not accepted within 10 seconds fails with a timeout. Check the network and the address, and check that a firewall does not block the connection.
 
 ### The adapter answers, but the vehicle does not
@@ -84,7 +84,7 @@ Open a [real setup report](https://github.com/shoka-jp/obd2-mcp/issues/new?templ
 ### WiFiアダプタ
 
 - パソコンをアダプタのWiFiに接続します。接続中はインターネットにつながらないことがよくあります。
-- 多くのアダプタは `tcp:192.168.0.10:35000` ですが、アドレスとポートはアダプタの説明書で確認してください。
+- そのうえでClaudeに接続を頼むと、`find_adapter`（`include_wifi`）がよく使われる初期アドレス（`192.168.0.10:35000`、OBDLink MX WiFiの `192.168.0.74:23`）に識別コマンドだけを送って確かめます。別のアドレスを使うアダプタは説明書で確認してください。
 - 10秒以内に接続できない場合はタイムアウトになります。ネットワークとアドレスに加え、ファイアウォールが接続を妨げていないか確認してください。
 
 ### アダプタは応答するが車両が応答しない

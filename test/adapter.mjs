@@ -179,3 +179,42 @@ test('local WiFi addresses and serial names pass the session check', async () =>
     assert.equal(sessionConnectionError(ok), undefined, ok);
   }
 });
+
+test('WiFi addresses are tried only when asked, with ATZ only', async t => {
+  const tried = [];
+  const wifiAdapter = (host, port) => ({
+    describe: () => `tcp:${host}:${port}`,
+    open: async () => {
+      tried.push(`${host}:${port}`);
+      if (host !== '192.168.0.10') throw new Error(`connect ECONNREFUSED ${host}:${port}`);
+    },
+    close: async () => {},
+    sendRaw: async command => { tried.push(command); return 'ELM327 v1.5\r\r'; },
+  });
+  const base = { list: async () => [], openTcp: wifiAdapter, timeoutMs: 50 };
+  const without = await findAdapters(base);
+  assert.deepEqual(without.checked, []);
+  assert.deepEqual(tried, [], 'no network connection unless asked');
+
+  const withWifi = await findAdapters({ ...base, wifi: true });
+  assert.deepEqual(tried, ['192.168.0.10:35000', 'ATZ', '192.168.0.74:23']);
+  assert.deepEqual(withWifi.found.map(f => [f.connection, f.adapter]), [['tcp:192.168.0.10:35000', 'ELM327 v1.5']]);
+  assert.deepEqual(withWifi.checked.map(c => [c.connection, c.status]), [['tcp:192.168.0.10:35000', 'elm327_found'], ['tcp:192.168.0.74:23', 'no_answer']]);
+});
+
+test('find_adapter passes include_wifi and suggests the WiFi step', async t => {
+  const seen = [];
+  const { call } = await session(t, { findAdapters: async options => { seen.push(options); return { found: [], checked: [], skipped: [] }; } });
+  await call('find_adapter');
+  const { data } = await call('find_adapter', { include_wifi: true });
+  assert.deepEqual(seen, [{ wifi: false }, { wifi: true }]);
+  assert.match(data.next_step, /call find_adapter with include_wifi true/);
+});
+
+test('a WiFi adapter on a real TCP socket is found', async t => {
+  const { connection, commands } = await fakeWifiAdapter(t);
+  const [, host, port] = /^tcp:(.+):(\d+)$/.exec(connection);
+  const result = await findAdapters({ list: async () => [], wifi: true, wifiAddresses: [{ host, port: Number(port) }] });
+  assert.deepEqual(result.found.map(f => f.connection), [connection]);
+  assert.deepEqual(commands, ['ATZ']);
+});
