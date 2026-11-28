@@ -75,6 +75,8 @@ export interface ServerDeps {
   units?: UnitSystem;
 }
 
+const MOCK_NOTE = "Mock vehicle data — no real car is connected.";
+
 /** Limits for watch_live_data: a short look at how values change while parked, not a driving logger. */
 export const WATCH_LIMITS = { maxPids: 4, minSeconds: 5, maxSeconds: 30, minInterval: 1, maxInterval: 5 } as const;
 
@@ -106,9 +108,9 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
     const payload = {
       ...data,
       source: session.elm.describe(),
-      ...(session.mock ? { simulated: true, note: data.note ?? "Mock vehicle data — no real car is connected." } : {}),
+      ...(session.mock ? { simulated: true, note: data.note ?? MOCK_NOTE } : {}),
     };
-    return { content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }] };
+    return { content: [{ type: "text" as const, text: JSON.stringify(payload) }] };
   };
 
   const fail = (err: unknown) => {
@@ -195,7 +197,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
               ? "No serial ports found. Plug in a USB adapter or pair a Bluetooth adapter in the operating system first. WiFi adapters use tcp:<host>:<port>."
               : "A listed port is not necessarily an OBD-II adapter. To identify it, unplug or unpair the adapter and list again. Use the chosen 'connection' value as OBD2MCP_CONNECTION and restart the server.",
         };
-        return { content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }] };
+        return { content: [{ type: "text" as const, text: JSON.stringify(payload) }] };
       } catch (err) {
         return fail(err);
       }
@@ -224,7 +226,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
             ? `No adapter answered. Check that it is plugged into the car, the ignition is ON, and (for Bluetooth) that it is paired and nearby${wifi ? "; for WiFi, that this computer is on the adapter's network and the address is in its manual" : ""}; then try again.`
             : "No port looks like an OBD-II adapter. Plug in the USB adapter, or pair the Bluetooth adapter in the operating system settings, then try again. For a WiFi adapter, have the user join its WiFi network and call find_adapter with include_wifi true. A Bluetooth LE-only adapter (often sold for iPhone) never appears as a port on a computer and cannot be used; see docs/adapters.md.";
         const payload = { ...result, current_connection: session.elm.describe(), next_step };
-        return { content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }] };
+        return { content: [{ type: "text" as const, text: JSON.stringify(payload) }] };
       } catch (err) {
         return fail(err);
       }
@@ -362,7 +364,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
     "read_supported_pids",
     {
       title: "Discover supported live sensors",
-      description: "Discover advertised Mode 01 support for this server's live sensors (PID range 01-60). Returns supported_sensor_names for a later read_live_data or read_diagnostic_report call, plus per-sensor supported/not_advertised/unknown states. Partial failures retain earlier results. Support does not guarantee a reading. If no names are supported, do not pass an empty pids array expecting no reads: it selects the defaults. No VIN request or code clearing.",
+      description: "Discover advertised Mode 01 support for this server's live sensors (PID range 01-60). Returns supported_sensor_names for a later read_live_data or read_diagnostic_report call, plus not_advertised_sensor_names and unknown_sensor_names (support unknown is not unsupported). Partial failures retain earlier results. Support does not guarantee a reading. If no names are supported, do not pass an empty pids array expecting no reads: it selects the defaults. No VIN request or code clearing.",
       inputSchema: {},
       annotations: READ_ONLY,
     },
@@ -411,7 +413,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
     "watch_live_data",
     {
       title: "Watch live sensor data over time",
-      description: `Read up to ${WATCH_LIMITS.maxPids} live sensors repeatedly for ${WATCH_LIMITS.minSeconds}-${WATCH_LIMITS.maxSeconds} seconds while the vehicle is parked, to see how values change: for example coolant temperature while the engine warms up, idle rpm stability, or fuel trims. Returns timestamped samples and, per sensor, min, max, first, last and the number of failed reads. Use read_supported_pids first and pass only supported names. Available names: ${PIDS.map(p => p.name).join(", ")}. Read-only; it is not a driving logger.`,
+      description: `Read up to ${WATCH_LIMITS.maxPids} live sensors repeatedly for ${WATCH_LIMITS.minSeconds}-${WATCH_LIMITS.maxSeconds} seconds while the vehicle is parked, to see how values change: for example coolant temperature while the engine warms up, idle rpm stability, or fuel trims. Returns timestamped samples and, per sensor, min, max, first, last and the number of failed reads. Use read_supported_pids first and pass only supported names; the names are those of read_live_data. Read-only; it is not a driving logger.`,
       inputSchema: {
         pids: z.array(z.string()).min(1).max(WATCH_LIMITS.maxPids).describe(`1 to ${WATCH_LIMITS.maxPids} PID names to watch`),
         seconds: z.number().int().min(WATCH_LIMITS.minSeconds).max(WATCH_LIMITS.maxSeconds).optional().describe(`How long to watch, ${WATCH_LIMITS.minSeconds}-${WATCH_LIMITS.maxSeconds} seconds (default 20)`),
@@ -572,7 +574,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
     "read_diagnostic_report",
     {
       title: "Collect diagnostic evidence report",
-      description: `Collect stored/pending/permanent codes, freeze frame, live data and readiness into one timestamped evidence record for a workshop discussion. Optionally select live sensor names with pids; omit or pass an empty list for the defaults. Available names: ${PIDS.map(p => p.name).join(", ")}. Readings are collected sequentially. Preserve each section's errors and unknown values when summarizing. VIN is not requested and codes are not cleared. The result contains observations, not a diagnosis. Each report gets a session_report_number; collect another later (for example after a test drive or a repair) and call compare_diagnostic_reports to see what changed. If the user set a report history folder, reports from a real vehicle are also saved there and the latest come back after a restart (marked loaded_from), so reports from earlier days can be compared.`,
+      description: `Collect stored/pending/permanent codes, freeze frame, live data and readiness into one timestamped evidence record for a workshop discussion. Optionally select live sensor names with pids (the names of read_live_data); omit or pass an empty list for the defaults. Readings are collected sequentially. Preserve each section's errors and unknown values when summarizing. VIN is not requested and codes are not cleared. The result contains observations, not a diagnosis. Each report gets a session_report_number; collect another later (for example after a test drive or a repair) and call compare_diagnostic_reports to see what changed. If the user set a report history folder, reports from a real vehicle are also saved there and the latest come back after a restart (marked loaded_from), so reports from earlier days can be compared.`,
       inputSchema: { pids: z.array(z.string()).optional().describe("Live PID names to read; omit or pass an empty list for the default set") },
       annotations: READ_ONLY,
     },
@@ -596,6 +598,9 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
         // Source can contain the local serial path or adapter's network address.
         // Keep it out of a report intended for sharing with a workshop.
         delete data.source;
+        // The report says once whether it is simulated; per-section copies only cost tokens.
+        delete data.simulated;
+        if (data.note === MOCK_NOTE) delete data.note;
         sections[name] = {
           collected_at: new Date().toISOString(),
           is_error: "isError" in result && result.isError === true,
@@ -623,7 +628,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
       record.reports.push({ number, report });
       if (record.reports.length > KEPT_REPORTS) record.reports.shift();
       return {
-        content: [{ type: "text" as const, text: JSON.stringify(report, null, 2) }],
+        content: [{ type: "text" as const, text: JSON.stringify(report) }],
         structuredContent: report,
       };
     }
@@ -672,7 +677,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
         earlierInput = earlierEntry;
       }
       const result = compareReports(earlierInput, laterEntry);
-      return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+      return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
     }
   );
 
