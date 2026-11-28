@@ -60,6 +60,12 @@ test('codes cleared between two reports: counters went down, monitors reset, cod
   assert(result.observations.some(o => o === 'The warning light went off since the earlier report.'));
 });
 
+test('time since codes were cleared going down also shows a clear', () => {
+  const result = compare(report({ live: { time_since_clear: 1180 } }), report({ live: { time_since_clear: 3 } }));
+  assert.match(result.observations[0], /^time_since_clear went down \(1180 to 3\): trouble codes were cleared between the reports/);
+  assert.equal(result.live_data.time_since_clear.unit, 'min');
+});
+
 test('monitor reset with a gone code but no counters is reported as consistent with a clear', () => {
   const result = compare(
     report({ mil: true, stored: ['P0171'] }),

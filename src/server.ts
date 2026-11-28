@@ -634,6 +634,31 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
   );
 
   server.registerTool(
+    "read_battery_voltage",
+    {
+      title: "Read battery voltage at the OBD-II port",
+      description: "Read the voltage at the OBD-II port as measured by the adapter itself (ELM327 command ATRV), to check the 12 V battery and charging. This asks the adapter, not the car's control modules, so it also works with the ignition off. One reading is not a battery test: present it with the guide in the result, and do not call a battery bad from it alone.",
+      inputSchema: {},
+      annotations: READ_ONLY,
+    },
+    async () => {
+      try {
+        const answer = (await session.elm.at("ATRV")).trim();
+        const match = /^(\d{1,2}(?:\.\d{1,2})?)\s*V$/i.exec(answer);
+        if (!match) throw new Error(`Unexpected answer to ATRV: ${answer || "(empty)"}`);
+        return wrap({
+          voltage: Number(match[1]),
+          unit: "V",
+          measured_by: "adapter",
+          note: "Measured by the adapter at the OBD-II port; inexpensive adapters can be off by a few tenths of a volt, so compare readings taken with the same adapter. Rough guide for a 12 V lead-acid battery: with the engine off after the car has rested for an hour or more, about 12.6 V or more is charged, about 12.4 V partly charged, and 12.2 V or less low. With the engine running, about 13.5 to 14.8 V usually means the alternator is charging; cars with smart charging can read lower or higher. A voltage reading is not a load test; a workshop can test the battery properly.",
+        });
+      } catch (err) {
+        return fail(err);
+      }
+    }
+  );
+
+  server.registerTool(
     "read_vin",
     {
       title: "Read VIN",

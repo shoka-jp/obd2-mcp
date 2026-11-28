@@ -209,7 +209,7 @@ export function compareReports(earlierInput: CompareInput, laterInput: CompareIn
   if (hoursBetween !== null && hoursBetween < 0) {
     observations.push("The \"earlier\" report was collected after the \"later\" one; the changes below are described in the order given.");
   }
-  const counterDrop = (["warmups_since_clear", "distance_since_clear"] as const)
+  const counterDrop = (["warmups_since_clear", "distance_since_clear", "time_since_clear"] as const)
     .filter(name => liveData[name]?.change !== null && liveData[name]?.change !== undefined && liveData[name].change! < 0);
   const gone = stored.status === "compared" ? stored.gone : [];
   const reset = readiness.status === "compared" ? readiness.became_incomplete : [];

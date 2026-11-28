@@ -70,6 +70,14 @@ function defaultState(): MockState {
       oil_temp: 96,
       run_time: 640,
       distance_with_mil: 128,
+      evap_purge: 12.2,
+      absolute_load: 21.2,
+      commanded_lambda: 1,
+      relative_throttle: 3.1,
+      accelerator_pedal: 0,
+      time_with_mil: 95,
+      time_since_clear: 1180,
+      fuel_rate: 0.75,
     },
     freeze: {
       engine_load: 34.5,
@@ -99,6 +107,7 @@ function scenarioState(scenario: MockScenario): MockState {
     state.freezeDtc = null;
     state.readinessIncomplete = 0;
     state.live.distance_with_mil = 0;
+    state.live.time_with_mil = 0;
   } else if (scenario === "misfire") {
     state.storedDtcs = ["P0301"];
     state.permanentDtcs = ["P0301"];
@@ -124,6 +133,8 @@ function scenarioState(scenario: MockScenario): MockState {
     state.live.distance_with_mil = 0;
     state.live.warmups_since_clear = 1;
     state.live.distance_since_clear = 12;
+    state.live.time_since_clear = 22;
+    state.live.time_with_mil = 0;
     state.live.run_time = 410;
   } else if (scenario === "partial") {
     state.storedDtcs = ["P0128"];
@@ -243,7 +254,7 @@ export class MockTransport implements Transport {
       this.state.freezeDtc = null;
       this.state.readinessIncomplete = 0xe5;
       this.state.continuousIncomplete = 0x70;
-      for (const pid of ["distance_with_mil", "warmups_since_clear", "distance_since_clear"]) {
+      for (const pid of ["distance_with_mil", "warmups_since_clear", "distance_since_clear", "time_with_mil", "time_since_clear"]) {
         if (pid in this.state.live) {
           this.state.live[pid] = 0;
         }

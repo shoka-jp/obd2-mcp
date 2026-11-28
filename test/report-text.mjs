@@ -89,6 +89,17 @@ test('unavailable values stay visible and are never shown as normal', () => {
   assert.doesNotMatch(oddText, /clear the codes/);
 });
 
+test('units of the newer sensors', () => {
+  const text = renderReport({ schema_version: 1, sections: { read_live_data: { is_error: false, data: { live_data: {
+    commanded_lambda: { value: 1 }, time_since_clear: { value: 22 }, fuel_rate: { value: 0.75 }, hybrid_battery_remaining: { value: 57.25 },
+  } } } } }, 'en');
+  assert.match(text, /\| Commanded air-fuel equivalence ratio \(lambda\) \| 1 \|/);
+  assert.match(text, /\| Time since trouble codes cleared \| 22 min \|/);
+  assert.match(text, /\| Engine fuel rate \| 0\.75 L\/h \|/);
+  assert.match(text, /\| Hybrid battery pack remaining life \(meaning varies by manufacturer\) \| 57\.25% \|/);
+  assert.match(renderReport({ schema_version: 1, sections: { read_live_data: { is_error: false, data: { live_data: { time_with_mil: { value: 95 } } } } } }, 'ja'), /\| 警告灯点灯中の運転時間 \| 95 min \|/);
+});
+
 test('language names map to en or ja', () => {
   for (const value of ['ja', 'JA', 'Japanese', '日本語']) assert.equal(reportLanguage(value), 'ja');
   for (const value of [undefined, '', 'English', 'Español', '中文']) assert.equal(reportLanguage(value), 'en');
