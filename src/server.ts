@@ -24,6 +24,7 @@ import {
 } from "./mode09.js";
 import { VERSION } from "./version.js";
 import { SERVER_INSTRUCTIONS } from "./instructions.js";
+import { IMPERIAL_INSTRUCTION, unitSystem, type UnitSystem } from "./units.js";
 import { errorHint } from "./hints.js";
 import { findAdapters, type FindAdapterResult } from "./discover.js";
 import { parseConnection, sessionConnectionError } from "./connection.js";
@@ -70,6 +71,8 @@ export interface ServerDeps {
   now?: () => number;
   /** Report history folder; undefined reads OBD2MCP_REPORT_DIR, null turns history off. */
   reportDir?: string | null;
+  /** Display units; undefined reads OBD2MCP_UNITS. */
+  units?: UnitSystem;
 }
 
 /** Limits for watch_live_data: a short look at how values change while parked, not a driving logger. */
@@ -95,7 +98,9 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
     }
   }
   const remember = (codes: Array<string | null | undefined>) => { for (const code of codes) if (code) record.seenCodes.add(code); };
-  const server = new McpServer({ name: "obd2-mcp", version: VERSION }, { instructions: SERVER_INSTRUCTIONS });
+  const units = deps.units ?? unitSystem(process.env);
+  const instructions = units === "imperial" ? `${SERVER_INSTRUCTIONS}\n${IMPERIAL_INSTRUCTION}` : SERVER_INSTRUCTIONS;
+  const server = new McpServer({ name: "obd2-mcp", version: VERSION }, { instructions });
 
   const wrap = (data: Record<string, unknown>) => {
     const payload = {
@@ -679,10 +684,11 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
       inputSchema: {
         report_number: z.number().int().min(1).optional().describe("session_report_number; default: the latest report"),
         language: z.enum(["en", "ja"]).optional().describe("en (default) or ja"),
+        units: z.enum(["metric", "imperial"]).optional().describe("metric or imperial (US units); default: the user's setting"),
       },
       annotations: LOCAL_READ_ONLY,
     },
-    async ({ report_number, language }) => {
+    async ({ report_number, language, units: requested }) => {
       const entry = report_number !== undefined ? record.reports.find(r => r.number === report_number) : record.reports.at(-1);
       if (!entry) {
         const kept = record.reports.map(r => r.number);
@@ -690,7 +696,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
           ? `Report ${report_number} is not available. Reports kept in this session: ${kept.join(", ")}.`
           : "No report has been collected in this session yet. Call read_diagnostic_report first."));
       }
-      return { content: [{ type: "text" as const, text: renderReport(entry.report, language ?? "en") }] };
+      return { content: [{ type: "text" as const, text: renderReport(entry.report, language ?? "en", requested ?? units) }] };
     }
   );
 

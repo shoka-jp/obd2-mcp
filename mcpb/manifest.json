@@ -27,7 +27,8 @@
         "OBD2MCP_CONNECTION": "${user_config.connection}",
         "OBD2MCP_MOCK_SCENARIO": "${user_config.mock_scenario}",
         "OBD2MCP_BAUD": "${user_config.baud}",
-        "OBD2MCP_REPORT_DIR": "${user_config.report_folder}"
+        "OBD2MCP_REPORT_DIR": "${user_config.report_folder}",
+        "OBD2MCP_UNITS": "${user_config.units}"
       }
     }
   },
@@ -88,6 +89,13 @@
       "title": "Report history folder",
       "description": "Optional. Choose a folder to keep diagnostic reports from your real car, so Claude can compare them across days (for example before and after a repair). Reports contain no VIN; reports from the simulated car are not saved. Leave empty to keep reports only until Claude Desktop restarts.",
       "default": "",
+      "required": false
+    },
+    "units": {
+      "type": "string",
+      "title": "Units",
+      "description": "metric (default: °C, km/h, km, kPa) or imperial (US units: °F, mph, miles, psi) for answers and the readable report. Tool data stays metric.",
+      "default": "metric",
       "required": false
     }
   }
