@@ -38,15 +38,19 @@ test('mock discovery advertises implemented sensors using only support queries',
   assert.equal(data.complete, true);
   assert.equal(data.simulated, true);
   assert.equal(data.mode, '01');
-  assert.equal(data.pid_range, '01-60');
+  assert.equal(data.pid_range, '01-C0');
   assert(Number.isFinite(Date.parse(data.collected_at)));
   // The catalyst car is a port-injected petrol car without EGR or a hybrid battery.
   const absent = ['fuel_pressure', 'fuel_rail_pressure', 'commanded_egr', 'hybrid_battery_remaining'];
   assert.deepEqual(data.supported_sensor_names, mockPidNames().filter(name => !absent.includes(name)));
   assert.deepEqual(data.not_advertised_sensor_names, absent);
   assert.deepEqual(data.unknown_sensor_names, []);
-  assert.deepEqual(commands.filter(command => !command.startsWith('AT')), ['0100', '0120', '0140']);
-  assert.deepEqual(data.blocks[2].supported_pids, ['42', '43', '44', '45', '46', '49', '4D', '4E', '5C', '5E']);
+  // The odometer (A6) lies beyond 0140, so the car advertises 0160, 0180 and 01A0 and nothing later.
+  assert.deepEqual(commands.filter(command => !command.startsWith('AT')), ['0100', '0120', '0140', '0160', '0180', '01A0']);
+  assert.deepEqual(data.blocks[2].supported_pids, ['41', '42', '43', '44', '45', '46', '49', '4D', '4E', '5C', '5E', '60']);
+  assert.deepEqual(data.blocks[3].supported_pids, ['80']);
+  assert.deepEqual(data.blocks[5].supported_pids, ['A6']);
+  assert(data.supported_sensor_names.includes('odometer'));
   const live = await client.callTool({ name: 'read_live_data', arguments: { pids: data.supported_sensor_names } });
   const values = JSON.parse(live.content[0].text).live_data;
   assert(data.supported_sensor_names.every(name => Number.isFinite(values[name].value)));
@@ -115,14 +119,34 @@ for (const [label, reply, error] of [
 }
 
 test('discovery is bounded even when every bitmap bit is set', async t => {
+  const responses = {};
+  for (const base of ['00', '20', '40', '60', '80', 'A0', 'C0']) responses[`01${base}`] = `41 ${base} FF FF FF FF`;
+  const { commands, read } = await session(t, responses);
+  const { data } = await read();
+  assert.equal(data.complete, true);
+  assert.equal(data.blocks.length, 6);
+  assert.equal(data.blocks[5].supported_pids.at(-1), 'C0');
+  assert.equal(data.pid_range, '01-C0');
+  assert(!commands.includes('01C0'));
+});
+
+test('a car without the later ranges stops at 0140 and lists the odometer as not advertised', async t => {
   const { commands, read } = await session(t, {
-    '0100': '41 00 FF FF FF FF', '0120': '41 20 FF FF FF FF', '0140': '41 40 FF FF FF FF',
+    '0100': '41 00 BE 3F A8 13', '0120': '41 20 80 01 A0 01', '0140': '41 40 7E D0 00 00', // 0140 without continuation
   });
   const { data } = await read();
   assert.equal(data.complete, true);
-  assert.equal(data.blocks[2].supported_pids.at(-1), '60');
-  assert.equal(data.pid_range, '01-60');
   assert(!commands.includes('0160'));
+  assert(data.not_advertised_sensor_names.includes('odometer'));
+});
+
+test('the odometer is read as four bytes in tenths of a kilometre', async t => {
+  const { client } = await session(t, { '01A6': '41 A6 00 0C D9 7C' });
+  const result = await client.callTool({ name: 'read_live_data', arguments: { pids: ['走行距離'] } });
+  const data = JSON.parse(result.content[0].text);
+  assert.deepEqual(data.names_used, { 走行距離: 'odometer' });
+  assert.equal(data.live_data.odometer.value, 84210.8);
+  assert.equal(data.live_data.odometer.unit, 'km');
 });
 
 test('later calls rediscover support instead of retaining a stale bitmap', async t => {

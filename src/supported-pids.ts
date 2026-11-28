@@ -11,13 +11,17 @@ type Block = {
 
 const hex = (value: number) => value.toString(16).toUpperCase().padStart(2, "0");
 
+/** The support ranges (0100, 0120, …) up to the highest PID this server reads. */
+const BASES = Array.from({ length: Math.floor(Math.max(...PIDS.map(p => parseInt(p.pid, 16) - 1)) / 32) + 1 }, (_, i) => i * 32);
+export const PID_RANGE = `01-${hex(BASES.at(-1)! + 32)}`;
+
 /** Read only the Mode 01 support ranges used by our live sensor definitions. */
 export async function discoverSupportedPids(elm: Pick<Elm327, "obd">) {
   const support = new Map<number, Support>();
   const blocks: Block[] = [];
   let advertised = true;
   let complete = true;
-  for (const base of [0x00, 0x20, 0x40]) {
+  for (const base of BASES) {
     if (!advertised) {
       for (let pid = base + 1; pid <= base + 32; pid++) support.set(pid, "not_advertised");
       continue;
@@ -51,13 +55,13 @@ export async function discoverSupportedPids(elm: Pick<Elm327, "obd">) {
   const names = (wanted: string) => PIDS.filter(p => state(p.pid) === wanted).map(p => p.name);
   return {
     mode: "01",
-    pid_range: "01-60",
+    pid_range: PID_RANGE,
     collected_at: new Date().toISOString(),
     complete,
     supported_sensor_names: names("supported"),
     not_advertised_sensor_names: names("not_advertised"),
     unknown_sensor_names: names("unknown"),
     blocks,
-    note: "Support flags describe what the responding vehicle advertises, not a successful sensor reading. Only the 01-60 range used by this server is covered. Unknown support must not be treated as unsupported. An empty pids array in a live read or diagnostic report still selects the defaults.",
+    note: "Support flags describe what the responding vehicle advertises, not a successful sensor reading. Only the range used by this server is covered, and later ranges only when the car advertises them. Unknown support must not be treated as unsupported. An empty pids array in a live read or diagnostic report still selects the defaults.",
   };
 }

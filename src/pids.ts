@@ -57,6 +57,18 @@ export const PIDS: PidDef[] = [
   { pid: "5B", name: "hybrid_battery_remaining", desc: "Hybrid battery pack remaining life (meaning varies by manufacturer)", bytes: 1, unit: "%", parse: b => pct(b[0]), encode: pctEnc },
   { pid: "5C", name: "oil_temp", desc: "Engine oil temperature", bytes: 1, unit: "degC", parse: b => temp(b[0]), encode: tempEnc },
   { pid: "5E", name: "fuel_rate", desc: "Engine fuel rate", bytes: 2, unit: "L/h", parse: b => word(b) / 20, encode: v => wordEnc(Math.round(v * 20)) },
+  {
+    pid: "A6",
+    name: "odometer",
+    desc: "Odometer as recorded by the engine computer (newer cars only; may differ from the dashboard)",
+    bytes: 4,
+    unit: "km",
+    parse: b => (b[0] * 2 ** 24 + b[1] * 2 ** 16 + b[2] * 2 ** 8 + b[3]) / 10,
+    encode: v => {
+      const raw = Math.round(v * 10);
+      return [Math.floor(raw / 2 ** 24) & 0xff, Math.floor(raw / 2 ** 16) & 0xff, Math.floor(raw / 2 ** 8) & 0xff, raw & 0xff];
+    },
+  },
 ];
 
 export const PID_BY_NAME = new Map(PIDS.map(p => [p.name, p]));
@@ -102,7 +114,7 @@ const ALIASES: Record<string, string> = {
   hybrid_battery: "hybrid_battery_remaining", hv_battery: "hybrid_battery_remaining", soc: "hybrid_battery_remaining",
   rail_pressure: "fuel_rail_pressure", cat_temp: "catalyst_temp_b1s1", catalyst_temp: "catalyst_temp_b1s1",
   o2: "o2_b1s1_voltage", o2_voltage: "o2_b1s1_voltage", o2_sensor: "o2_b1s1_voltage",
-  timing: "timing_advance", ignition_timing: "timing_advance",
+  timing: "timing_advance", ignition_timing: "timing_advance", mileage: "odometer", odo: "odometer", 走行距離: "odometer", オドメーター: "odometer",
   barometric_pressure: "baro", baro_pressure: "baro", runtime: "run_time", engine_run_time: "run_time",
 };
 

@@ -364,7 +364,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
     "read_supported_pids",
     {
       title: "Discover supported live sensors",
-      description: "Discover advertised Mode 01 support for this server's live sensors (PID range 01-60). Returns supported_sensor_names for a later read_live_data or read_diagnostic_report call, plus not_advertised_sensor_names and unknown_sensor_names (support unknown is not unsupported). Partial failures retain earlier results. Support does not guarantee a reading. If no names are supported, do not pass an empty pids array expecting no reads: it selects the defaults. No VIN request or code clearing.",
+      description: "Discover advertised Mode 01 support for this server's live sensors (Mode 01 support queries 0100 onwards, only as far as the car advertises). Returns supported_sensor_names for a later read_live_data or read_diagnostic_report call, plus not_advertised_sensor_names and unknown_sensor_names (support unknown is not unsupported). Partial failures retain earlier results. Support does not guarantee a reading. If no names are supported, do not pass an empty pids array expecting no reads: it selects the defaults. No VIN request or code clearing.",
       inputSchema: {},
       annotations: READ_ONLY,
     },
@@ -527,25 +527,52 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
     readFreezeFrame
   );
 
+  /** Decode PID 01 or PID 41 bytes B-D: [available or enabled, incomplete] per monitor. */
+  const monitorBits = (b: number[], diesel: boolean, off: string) => {
+    const monitors: Record<string, string> = {};
+    MONITORS_B.forEach((name, i) => {
+      const available = (b[1] & (1 << i)) !== 0;
+      const incomplete = (b[1] & (1 << (i + 4))) !== 0;
+      monitors[name] = !available ? off : incomplete ? "incomplete" : "complete";
+    });
+    const cd: Array<[number, string]> = diesel ? MONITORS_CD_DIESEL : MONITORS_CD.map((name, i) => [i, name]);
+    for (const [bit, name] of cd) {
+      const available = (b[2] & (1 << bit)) !== 0;
+      const incomplete = (b[3] & (1 << bit)) !== 0;
+      monitors[name] = !available ? off : incomplete ? "incomplete" : "complete";
+    }
+    return monitors;
+  };
+
   const readReadiness = async () => {
     try {
       const b = await session.elm.obd("0101", "4101");
       requireBytes(b, 4, "0101");
       const diesel = (b[1] & 0x08) !== 0;
-      const monitors: Record<string, string> = {};
-      MONITORS_B.forEach((name, i) => {
-        const available = (b[1] & (1 << i)) !== 0;
-        const incomplete = (b[1] & (1 << (i + 4))) !== 0;
-        monitors[name] = !available ? "not_supported" : incomplete ? "incomplete" : "complete";
-      });
-      const cd: Array<[number, string]> = diesel ? MONITORS_CD_DIESEL : MONITORS_CD.map((name, i) => [i, name]);
-      for (const [bit, name] of cd) {
-        const available = (b[2] & (1 << bit)) !== 0;
-        const incomplete = (b[3] & (1 << bit)) !== 0;
-        monitors[name] = !available ? "not_supported" : incomplete ? "incomplete" : "complete";
-      }
+      const monitors = monitorBits(b, diesel, "not_supported");
       const states = Object.entries(monitors);
       const supported = states.filter(([, state]) => state !== "not_supported");
+      // PID 41: the same monitors for the current drive cycle only. Optional: many cars do not answer it.
+      let thisDriveCycle: Record<string, unknown> | null = null;
+      let thisDriveCycleError: string | undefined;
+      try {
+        const cycle = await session.elm.obd("0141", "4141");
+        requireBytes(cycle, 4, "0141");
+        const current = monitorBits(cycle, diesel, "not_enabled");
+        // Only monitors the vehicle supports at all; the rest stay in readiness_monitors as not_supported.
+        for (const name of Object.keys(current)) if (monitors[name] === "not_supported") delete current[name];
+        const enabled = Object.entries(current).filter(([, state]) => state !== "not_enabled");
+        thisDriveCycle = {
+          monitors: current,
+          enabled_count: enabled.length,
+          complete_count: enabled.filter(([, state]) => state === "complete").length,
+          incomplete_monitors: enabled.filter(([, state]) => state === "incomplete").map(([name]) => name),
+        };
+      } catch (err) {
+        thisDriveCycleError = err instanceof NoDataError
+          ? "Not available: this vehicle did not answer the drive-cycle monitor status (PID 41)."
+          : String(err instanceof Error ? err.message : err);
+      }
       return wrap({
         mil_on: (b[0] & 0x80) !== 0,
         engine_type: diesel ? "compression_ignition" : "spark_ignition",
@@ -553,6 +580,8 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
         supported_count: supported.length,
         complete_count: supported.filter(([, state]) => state === "complete").length,
         incomplete_monitors: supported.filter(([, state]) => state === "incomplete").map(([name]) => name),
+        this_drive_cycle: thisDriveCycle,
+        ...(thisDriveCycleError ? { this_drive_cycle_error: thisDriveCycleError } : {}),
       });
     } catch (err) {
       return fail(err);
@@ -563,7 +592,7 @@ export function buildServer(elm: Elm327, mock: boolean, deps: ServerDeps = {}): 
     "read_readiness",
     {
       title: "Read readiness monitors",
-      description: "Read readiness monitors (emissions self-tests): which monitors this vehicle supports and whether each has completed, with supported_count, complete_count and the incomplete_monitors list. Monitors reported as not_supported do not apply to the vehicle. Diesel (compression-ignition) engines report their own set: NMHC catalyst, NOx/SCR, boost pressure, exhaust gas sensor, PM filter and EGR/VVT, with engine_type compression_ignition. Clearing codes or disconnecting the battery resets monitors; they complete again after enough driving, and some vehicles normally leave one (often EVAP) incomplete. Useful when preparing for an emissions inspection or checking a used car; this result alone does not determine whether the vehicle will pass.",
+      description: "Read readiness monitors (emissions self-tests): which monitors this vehicle supports and whether each has completed, with supported_count, complete_count and the incomplete_monitors list. Monitors reported as not_supported do not apply to the vehicle. Diesel (compression-ignition) engines report their own set: NMHC catalyst, NOx/SCR, boost pressure, exhaust gas sensor, PM filter and EGR/VVT, with engine_type compression_ignition. Clearing codes or disconnecting the battery resets monitors; they complete again after enough driving, and some vehicles normally leave one (often EVAP) incomplete. Useful when preparing for an emissions inspection or checking a used car; this result alone does not determine whether the vehicle will pass. this_drive_cycle (PID 41, when the vehicle answers) shows the same monitors for the current drive only: enabled, complete or not_enabled (conditions not met yet). It helps when driving to complete monitors after a repair; it is null with this_drive_cycle_error when unavailable.",
       inputSchema: {},
       annotations: READ_ONLY,
     },
