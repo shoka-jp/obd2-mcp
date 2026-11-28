@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Smaller results, so conversations use fewer tokens: tool results are compact JSON instead of indented; the diagnostic report says once whether it is simulated instead of in every section (about half the size); `read_supported_pids` returns `supported_sensor_names`, `not_advertised_sensor_names` and `unknown_sensor_names` instead of an object per sensor (about a quarter of the size); `watch_live_data` and `read_diagnostic_report` no longer repeat the list of sensor names in their descriptions. Resources and saved reports stay indented for people to read.
+
 ### Added
 
 - US units: `OBD2MCP_UNITS=imperial` (Claude Desktop setting *Units*) shows °F, mph, miles, psi and gallons per hour in the readable report, the `obd2://report/latest.md` resources and the demo summary, and tells the assistant to answer in US units. `format_diagnostic_report` also takes `units`. Tool data stays metric so reports, comparisons and the history folder stay consistent. Metric remains the default.

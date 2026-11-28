@@ -47,16 +47,16 @@ export async function discoverSupportedPids(elm: Pick<Elm327, "obd">) {
       break; // Do not guess support for this or any later range.
     }
   }
-  const sensors = PIDS.map(({ name, pid, unit }) => ({
-    name, pid, unit, support: support.get(parseInt(pid, 16)) ?? "unknown",
-  }));
+  const state = (pid: string) => support.get(parseInt(pid, 16)) ?? "unknown";
+  const names = (wanted: string) => PIDS.filter(p => state(p.pid) === wanted).map(p => p.name);
   return {
     mode: "01",
     pid_range: "01-60",
     collected_at: new Date().toISOString(),
     complete,
-    supported_sensor_names: sensors.filter(sensor => sensor.support === "supported").map(sensor => sensor.name),
-    sensors,
+    supported_sensor_names: names("supported"),
+    not_advertised_sensor_names: names("not_advertised"),
+    unknown_sensor_names: names("unknown"),
     blocks,
     note: "Support flags describe what the responding vehicle advertises, not a successful sensor reading. Only the 01-60 range used by this server is covered. Unknown support must not be treated as unsupported. An empty pids array in a live read or diagnostic report still selects the defaults.",
   };

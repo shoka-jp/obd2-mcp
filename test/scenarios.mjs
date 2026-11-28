@@ -76,7 +76,7 @@ test('partial: unsupported sensors remain missing and no freeze frame is availab
     const support = await call(client, 'read_supported_pids');
     const unsupported = ['maf', 'stft_b2', 'ltft_b2', 'oil_temp', 'ambient_temp'];
     for (const name of unsupported) {
-      assert.equal(support.sensors.find((s) => s.name === name)?.support, 'not_advertised', name);
+      assert.ok(support.not_advertised_sensor_names.includes(name), name);
       assert.ok(!support.supported_sensor_names.includes(name), name);
     }
 

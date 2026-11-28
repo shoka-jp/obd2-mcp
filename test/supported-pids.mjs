@@ -43,7 +43,8 @@ test('mock discovery advertises implemented sensors using only support queries',
   // The catalyst car is a port-injected petrol car without EGR or a hybrid battery.
   const absent = ['fuel_pressure', 'fuel_rail_pressure', 'commanded_egr', 'hybrid_battery_remaining'];
   assert.deepEqual(data.supported_sensor_names, mockPidNames().filter(name => !absent.includes(name)));
-  assert.deepEqual(data.sensors.filter(sensor => sensor.support !== 'supported').map(sensor => [sensor.name, sensor.support]), absent.map(name => [name, 'not_advertised']));
+  assert.deepEqual(data.not_advertised_sensor_names, absent);
+  assert.deepEqual(data.unknown_sensor_names, []);
   assert.deepEqual(commands.filter(command => !command.startsWith('AT')), ['0100', '0120', '0140']);
   assert.deepEqual(data.blocks[2].supported_pids, ['42', '43', '44', '45', '46', '49', '4D', '4E', '5C', '5E']);
   const live = await client.callTool({ name: 'read_live_data', arguments: { pids: data.supported_sensor_names } });
@@ -60,8 +61,8 @@ test('bitmap byte boundaries and continuation flags retain their exact PID numbe
   assert.deepEqual(data.blocks[0].supported_pids, ['01', '10', '11', '20']);
   assert.deepEqual(data.blocks[1].supported_pids, ['21']);
   assert.deepEqual(data.supported_sensor_names, ['maf', 'throttle', 'distance_with_mil']);
-  assert.equal(data.sensors.find(sensor => sensor.name === 'rpm').support, 'not_advertised');
-  assert.equal(data.sensors.find(sensor => sensor.name === 'oil_temp').support, 'not_advertised');
+  assert(data.not_advertised_sensor_names.includes('rpm'));
+  assert(data.not_advertised_sensor_names.includes('oil_temp'));
   assert(!commands.includes('0140'));
   assert.equal(data.complete, true);
 });
@@ -72,7 +73,8 @@ test('a valid all-zero bitmap differs from unavailable support data', async t =>
   assert.equal(data.complete, true);
   assert(!response.isError);
   assert.deepEqual(data.supported_sensor_names, []);
-  assert(data.sensors.every(sensor => sensor.support === 'not_advertised'));
+  assert.equal(data.not_advertised_sensor_names.length, mockPidNames().length);
+  assert.deepEqual(data.unknown_sensor_names, []);
   assert.deepEqual(commands.filter(command => !command.startsWith('AT')), ['0100']);
 });
 
@@ -82,7 +84,8 @@ test('no initial data leaves every sensor unknown, not unsupported', async t => 
   assert.equal(response.isError, true);
   assert.equal(data.complete, false);
   assert.deepEqual(data.supported_sensor_names, []);
-  assert(data.sensors.every(sensor => sensor.support === 'unknown'));
+  assert.equal(data.unknown_sensor_names.length, mockPidNames().length);
+  assert.deepEqual(data.not_advertised_sensor_names, []);
   assert.equal(data.blocks[0].supported_pids, null);
   assert.match(data.blocks[0].error, /support is unknown/);
   assert(!commands.includes('0120'));
@@ -101,9 +104,9 @@ for (const [label, reply, error] of [
     assert.equal(response.isError, true);
     assert.equal(data.complete, false);
     assert.deepEqual(data.supported_sensor_names, ['coolant_temp', 'rpm']);
-    assert.equal(data.sensors.find(sensor => sensor.name === 'engine_load').support, 'not_advertised');
+    assert(data.not_advertised_sensor_names.includes('engine_load'));
     for (const name of ['fuel_level', 'module_voltage', 'oil_temp']) {
-      assert.equal(data.sensors.find(sensor => sensor.name === name).support, 'unknown');
+      assert(data.unknown_sensor_names.includes(name), name);
     }
     assert.match(data.blocks[1].error, error);
     assert.equal(data.blocks[1].supported_pids, null);
